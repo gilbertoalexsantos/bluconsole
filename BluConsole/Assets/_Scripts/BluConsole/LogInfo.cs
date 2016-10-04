@@ -12,15 +12,25 @@ namespace BluConsole
 public class LogInfo
 {
 
+    [SerializeField] private Guid _identifier;
     [SerializeField] private string _rawMessage;
     [SerializeField] private string _message;
     [SerializeField] private List<LogStackFrame> _callStack;
     [SerializeField] private BluLogType _logType;
     [SerializeField] private bool _isCompilerError;
 
+    public Guid Identifier
+    {
+        get
+        {
+            return _identifier;
+        }
+    }
+
     public string RawMessage
     {
-        get{
+        get
+        {
             return _rawMessage;
         }
     }
@@ -63,6 +73,7 @@ public class LogInfo
                    BluLogType logType,
                    bool isCompilerError)
     {
+        _identifier = Guid.NewGuid();
         _rawMessage = rawMessage;
         _message = message;
         _callStack = callStack;
