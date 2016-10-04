@@ -17,13 +17,15 @@ public class BluConsoleEditorWindow : EditorWindow
     private LoggerAssetClient _loggerAsset;
 
     // Cache variables
-    private Texture2D _evenTexture;
-    private Texture2D _oddTexture;
-    private Texture2D _evenErrorTexture;
-    private Texture2D _oddErrorTexture;
-    private GUIStyle _logLineStyle;
-    private GUIStyle _logLineSelectedStyle;
-    private GUIStyle _logLineErrorStyle;
+    private GUIStyle _evenLogLineStyle = null;
+    private GUIStyle _oddLogLineStyle = null;
+    private GUIStyle _logLineSelectedStyle = null;
+    private GUIStyle _evenLogLineErrorStyle = null;
+    private GUIStyle _oddLogLineErrorStyle = null;
+    private Texture2D _evenLogLineTexture = null;
+    private Texture2D _oddLogLineTexture = null;
+    private Texture2D _evenLogLineErrorTexture = null;
+    private Texture2D _oddLogLineErrorTexture = null;
 
     // Toolbar Variables
     private bool _isShowNormal = true;
@@ -46,6 +48,10 @@ public class BluConsoleEditorWindow : EditorWindow
     private int _logDetailSelectedFrame = -1;
     private double _logDetailLastTimeClicked = 0.0;
 
+    // Compiling
+    private bool _isCompiling = false;
+    private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
+
     [MenuItem("Window/BluConsole")]
     public static void ShowWindow()
     {
@@ -55,8 +61,17 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void OnGUI()
     {
-        if (EditorApplication.isCompiling)
-            _loggerAsset.ClearCompileErrors();
+        if (EditorApplication.isCompiling) {
+            if (!_isCompiling) {
+                _isCompiling = true;
+                BeforeCompile();
+            }
+        } else if (_isCompiling) {
+            _isCompiling = false;
+            AfterCompile();
+        }
+
+        InitCachedVariables();
 
         GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(100.0f));
         DrawTopToolbar();
@@ -73,6 +88,91 @@ public class BluConsoleEditorWindow : EditorWindow
         Repaint();
     }
 
+    private void BeforeCompile()
+    {
+        _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompilerError));
+    }
+
+    private void AfterCompile()
+    {
+        _loggerAsset.Clear(log => 
+                           _dirtyLogsBeforeCompile.Where(dirtyLog => dirtyLog.Identifier == log.Identifier).Count() > 0);
+    }
+        
+    private void InitCachedVariables()
+    {
+        if (_evenLogLineTexture == null)
+            _evenLogLineTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, EvenButtonColor);
+
+        if (_oddLogLineErrorTexture == null)
+            _oddLogLineTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, OddButtonColor);
+
+        if (_evenLogLineErrorTexture == null) {
+            Color evenLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
+            _evenLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, evenLogLineErrorColor);
+        }
+
+        if (_oddLogLineErrorTexture == null) {
+            Color oddLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
+            _oddLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, oddLogLineErrorColor);
+        }
+
+        _evenLogLineStyle = new GUIStyle(EditorStyles.label);
+        _evenLogLineStyle.richText = true;
+        _evenLogLineStyle.fontSize = 13;
+        _evenLogLineStyle.alignment = TextAnchor.MiddleLeft;
+        _evenLogLineStyle.margin = new RectOffset(0, 0, 0, 0);
+        _evenLogLineStyle.padding = new RectOffset(7, 0, 0, 0);
+        _evenLogLineStyle.normal.background = _evenLogLineTexture;
+        _evenLogLineStyle.active = _evenLogLineStyle.normal;
+        _evenLogLineStyle.hover = _evenLogLineStyle.normal;
+        _evenLogLineStyle.focused = _evenLogLineStyle.normal;
+
+        _oddLogLineStyle = new GUIStyle(EditorStyles.label);
+        _oddLogLineStyle.richText = true;
+        _oddLogLineStyle.fontSize = 13;
+        _oddLogLineStyle.alignment = TextAnchor.MiddleLeft;
+        _oddLogLineStyle.margin = new RectOffset(0, 0, 0, 0);
+        _oddLogLineStyle.padding = new RectOffset(7, 0, 0, 0);
+        _oddLogLineStyle.normal.background = _oddLogLineTexture;
+        _oddLogLineStyle.active = _oddLogLineStyle.normal;
+        _oddLogLineStyle.hover = _oddLogLineStyle.normal;
+        _oddLogLineStyle.focused = _oddLogLineStyle.normal;
+
+        _logLineSelectedStyle = new GUIStyle(EditorStyles.whiteLabel);
+        _logLineSelectedStyle.richText = true;
+        _logLineSelectedStyle.fontSize = 13;
+        _logLineSelectedStyle.alignment = TextAnchor.MiddleLeft;
+        _logLineSelectedStyle.margin = new RectOffset(0, 0, 0, 0);
+        _logLineSelectedStyle.padding = new RectOffset(7, 0, 0, 0);
+        _logLineSelectedStyle.normal.background = BluConsoleEditorHelper.BlueSelectedBackground;
+        _logLineSelectedStyle.active = _logLineSelectedStyle.normal;
+        _logLineSelectedStyle.hover = _logLineSelectedStyle.normal;
+        _logLineSelectedStyle.focused = _logLineSelectedStyle.normal;
+
+        _evenLogLineErrorStyle = new GUIStyle(EditorStyles.label);
+        _evenLogLineErrorStyle.richText = true;
+        _evenLogLineErrorStyle.fontSize = 13;
+        _evenLogLineErrorStyle.alignment = TextAnchor.MiddleLeft;
+        _evenLogLineErrorStyle.margin = new RectOffset(0, 0, 0, 0);
+        _evenLogLineErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+        _evenLogLineErrorStyle.normal.background = _evenLogLineErrorTexture;
+        _evenLogLineErrorStyle.active = _evenLogLineErrorStyle.normal;
+        _evenLogLineErrorStyle.hover = _evenLogLineErrorStyle.normal;
+        _evenLogLineErrorStyle.focused = _evenLogLineErrorStyle.normal;
+
+        _oddLogLineErrorStyle = new GUIStyle(EditorStyles.label);
+        _oddLogLineErrorStyle.richText = true;
+        _oddLogLineErrorStyle.fontSize = 13;
+        _oddLogLineErrorStyle.alignment = TextAnchor.MiddleLeft;
+        _oddLogLineErrorStyle.margin = new RectOffset(0, 0, 0, 0);
+        _oddLogLineErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+        _oddLogLineErrorStyle.normal.background = _oddLogLineErrorTexture;
+        _oddLogLineErrorStyle.active = _oddLogLineErrorStyle.normal;
+        _oddLogLineErrorStyle.hover = _oddLogLineErrorStyle.normal;
+        _oddLogLineErrorStyle.focused = _oddLogLineErrorStyle.normal;
+    }
+
     private void OnEnable()
     {
         if (_loggerAsset == null) {
@@ -81,7 +181,8 @@ public class BluConsoleEditorWindow : EditorWindow
                 _loggerAsset = LoggerAssetClient.GetOrCreate();
         }
 
-        ClearAllSelectedMessages();
+        _logListSelectedMessage = -1;
+        _logDetailSelectedFrame = -1;
             
         LoggerServer.Register(_loggerAsset);
     }
@@ -94,7 +195,8 @@ public class BluConsoleEditorWindow : EditorWindow
         // Clear/Collapse/ClearOnPlay/ErrorPause Area
         if (BluConsoleEditorHelper.ButtonClamped("Clear", EditorStyles.toolbarButton)) {
             _loggerAsset.Clear();
-            ClearAllSelectedMessages();
+            _logListSelectedMessage = -1;
+            _logDetailSelectedFrame = -1;
         }
         
         GUILayout.Space(6.0f);
@@ -143,9 +245,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void DrawLogList()
     {
-        var oldColor = GUI.color;
-        GUI.color = ConsoleEvenButtonColor;
-
         _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition);
      
         var logListHeight = WindowHeight;
@@ -171,18 +270,22 @@ public class BluConsoleEditorWindow : EditorWindow
             }
 
             LogInfo logInfo = logsInfo[i];
-            var showMessage = logInfo.Message.Replace(System.Environment.NewLine, " ");
+            string showMessage = null;
+            if (logInfo.IsCompilerError) {
+                showMessage = logInfo.RawMessage;
+            } else {
+                showMessage = logInfo.Message.Replace(System.Environment.NewLine, " ");
+            }
             showMessage = "  " + showMessage;
             var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
 
-            var actualLogLineStyle = LogLineStyle;
+            var actualLogLineStyle = EvenLogLineStyle;
             if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
-                actualLogLineStyle = GetLogLineNormalButtonErrorStyle(drawnButtons % 2 == 0);
+                actualLogLineStyle = drawnButtons % 2 == 0 ? EvenLogLineErrorStyle : OddLogLineErrorStyle;
             } else {
                 actualLogLineStyle = i == _logListSelectedMessage ? 
-                    GetLogLineSelectedButtonStyle() : 
-                    GetLogLineNormalButtonStyle(drawnButtons % 2 == 0);
+                    LogLineSelectedStyle : (drawnButtons % 2 == 0 ? EvenLogLineStyle : OddLogLineStyle);
             }
 
 
@@ -208,8 +311,6 @@ public class BluConsoleEditorWindow : EditorWindow
         }
 
         EditorGUILayout.EndScrollView();
-
-        GUI.color = oldColor;
     }
 
     private void DrawResizer()
@@ -242,10 +343,8 @@ public class BluConsoleEditorWindow : EditorWindow
             _loggerAsset.LogsInfo.Count < _logListSelectedMessage + 1)
             return;
 
-        var oldColor = GUI.color;
-        GUI.color = ConsoleEvenButtonColor;
-
         _logDetailBeginPosition = GUILayout.BeginScrollView(_logDetailBeginPosition);
+
         var log = _loggerAsset.LogsInfo[_logListSelectedMessage];
         for (int i = 0; i < log.CallStack.Count; i++) {
             var frame = log.CallStack[i];
@@ -255,8 +354,7 @@ public class BluConsoleEditorWindow : EditorWindow
                 methodName = log.RawMessage;
 
             var actualLogLineStyle = i == _logDetailSelectedFrame ? 
-                GetLogLineSelectedButtonStyle() : 
-                GetLogLineNormalButtonStyle(i % 2 == 0);
+                LogLineSelectedStyle : (i % 2 == 0 ? EvenLogLineStyle : OddLogLineStyle);
 
             if (GUILayout.Button(methodName, actualLogLineStyle)) {
                 if (i == _logDetailSelectedFrame) {
@@ -271,9 +369,8 @@ public class BluConsoleEditorWindow : EditorWindow
                 }
             }
         }
-        GUILayout.EndScrollView();
 
-        GUI.color = oldColor;
+        GUILayout.EndScrollView();
     }
 
     private Texture2D GetIcon(BluLogType logType)
@@ -323,12 +420,6 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
-    private void ClearAllSelectedMessages()
-    {
-        _logListSelectedMessage = -1;
-        _logDetailSelectedFrame = -1;
-    }
-
     private float WindowHeight
     {
         get
@@ -341,7 +432,7 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            return LogLineStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+            return EvenLogLineStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
         }
     }
 
@@ -356,7 +447,7 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
-    private Color ConsoleEvenButtonColor
+    private Color EvenButtonColor
     {
         get
         {
@@ -367,7 +458,7 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
-    private Color ConsoleOddButtonColor
+    private Color OddButtonColor
     {
         get
         {
@@ -378,52 +469,67 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
-    private Texture2D EvenErrorTexture
+    private int LogLineWidth
     {
         get
         {
-            if (_evenErrorTexture == null) {
-                float width, height;
-                LogLineStyle.CalcMinMaxWidth(new GUIContent("Test"), out width, out height);
-                Color color = BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-                _evenErrorTexture = BluConsoleEditorHelper.GetTexture((int)width, (int)height, color);
-            }
-
-            return _evenErrorTexture;
+            return 35;
         }
     }
 
-    private Texture2D OddErrorTexture
+    private int LogLineHeight
     {
         get
         {
-            if (_oddErrorTexture == null) {
-                float width, height;
-                LogLineStyle.CalcMinMaxWidth(new GUIContent("Test"), out width, out height);
-                Color color = BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-                _oddErrorTexture = BluConsoleEditorHelper.GetTexture((int)width, (int)height, color);
-            }
-
-            return _oddErrorTexture;
+            return 35;
         }
     }
 
-    private GUIStyle LogLineStyle
+    private Texture2D EvenLogLineTexture
     {
         get
         {
-            if (_logLineStyle == null) {
-                _logLineStyle = new GUIStyle(EditorStyles.label);
-                _logLineStyle.richText = true;
-                _logLineStyle.fontSize = 13;
-                _logLineStyle.alignment = TextAnchor.MiddleLeft;
-                _logLineStyle.margin = new RectOffset(0, 0, 0, 0);
-                _logLineStyle.padding = new RectOffset(7, 0, 0, 0);
-                _logLineStyle.active = _logLineStyle.normal;
-                _logLineStyle.hover = _logLineStyle.normal;
-                _logLineStyle.focused = _logLineStyle.normal;
-            }
-            return _logLineStyle;
+            return _evenLogLineTexture;
+        }
+    }
+
+    private Texture2D OddLogLineTexture
+    {
+        get
+        {
+            return _oddLogLineTexture;
+        }
+    }
+
+    private Texture2D EvenLogLineErrorTexture
+    {
+        get
+        {
+            return _evenLogLineErrorTexture;
+        }
+    }
+
+    private Texture2D OddLogLineErrorTexture
+    {
+        get
+        {
+            return _oddLogLineErrorTexture;
+        }
+    }
+
+    private GUIStyle EvenLogLineStyle
+    {
+        get
+        {
+            return _evenLogLineStyle;
+        }
+    }
+
+    private GUIStyle OddLogLineStyle
+    {
+        get
+        {
+            return _oddLogLineStyle;
         }
     }
 
@@ -431,74 +537,24 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_logLineSelectedStyle == null) {
-                _logLineSelectedStyle = new GUIStyle(EditorStyles.whiteLabel);
-                _logLineSelectedStyle.richText = true;
-                _logLineSelectedStyle.fontSize = 13;
-                _logLineSelectedStyle.alignment = TextAnchor.MiddleLeft;
-                _logLineSelectedStyle.margin = new RectOffset(0, 0, 0, 0);
-                _logLineSelectedStyle.padding = new RectOffset(7, 0, 0, 0);
-                _logLineSelectedStyle.normal.background = BluConsoleEditorHelper.BlueSelectedBackground;
-                _logLineSelectedStyle.active = _logLineSelectedStyle.normal;
-                _logLineSelectedStyle.hover = _logLineSelectedStyle.normal;
-                _logLineSelectedStyle.focused = _logLineSelectedStyle.normal;   
-            }
             return _logLineSelectedStyle;
         }
     }
 
-    private GUIStyle LogLineErrorStyle
+    private GUIStyle EvenLogLineErrorStyle
     {
         get
         {
-            if (_logLineErrorStyle == null) {
-                _logLineErrorStyle = new GUIStyle(EditorStyles.label);
-                _logLineErrorStyle.richText = true;
-                _logLineErrorStyle.fontSize = 13;
-                _logLineErrorStyle.alignment = TextAnchor.MiddleLeft;
-                _logLineErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-                _logLineErrorStyle.padding = new RectOffset(7, 0, 0, 0);
-                _logLineErrorStyle.active = _logLineErrorStyle.normal;
-                _logLineErrorStyle.hover = _logLineErrorStyle.normal;
-                _logLineErrorStyle.focused = _logLineErrorStyle.normal;
-            }
-            return _logLineErrorStyle;
+            return _evenLogLineErrorStyle;
         }
     }
 
-    private GUIStyle GetLogLineSelectedButtonStyle()
+    private GUIStyle OddLogLineErrorStyle
     {
-        return LogLineSelectedStyle;
-    }
-
-    private GUIStyle GetLogLineNormalButtonStyle(bool isEven)
-    {
-        GUIStyle style = LogLineStyle;
-
-        float width, height;
-        style.CalcMinMaxWidth(new GUIContent("Test"), out width, out height);
-
-        if (isEven) {
-            if (_evenTexture == null)
-                _evenTexture = BluConsoleEditorHelper.GetTexture((int)width, (int)height, ConsoleEvenButtonColor);
-            style.normal.background = _evenTexture;
-        } else {
-            if (_oddTexture == null)
-                _oddTexture = BluConsoleEditorHelper.GetTexture((int)width, (int)height, ConsoleOddButtonColor);
-            style.normal.background = _oddTexture;
+        get
+        {
+            return _oddLogLineErrorStyle;
         }
-
-        return style;
-    }
-
-    private GUIStyle GetLogLineNormalButtonErrorStyle(bool isEven)
-    {
-        GUIStyle style = LogLineErrorStyle;
-
-        float width, height;
-        style.CalcMinMaxWidth(new GUIContent("Test"), out width, out height);
-        style.normal.background = isEven ? EvenErrorTexture : OddErrorTexture;
-        return style;
     }
 
 }

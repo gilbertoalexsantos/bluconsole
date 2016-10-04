@@ -105,6 +105,34 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     public void Clear()
     {
+        _logsInfo.Clear();
+        _qtNormalLogs = 0;
+        _qtWarningLogs = 0;
+        _qtErrorLogs = 0;
+    }
+
+    public void Clear(Predicate<LogInfo> cmp)
+    {
+        var logsToRemove = _logsInfo.Where(log => cmp(log)).ToList();
+        foreach (var log in logsToRemove) {
+            switch (log.LogType) {
+            case BluLogType.Normal:
+                _qtNormalLogs--;
+                break;
+            case BluLogType.Warning:
+                _qtWarningLogs--;
+                break;
+            case BluLogType.Error:
+                _qtErrorLogs--;
+                break;
+            }
+        }
+
+        _logsInfo.RemoveAll(cmp);
+    }
+
+    public void ClearExceptErrors()
+    {
         _logsInfo = _logsInfo.Where(log => log.IsCompilerError).ToList();
         _qtNormalLogs = 0;
         _qtWarningLogs = 0;
