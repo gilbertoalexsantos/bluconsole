@@ -26,6 +26,8 @@ public class BluConsoleEditorWindow : EditorWindow
     private Texture2D _oddLogLineTexture = null;
     private Texture2D _evenLogLineErrorTexture = null;
     private Texture2D _oddLogLineErrorTexture = null;
+    private int _logLineWidth = 35;
+    private int _logLineHeight = 35;
 
     // Toolbar Variables
     private bool _isShowNormal = true;
@@ -102,19 +104,19 @@ public class BluConsoleEditorWindow : EditorWindow
     private void InitCachedVariables()
     {
         if (_evenLogLineTexture == null)
-            _evenLogLineTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, EvenButtonColor);
+            _evenLogLineTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, EvenButtonColor);
 
         if (_oddLogLineErrorTexture == null)
-            _oddLogLineTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, OddButtonColor);
+            _oddLogLineTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, OddButtonColor);
 
         if (_evenLogLineErrorTexture == null) {
             Color evenLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-            _evenLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, evenLogLineErrorColor);
+            _evenLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, evenLogLineErrorColor);
         }
 
         if (_oddLogLineErrorTexture == null) {
             Color oddLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-            _oddLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(LogLineWidth, LogLineHeight, oddLogLineErrorColor);
+            _oddLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, oddLogLineErrorColor);
         }
 
         _evenLogLineStyle = new GUIStyle(EditorStyles.label);
@@ -280,12 +282,12 @@ public class BluConsoleEditorWindow : EditorWindow
             var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
 
-            var actualLogLineStyle = EvenLogLineStyle;
+            var actualLogLineStyle = _evenLogLineStyle;
             if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
-                actualLogLineStyle = drawnButtons % 2 == 0 ? EvenLogLineErrorStyle : OddLogLineErrorStyle;
+                actualLogLineStyle = drawnButtons % 2 == 0 ? _evenLogLineErrorStyle : _oddLogLineErrorStyle;
             } else {
                 actualLogLineStyle = i == _logListSelectedMessage ? 
-                    LogLineSelectedStyle : (drawnButtons % 2 == 0 ? EvenLogLineStyle : OddLogLineStyle);
+                    _logLineSelectedStyle : (drawnButtons % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
             }
 
 
@@ -354,7 +356,7 @@ public class BluConsoleEditorWindow : EditorWindow
                 methodName = log.RawMessage;
 
             var actualLogLineStyle = i == _logDetailSelectedFrame ? 
-                LogLineSelectedStyle : (i % 2 == 0 ? EvenLogLineStyle : OddLogLineStyle);
+                _logLineSelectedStyle : (i % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
 
             if (GUILayout.Button(methodName, actualLogLineStyle)) {
                 if (i == _logDetailSelectedFrame) {
@@ -432,7 +434,7 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            return EvenLogLineStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+            return _evenLogLineStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
         }
     }
 
@@ -466,94 +468,6 @@ public class BluConsoleEditorWindow : EditorWindow
             return new Color(defaultBackgroundColor.r * 0.847f, 
                              defaultBackgroundColor.g * 0.847f, 
                              defaultBackgroundColor.b * 0.847f);
-        }
-    }
-
-    private int LogLineWidth
-    {
-        get
-        {
-            return 35;
-        }
-    }
-
-    private int LogLineHeight
-    {
-        get
-        {
-            return 35;
-        }
-    }
-
-    private Texture2D EvenLogLineTexture
-    {
-        get
-        {
-            return _evenLogLineTexture;
-        }
-    }
-
-    private Texture2D OddLogLineTexture
-    {
-        get
-        {
-            return _oddLogLineTexture;
-        }
-    }
-
-    private Texture2D EvenLogLineErrorTexture
-    {
-        get
-        {
-            return _evenLogLineErrorTexture;
-        }
-    }
-
-    private Texture2D OddLogLineErrorTexture
-    {
-        get
-        {
-            return _oddLogLineErrorTexture;
-        }
-    }
-
-    private GUIStyle EvenLogLineStyle
-    {
-        get
-        {
-            return _evenLogLineStyle;
-        }
-    }
-
-    private GUIStyle OddLogLineStyle
-    {
-        get
-        {
-            return _oddLogLineStyle;
-        }
-    }
-
-    private GUIStyle LogLineSelectedStyle
-    {
-        get
-        {
-            return _logLineSelectedStyle;
-        }
-    }
-
-    private GUIStyle EvenLogLineErrorStyle
-    {
-        get
-        {
-            return _evenLogLineErrorStyle;
-        }
-    }
-
-    private GUIStyle OddLogLineErrorStyle
-    {
-        get
-        {
-            return _oddLogLineErrorStyle;
         }
     }
 
