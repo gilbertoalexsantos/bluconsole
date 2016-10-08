@@ -131,7 +131,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         _logsInfo.RemoveAll(cmp);
     }
 
-    public void ClearExceptErrors()
+    public void ClearExceptCompileErrors()
     {
         _logsInfo = _logsInfo.Where(log => log.IsCompilerError).ToList();
         _qtNormalLogs = 0;

@@ -199,7 +199,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         // Clear/Collapse/ClearOnPlay/ErrorPause Area
         if (BluConsoleEditorHelper.ButtonClamped("Clear", EditorStyles.toolbarButton)) {
-            _loggerAsset.Clear();
+            _loggerAsset.ClearExceptCompileErrors();
             _logListSelectedMessage = -1;
             _logDetailSelectedFrame = -1;
         }
