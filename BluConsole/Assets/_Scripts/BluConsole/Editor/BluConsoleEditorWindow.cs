@@ -63,6 +63,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void OnGUI()
     {
+        Application.logMessageReceived -= LoggerServer.UnityLogHandler;
+        Application.logMessageReceived += LoggerServer.UnityLogHandler;
+
         if (EditorApplication.isCompiling) {
             if (!_isCompiling) {
                 _isCompiling = true;
@@ -97,10 +100,10 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void AfterCompile()
     {
-        _loggerAsset.Clear(log => 
+        _loggerAsset.Clear(log =>
                            _dirtyLogsBeforeCompile.Where(dirtyLog => dirtyLog.Identifier == log.Identifier).Count() > 0);
     }
-        
+
     private void InitCachedVariables()
     {
         if (_evenLogLineTexture == null)
@@ -185,7 +188,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         _logListSelectedMessage = -1;
         _logDetailSelectedFrame = -1;
-            
+
         LoggerServer.Register(_loggerAsset);
     }
 
@@ -200,14 +203,14 @@ public class BluConsoleEditorWindow : EditorWindow
             _logListSelectedMessage = -1;
             _logDetailSelectedFrame = -1;
         }
-        
+
         GUILayout.Space(6.0f);
 
-        _loggerAsset.IsClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsClearOnPlay, 
-                                                                          "Clear on Play", 
+        _loggerAsset.IsClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsClearOnPlay,
+                                                                          "Clear on Play",
                                                                           EditorStyles.toolbarButton);
-        _loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError, 
-                                                                           "Pause on Error", 
+        _loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError,
+                                                                           "Pause on Error",
                                                                            EditorStyles.toolbarButton);
 
 
@@ -232,11 +235,11 @@ public class BluConsoleEditorWindow : EditorWindow
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
                                                  BluConsoleEditorHelper.InfoGUIContent(_loggerAsset.QtNormalLogs),
                                                  EditorStyles.toolbarButton);
-        _isShowWarnings = 
+        _isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
                                                  BluConsoleEditorHelper.WarningGUIContent(_loggerAsset.QtWarningsLogs),
                                                  EditorStyles.toolbarButton);
-        _isShowErrors = 
+        _isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
                                                  BluConsoleEditorHelper.ErrorGUIContent(_loggerAsset.QtErrorsLogs),
                                                  EditorStyles.toolbarButton);
@@ -248,14 +251,14 @@ public class BluConsoleEditorWindow : EditorWindow
     private void DrawLogList()
     {
         _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition);
-     
+
         var logListHeight = WindowHeight;
         var buttonY = 0.0f;
         var buttonHeight = LogListLineHeight;
         var drawnButtons = 0;
 
         // Filtering by SearchString
-        var logsInfo = 
+        var logsInfo =
             string.IsNullOrEmpty(_searchString) ? _loggerAsset.LogsInfo : _loggerAsset.GetLogsInfoFiltered(_searchString);
 
         // Filtering by type of log
@@ -286,7 +289,7 @@ public class BluConsoleEditorWindow : EditorWindow
             if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
                 actualLogLineStyle = drawnButtons % 2 == 0 ? _evenLogLineErrorStyle : _oddLogLineErrorStyle;
             } else {
-                actualLogLineStyle = i == _logListSelectedMessage ? 
+                actualLogLineStyle = i == _logListSelectedMessage ?
                     _logLineSelectedStyle : (drawnButtons % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
             }
 
@@ -320,7 +323,7 @@ public class BluConsoleEditorWindow : EditorWindow
         _cursorChangeRect = new Rect(0, _topPanelHeight, position.width, 5.0f);
 
         var oldColor = GUI.color;
-        GUI.color = SizerLineColour; 
+        GUI.color = SizerLineColour;
         GUI.DrawTexture(_cursorChangeRect, EditorGUIUtility.whiteTexture);
         EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
         GUI.color = oldColor;
@@ -355,7 +358,7 @@ public class BluConsoleEditorWindow : EditorWindow
             if (log.IsCompilerError)
                 methodName = log.RawMessage;
 
-            var actualLogLineStyle = i == _logDetailSelectedFrame ? 
+            var actualLogLineStyle = i == _logDetailSelectedFrame ?
                 _logLineSelectedStyle : (i % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
 
             if (GUILayout.Button(methodName, actualLogLineStyle)) {
@@ -443,8 +446,8 @@ public class BluConsoleEditorWindow : EditorWindow
         get
         {
             Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.5f, 
-                             defaultBackgroundColor.g * 0.5f, 
+            return new Color(defaultBackgroundColor.r * 0.5f,
+                             defaultBackgroundColor.g * 0.5f,
                              defaultBackgroundColor.b * 0.5f);
         }
     }
@@ -454,8 +457,8 @@ public class BluConsoleEditorWindow : EditorWindow
         get
         {
             Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.87f, 
-                             defaultBackgroundColor.g * 0.87f, 
+            return new Color(defaultBackgroundColor.r * 0.87f,
+                             defaultBackgroundColor.g * 0.87f,
                              defaultBackgroundColor.b * 0.87f);
         }
     }
@@ -465,8 +468,8 @@ public class BluConsoleEditorWindow : EditorWindow
         get
         {
             Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.847f, 
-                             defaultBackgroundColor.g * 0.847f, 
+            return new Color(defaultBackgroundColor.r * 0.847f,
+                             defaultBackgroundColor.g * 0.847f,
                              defaultBackgroundColor.b * 0.847f);
         }
     }

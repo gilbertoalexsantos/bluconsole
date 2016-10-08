@@ -6,21 +6,19 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEditor;
 
 
 namespace BluConsole
 {
 
+
 public static class LoggerServer
 {
 
-    private static HashSet<ILogger> _loggers;
-    private static HashSet<KeyValuePair<string, string>> _logBlackList;
-
-    static LoggerServer()
-    {
-        _loggers = new HashSet<ILogger>();
-        _logBlackList = new HashSet<KeyValuePair<string, string>>() {
+    private static HashSet<ILogger> _loggers = new HashSet<ILogger>();
+    private static HashSet<KeyValuePair<string, string>> _logBlackList = 
+        new HashSet<KeyValuePair<string, string>>() {
             new KeyValuePair<string, string>("CallLogCallback", "Application"),
             new KeyValuePair<string, string>("Internal_Log", "Debug"),
             new KeyValuePair<string, string>("Internal_Log", "DebugLogHandler"),
@@ -31,22 +29,19 @@ public static class LoggerServer
             new KeyValuePair<string, string>("LogFormat", "DebugLogHandler"),
         };
 
-        #if UNITY_5
-        Application.logMessageReceived += UnityLogHandler;
-        #else
-        Application.RegisterLogCallback(UnityLogHandler);
-        #endif
-    }
-
     public static void Register(ILogger logger)
     {
-        _loggers.Add(logger);
+        lock (_loggers) {
+            _loggers.Add(logger);
+        }
     }
 
     public static void Unregister(ILogger logger)
     {
-        if (_loggers.Contains(logger)) {
-            _loggers.Remove(logger);
+        lock (_loggers) {
+            if (_loggers.Contains(logger)) {
+                _loggers.Remove(logger);
+            }
         }
     }
 
@@ -59,21 +54,23 @@ public static class LoggerServer
     }
 
     [StackTraceIgnore]
-    private static void UnityLogHandler(string message,
-                                        string stackTrace,
-                                        LogType logType)
+    public static void UnityLogHandler(string message,
+                                       string stackTrace,
+                                       LogType logType)
     {
-        string extractedMessage = ExtractMessageFromUnityMessage(message);
+        lock (_loggers) {
+            string extractedMessage = ExtractMessageFromUnityMessage(message);
 
-        List<LogStackFrame> callStack = GetCallStack();
-        if (callStack.Count == 0)
-            callStack = GetCallStack(stackTrace);
-        if (callStack.Count == 0)
-            callStack = GetCallStackFromUnityMessage(message);
+            List<LogStackFrame> callStack = GetCallStack();
+            if (callStack.Count == 0)
+                callStack = GetCallStack(stackTrace);
+            if (callStack.Count == 0)
+                callStack = GetCallStackFromUnityMessage(message);
         
-        BluLogType bluLogType = GetLogType(logType);
-        var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompilerError(message));
-        Call(logInfo);
+            BluLogType bluLogType = GetLogType(logType);
+            var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompilerError(message));
+            Call(logInfo);
+        }
     }
 
     private static string ExtractMessageFromUnityMessage(string message)
@@ -151,7 +148,7 @@ public static class LoggerServer
             return true;
 
         foreach (var pair in _logBlackList) {
-            if (Regex.Match(method.Name, pair.Key).Success && 
+            if (Regex.Match(method.Name, pair.Key).Success &&
                 Regex.Match(method.DeclaringType.Name, pair.Value).Success)
                 return true;
         }
