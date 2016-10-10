@@ -8,24 +8,36 @@ using System.Text.RegularExpressions;
 namespace BluConsole
 {
 
+public class LogInfoComparer : IEqualityComparer<LogInfo>
+{
+    
+    #region IEqualityComparer implementation
+
+    public bool Equals(LogInfo x,
+                       LogInfo y)
+    {
+        return x.RawMessage == y.RawMessage;
+    }
+
+    public int GetHashCode(LogInfo obj)
+    {
+        return obj.RawMessage.GetHashCode();
+    }
+
+    #endregion
+    
+}
+
+
 [Serializable]
 public class LogInfo
 {
 
-    [SerializeField] private Guid _identifier;
     [SerializeField] private string _rawMessage;
     [SerializeField] private string _message;
     [SerializeField] private List<LogStackFrame> _callStack;
     [SerializeField] private BluLogType _logType;
     [SerializeField] private bool _isCompilerError;
-
-    public Guid Identifier
-    {
-        get
-        {
-            return _identifier;
-        }
-    }
 
     public string RawMessage
     {
@@ -73,7 +85,6 @@ public class LogInfo
                    BluLogType logType,
                    bool isCompilerError)
     {
-        _identifier = Guid.NewGuid();
         _rawMessage = rawMessage;
         _message = message;
         _callStack = callStack;

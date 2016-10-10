@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,22 +18,13 @@ public class BluConsoleEditorWindow : EditorWindow
     private LoggerAssetClient _loggerAsset;
 
     // Cache variables
-    private GUIStyle _evenLogLineStyle = null;
-    private GUIStyle _oddLogLineStyle = null;
-    private GUIStyle _logLineSelectedStyle = null;
-    private GUIStyle _evenLogLineErrorStyle = null;
-    private GUIStyle _oddLogLineErrorStyle = null;
-    private Texture2D _evenLogLineTexture = null;
-    private Texture2D _oddLogLineTexture = null;
-    private Texture2D _evenLogLineErrorTexture = null;
-    private Texture2D _oddLogLineErrorTexture = null;
-    private int _logLineWidth = 35;
-    private int _logLineHeight = 35;
+    private float _buttonLineHeight = 0.0f;
 
     // Toolbar Variables
     private bool _isShowNormal = true;
     private bool _isShowWarnings = true;
     private bool _isShowErrors = true;
+    private bool _isClearOnPlay = false;
     private string _searchString = "";
 
     // LogList Variables
@@ -41,7 +33,7 @@ public class BluConsoleEditorWindow : EditorWindow
     private double _logListLastTimeClicked = 0.0;
 
     // Resizer
-    private float _topPanelHeight = 100.0f;
+    private float _topPanelHeight;
     private Rect _cursorChangeRect;
     private bool _isResizing = false;
 
@@ -52,6 +44,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
     // Compiling
     private bool _isCompiling = false;
+    private bool _isPlaying = false;
     private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
 
     [MenuItem("Window/BluConsole")]
@@ -66,19 +59,22 @@ public class BluConsoleEditorWindow : EditorWindow
         Application.logMessageReceived -= LoggerServer.UnityLogHandler;
         Application.logMessageReceived += LoggerServer.UnityLogHandler;
 
-        if (EditorApplication.isCompiling) {
-            if (!_isCompiling) {
-                _isCompiling = true;
-                BeforeCompile();
-            }
-        } else if (_isCompiling) {
+        if (EditorApplication.isCompiling && !_isCompiling) {
+            _isCompiling = true;
+            OnBeforeCompile();
+        } else if (!EditorApplication.isCompiling && _isCompiling) {
             _isCompiling = false;
-            AfterCompile();
+            OnAfterCompile();
         }
 
-        InitCachedVariables();
+        if (EditorApplication.isPlaying && !_isPlaying) {
+            _isPlaying = true;
+            OnBeginPlay();
+        } else if (!EditorApplication.isPlaying && _isPlaying) {
+            _isPlaying = false;
+        }
 
-        GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(100.0f));
+        GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfResizer));
         DrawTopToolbar();
         DrawLogList();
         GUILayout.EndVertical();
@@ -93,89 +89,22 @@ public class BluConsoleEditorWindow : EditorWindow
         Repaint();
     }
 
-    private void BeforeCompile()
+    private void OnBeforeCompile()
     {
         _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompilerError));
     }
 
-    private void AfterCompile()
+    private void OnAfterCompile()
     {
-        _loggerAsset.Clear(log =>
-                           _dirtyLogsBeforeCompile.Where(dirtyLog => dirtyLog.Identifier == log.Identifier).Count() > 0);
+        HashSet<LogInfo> logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile,
+                                                              new LogInfoComparer());
+        _loggerAsset.Clear(log => logsBlackList.Contains(log));
     }
 
-    private void InitCachedVariables()
+    private void OnBeginPlay()
     {
-        if (_evenLogLineTexture == null)
-            _evenLogLineTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, EvenButtonColor);
-
-        if (_oddLogLineErrorTexture == null)
-            _oddLogLineTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, OddButtonColor);
-
-        if (_evenLogLineErrorTexture == null) {
-            Color evenLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-            _evenLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, evenLogLineErrorColor);
-        }
-
-        if (_oddLogLineErrorTexture == null) {
-            Color oddLogLineErrorColor = BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-            _oddLogLineErrorTexture = BluConsoleEditorHelper.GetTexture(_logLineWidth, _logLineHeight, oddLogLineErrorColor);
-        }
-
-        _evenLogLineStyle = new GUIStyle(EditorStyles.label);
-        _evenLogLineStyle.richText = true;
-        _evenLogLineStyle.fontSize = 13;
-        _evenLogLineStyle.alignment = TextAnchor.MiddleLeft;
-        _evenLogLineStyle.margin = new RectOffset(0, 0, 0, 0);
-        _evenLogLineStyle.padding = new RectOffset(7, 0, 0, 0);
-        _evenLogLineStyle.normal.background = _evenLogLineTexture;
-        _evenLogLineStyle.active = _evenLogLineStyle.normal;
-        _evenLogLineStyle.hover = _evenLogLineStyle.normal;
-        _evenLogLineStyle.focused = _evenLogLineStyle.normal;
-
-        _oddLogLineStyle = new GUIStyle(EditorStyles.label);
-        _oddLogLineStyle.richText = true;
-        _oddLogLineStyle.fontSize = 13;
-        _oddLogLineStyle.alignment = TextAnchor.MiddleLeft;
-        _oddLogLineStyle.margin = new RectOffset(0, 0, 0, 0);
-        _oddLogLineStyle.padding = new RectOffset(7, 0, 0, 0);
-        _oddLogLineStyle.normal.background = _oddLogLineTexture;
-        _oddLogLineStyle.active = _oddLogLineStyle.normal;
-        _oddLogLineStyle.hover = _oddLogLineStyle.normal;
-        _oddLogLineStyle.focused = _oddLogLineStyle.normal;
-
-        _logLineSelectedStyle = new GUIStyle(EditorStyles.whiteLabel);
-        _logLineSelectedStyle.richText = true;
-        _logLineSelectedStyle.fontSize = 13;
-        _logLineSelectedStyle.alignment = TextAnchor.MiddleLeft;
-        _logLineSelectedStyle.margin = new RectOffset(0, 0, 0, 0);
-        _logLineSelectedStyle.padding = new RectOffset(7, 0, 0, 0);
-        _logLineSelectedStyle.normal.background = BluConsoleEditorHelper.BlueSelectedBackground;
-        _logLineSelectedStyle.active = _logLineSelectedStyle.normal;
-        _logLineSelectedStyle.hover = _logLineSelectedStyle.normal;
-        _logLineSelectedStyle.focused = _logLineSelectedStyle.normal;
-
-        _evenLogLineErrorStyle = new GUIStyle(EditorStyles.label);
-        _evenLogLineErrorStyle.richText = true;
-        _evenLogLineErrorStyle.fontSize = 13;
-        _evenLogLineErrorStyle.alignment = TextAnchor.MiddleLeft;
-        _evenLogLineErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-        _evenLogLineErrorStyle.padding = new RectOffset(7, 0, 0, 0);
-        _evenLogLineErrorStyle.normal.background = _evenLogLineErrorTexture;
-        _evenLogLineErrorStyle.active = _evenLogLineErrorStyle.normal;
-        _evenLogLineErrorStyle.hover = _evenLogLineErrorStyle.normal;
-        _evenLogLineErrorStyle.focused = _evenLogLineErrorStyle.normal;
-
-        _oddLogLineErrorStyle = new GUIStyle(EditorStyles.label);
-        _oddLogLineErrorStyle.richText = true;
-        _oddLogLineErrorStyle.fontSize = 13;
-        _oddLogLineErrorStyle.alignment = TextAnchor.MiddleLeft;
-        _oddLogLineErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-        _oddLogLineErrorStyle.padding = new RectOffset(7, 0, 0, 0);
-        _oddLogLineErrorStyle.normal.background = _oddLogLineErrorTexture;
-        _oddLogLineErrorStyle.active = _oddLogLineErrorStyle.normal;
-        _oddLogLineErrorStyle.hover = _oddLogLineErrorStyle.normal;
-        _oddLogLineErrorStyle.focused = _oddLogLineErrorStyle.normal;
+        if (_isClearOnPlay)
+            _loggerAsset.Clear();
     }
 
     private void OnEnable()
@@ -206,9 +135,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
         GUILayout.Space(6.0f);
 
-        _loggerAsset.IsClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsClearOnPlay,
-                                                                          "Clear on Play",
-                                                                          EditorStyles.toolbarButton);
+        _isClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_isClearOnPlay,
+                                                              "Clear on Play",
+                                                              EditorStyles.toolbarButton);
         _loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError,
                                                                            "Pause on Error",
                                                                            EditorStyles.toolbarButton);
@@ -231,17 +160,30 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
         // Info/Warning/Error buttons Area
+        int maxLogs = LoggerAssetClient.MAX_LOGS;
+        string qtNormalLogs = _loggerAsset.QtNormalLogs.ToString();
+        if (_loggerAsset.QtNormalLogs > maxLogs)
+            qtNormalLogs = maxLogs.ToString() + "+";
+
+        string qtWarningLogs = _loggerAsset.QtWarningsLogs.ToString();
+        if (_loggerAsset.QtWarningsLogs > maxLogs)
+            qtWarningLogs = maxLogs.ToString() + "+";
+
+        string qtErrorLogs = _loggerAsset.QtErrorsLogs.ToString();
+        if (_loggerAsset.QtErrorsLogs > LoggerAssetClient.MAX_LOGS)
+            qtErrorLogs = maxLogs.ToString() + "+";
+        
         _isShowNormal =
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
-                                                 BluConsoleEditorHelper.InfoGUIContent(_loggerAsset.QtNormalLogs),
+                                                 BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
                                                  EditorStyles.toolbarButton);
         _isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
-                                                 BluConsoleEditorHelper.WarningGUIContent(_loggerAsset.QtWarningsLogs),
+                                                 BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
                                                  EditorStyles.toolbarButton);
         _isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
-                                                 BluConsoleEditorHelper.ErrorGUIContent(_loggerAsset.QtErrorsLogs),
+                                                 BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
                                                  EditorStyles.toolbarButton);
 
 
@@ -254,15 +196,12 @@ public class BluConsoleEditorWindow : EditorWindow
 
         var logListHeight = WindowHeight;
         var buttonY = 0.0f;
-        var buttonHeight = LogListLineHeight;
+        var buttonHeight = ButtonLineHeight;
         var drawnButtons = 0;
 
         // Filtering by SearchString
         var logsInfo =
             string.IsNullOrEmpty(_searchString) ? _loggerAsset.LogsInfo : _loggerAsset.GetLogsInfoFiltered(_searchString);
-
-        // Filtering by type of log
-        logsInfo = logsInfo.Where(log => (((int)log.LogType) & LogTypeMask) != 0).ToList();
 
         for (int i = 0; i < logsInfo.Count; i++) {
             // Don't draw buttons that are TOTALLY outside of the Window View
@@ -275,6 +214,9 @@ public class BluConsoleEditorWindow : EditorWindow
             }
 
             LogInfo logInfo = logsInfo[i];
+            if (!CanLog(logInfo))
+                continue;
+
             string showMessage = null;
             if (logInfo.IsCompilerError) {
                 showMessage = logInfo.RawMessage;
@@ -285,14 +227,13 @@ public class BluConsoleEditorWindow : EditorWindow
             var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
 
-            var actualLogLineStyle = _evenLogLineStyle;
+            var actualLogLineStyle = EvenButtonStyle;
             if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
-                actualLogLineStyle = drawnButtons % 2 == 0 ? _evenLogLineErrorStyle : _oddLogLineErrorStyle;
+                actualLogLineStyle = drawnButtons % 2 == 0 ? EvenErrorButtonStyle : OddButtonErrorStyle;
             } else {
                 actualLogLineStyle = i == _logListSelectedMessage ?
-                    _logLineSelectedStyle : (drawnButtons % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
+                    SelectedButtonStyle : (drawnButtons % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
             }
-
 
             if (GUILayout.Button(content, actualLogLineStyle, GUILayout.Height(buttonHeight))) {
                 if (i == _logListSelectedMessage) {
@@ -320,17 +261,20 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void DrawResizer()
     {
-        _cursorChangeRect = new Rect(0, _topPanelHeight, position.width, 5.0f);
+        _cursorChangeRect = new Rect(0, _topPanelHeight, position.width, 4.0f);
 
-        var oldColor = GUI.color;
-        GUI.color = SizerLineColour;
-        GUI.DrawTexture(_cursorChangeRect, EditorGUIUtility.whiteTexture);
+        var cursorChangeBorderTopRect = new Rect(0, _topPanelHeight, position.width, 1.0f);
+        var cursorChangeCenterRect = new Rect(0, _topPanelHeight + 1.0f, position.width, 2.0f);
+        var cursorChangeBorderBottomRect = new Rect(0, _topPanelHeight + 3.0f, position.width, 1.0f);
+
+        GUI.DrawTexture(cursorChangeBorderTopRect, SizeLinerBorderTexture);
+        GUI.DrawTexture(cursorChangeCenterRect, SizeLinerCenterTexture);
+        GUI.DrawTexture(cursorChangeBorderBottomRect, SizeLinerBorderTexture);
         EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
-        GUI.color = oldColor;
 
-        if (Event.current.type == EventType.mouseDown && _cursorChangeRect.Contains(Event.current.mousePosition))
+        if (Event.current.type == EventType.MouseDown && _cursorChangeRect.Contains(Event.current.mousePosition))
             _isResizing = true;
-        else if (Event.current.type == EventType.MouseUp)
+        else if (Event.current.rawType == EventType.MouseUp)
             _isResizing = false;
 
         if (_isResizing) {
@@ -338,19 +282,19 @@ public class BluConsoleEditorWindow : EditorWindow
             _cursorChangeRect.Set(_cursorChangeRect.x, _topPanelHeight, _cursorChangeRect.width, _cursorChangeRect.height);
         }
 
-        _topPanelHeight = Mathf.Clamp(_topPanelHeight, 100, position.height - 100);
+        _topPanelHeight = Mathf.Clamp(_topPanelHeight, MinHeightOfResizer, position.height - MinHeightOfResizer);
     }
 
     private void DrawLogDetail()
     {
         if (_logListSelectedMessage == -1 ||
-            _loggerAsset.LogsInfo.Count == 0 ||
-            _loggerAsset.LogsInfo.Count < _logListSelectedMessage + 1)
+            _loggerAsset.QtLogs == 0 ||
+            _loggerAsset.QtLogs < _logListSelectedMessage + 1)
             return;
 
         _logDetailBeginPosition = GUILayout.BeginScrollView(_logDetailBeginPosition);
 
-        var log = _loggerAsset.LogsInfo[_logListSelectedMessage];
+        var log = _loggerAsset[_logListSelectedMessage];
         for (int i = 0; i < log.CallStack.Count; i++) {
             var frame = log.CallStack[i];
             var methodName = frame.FormattedMethodName;
@@ -359,7 +303,7 @@ public class BluConsoleEditorWindow : EditorWindow
                 methodName = log.RawMessage;
 
             var actualLogLineStyle = i == _logDetailSelectedFrame ?
-                _logLineSelectedStyle : (i % 2 == 0 ? _evenLogLineStyle : _oddLogLineStyle);
+                SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
 
             if (GUILayout.Button(methodName, actualLogLineStyle)) {
                 if (i == _logDetailSelectedFrame) {
@@ -390,6 +334,10 @@ public class BluConsoleEditorWindow : EditorWindow
         default:
             return BluConsoleEditorHelper.InfoIcon;
         }
+    }
+
+    private bool CanLog(LogInfo log) {
+        return (((int)log.LogType) & LogTypeMask) != 0;
     }
 
     private bool IsDoubleClickLogListButton()
@@ -433,22 +381,45 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
-    private float LogListLineHeight
+    private float ButtonLineHeight
     {
         get
         {
-            return _evenLogLineStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+            if (_buttonLineHeight == 0.0f)
+                _buttonLineHeight = EvenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+            return _buttonLineHeight;
         }
     }
 
-    private Color SizerLineColour
+    private int FontSize
     {
         get
         {
-            Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.5f,
-                             defaultBackgroundColor.g * 0.5f,
-                             defaultBackgroundColor.b * 0.5f);
+            return 12;
+        }
+    }
+
+    private float MinHeightOfResizer
+    {
+        get
+        {
+            return 60.0f;
+        }
+    }
+
+    private Color SizerLineCenterColour
+    {
+        get
+        {
+            return BluConsoleEditorHelper.ColorFromRGB(162, 162, 162);
+        }
+    }
+
+    private Color SizerLineBorderColour
+    {
+        get
+        {
+            return BluConsoleEditorHelper.ColorFromRGB(130, 130, 130);
         }
     }
 
@@ -456,10 +427,7 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.87f,
-                             defaultBackgroundColor.g * 0.87f,
-                             defaultBackgroundColor.b * 0.87f);
+            return BluConsoleEditorHelper.ColorFromRGB(222, 222, 222);
         }
     }
 
@@ -467,10 +435,161 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            Color defaultBackgroundColor = GUI.backgroundColor;
-            return new Color(defaultBackgroundColor.r * 0.847f,
-                             defaultBackgroundColor.g * 0.847f,
-                             defaultBackgroundColor.b * 0.847f);
+            return BluConsoleEditorHelper.ColorFromRGB(216, 216, 216);
+        }
+    }
+
+    private Color EvenErrorButtonColor
+    {
+        get
+        {
+            return BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
+        }
+    }
+
+    private Color OddErrorButtonColor
+    {
+        get
+        {
+            return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
+        }
+    }
+
+    private Texture2D SizeLinerCenterTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
+        }
+    }
+
+    private Texture2D SizeLinerBorderTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
+        }
+    }
+
+    private Texture2D EvenButtonTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(EvenButtonColor);
+        }
+    }
+
+    private Texture2D OddButtonTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(OddButtonColor);
+        }
+    }
+
+    private Texture2D EvenErrorButtonTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
+        }
+    }
+
+    private Texture2D OddErrorButtonTexture
+    {
+        get
+        {
+            return BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
+        }
+    }
+
+    private GUIStyle EvenButtonStyle
+    {
+        get
+        {
+            var _evenButtonStyle = new GUIStyle(EditorStyles.label);
+            _evenButtonStyle.richText = true;
+            _evenButtonStyle.fontSize = FontSize;
+            _evenButtonStyle.alignment = TextAnchor.MiddleLeft;
+            _evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+            _evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+            _evenButtonStyle.normal.background = EvenButtonTexture;
+            _evenButtonStyle.active = _evenButtonStyle.normal;
+            _evenButtonStyle.hover = _evenButtonStyle.normal;
+            _evenButtonStyle.focused = _evenButtonStyle.normal;
+            return _evenButtonStyle;
+        }
+    }
+
+    private GUIStyle OddButtonStyle
+    {
+        get
+        {
+            var _oddButtonStyle = new GUIStyle(EditorStyles.label);
+            _oddButtonStyle.richText = true;
+            _oddButtonStyle.fontSize = FontSize;
+            _oddButtonStyle.alignment = TextAnchor.MiddleLeft;
+            _oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+            _oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+            _oddButtonStyle.normal.background = OddButtonTexture;
+            _oddButtonStyle.active = _oddButtonStyle.normal;
+            _oddButtonStyle.hover = _oddButtonStyle.normal;
+            _oddButtonStyle.focused = _oddButtonStyle.normal;
+            return _oddButtonStyle;
+        }
+    }
+
+    private GUIStyle EvenErrorButtonStyle
+    {
+        get
+        {
+            var _evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
+            _evenErrorButtonStyle.richText = true;
+            _evenErrorButtonStyle.fontSize = FontSize;
+            _evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
+            _evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+            _evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+            _evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
+            _evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
+            _evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
+            _evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
+            return _evenErrorButtonStyle;
+        }
+    }
+
+    private GUIStyle OddButtonErrorStyle
+    {
+        get
+        {
+            var _oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
+            _oddButtonErrorStyle.richText = true;
+            _oddButtonErrorStyle.fontSize = FontSize;
+            _oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
+            _oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
+            _oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+            _oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
+            _oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
+            _oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
+            _oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
+            return _oddButtonErrorStyle;
+        }
+    }
+
+    private GUIStyle SelectedButtonStyle
+    {
+        get
+        {
+            var _selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
+            _selectedButtonStyle.richText = true;
+            _selectedButtonStyle.fontSize = FontSize;
+            _selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
+            _selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+            _selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+            _selectedButtonStyle.normal.background = BluConsoleEditorHelper.BlueTexture;
+            _selectedButtonStyle.active = _selectedButtonStyle.normal;
+            _selectedButtonStyle.hover = _selectedButtonStyle.normal;
+            _selectedButtonStyle.focused = _selectedButtonStyle.normal;
+            return _selectedButtonStyle;
         }
     }
 

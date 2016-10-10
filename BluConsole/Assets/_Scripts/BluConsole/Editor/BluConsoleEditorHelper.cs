@@ -97,7 +97,7 @@ public static class BluConsoleEditorHelper
         }
     }
 
-    public static Texture2D BlueSelectedBackground
+    public static Texture2D BlueTexture
     {
         get
         {
@@ -110,15 +110,14 @@ public static class BluConsoleEditorHelper
         }
     }
 
-    public static Texture2D GetTexture(int width,
-                                       int height,
-                                       Color color)
+    public static Texture2D GetTexture(Color color)
     {
-        Color[] pix = new Color[width * height];
+        Color[] pix = new Color[1];
         for (int i = 0; i < pix.Length; i++)
             pix[i] = color;
-        Texture2D result = new Texture2D(width, height);
+        Texture2D result = new Texture2D(1, 1);
         result.SetPixels(pix);
+        result.Apply();
         return result;
     }
 

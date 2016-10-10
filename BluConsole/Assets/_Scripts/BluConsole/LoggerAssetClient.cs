@@ -15,13 +15,14 @@ namespace BluConsole
 public class LoggerAssetClient : ScriptableObject, ILogger
 {
 
+    public static readonly int MAX_LOGS = 999;
+
     [SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
     [SerializeField] private bool _isClearOnPlay = true;
     [SerializeField] private bool _isPauseOnError = false;
     [SerializeField] private int _qtNormalLogs = 0;
     [SerializeField] private int _qtWarningLogs = 0;
     [SerializeField] private int _qtErrorLogs = 0;
-    [SerializeField] private bool _wasPlaying = false;
 
     public List<LogInfo> LogsInfo
     {
@@ -87,6 +88,14 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
+    public LogInfo this [int i]
+    {
+        get
+        {
+            return _logsInfo[i];
+        }
+    }
+
     public static LoggerAssetClient GetOrCreate()
     {
         var loggerAsset = ScriptableObject.FindObjectOfType<LoggerAssetClient>();
@@ -113,22 +122,13 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     public void Clear(Predicate<LogInfo> cmp)
     {
-        var logsToRemove = _logsInfo.Where(log => cmp(log)).ToList();
-        foreach (var log in logsToRemove) {
-            switch (log.LogType) {
-            case BluLogType.Normal:
-                _qtNormalLogs--;
-                break;
-            case BluLogType.Warning:
-                _qtWarningLogs--;
-                break;
-            case BluLogType.Error:
-                _qtErrorLogs--;
-                break;
-            }
-        }
+        _logsInfo = _logsInfo.Where(log => !cmp(log)).ToList();
+        _qtNormalLogs = 0;
+        _qtWarningLogs = 0;
+        _qtErrorLogs = 0;
 
-        _logsInfo.RemoveAll(cmp);
+        foreach (var log in _logsInfo)
+            IncreaseLogCont(log.LogType);
     }
 
     public void ClearExceptCompileErrors()
@@ -139,33 +139,20 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         _qtErrorLogs = _logsInfo.Count;
     }
 
-    public void ClearCompileErrors()
-    {
-        int oldQtMessages = _logsInfo.Count;
-        _logsInfo = _logsInfo.Where(log => !log.IsCompilerError).ToList();
-        _qtErrorLogs -= oldQtMessages - _logsInfo.Count;
-    }
-
     private void OnEnable()
     {
-        EditorApplication.playmodeStateChanged += OnProcessStateChange;
         hideFlags = HideFlags.HideAndDontSave;
     }
 
-    private void OnProcessStateChange()
+    private void TrimLogs()
     {
-        if (!_wasPlaying && EditorApplication.isPlayingOrWillChangePlaymode && _isClearOnPlay)
-            Clear();
-        _wasPlaying = EditorApplication.isPlayingOrWillChangePlaymode;
+        while (_logsInfo.Count > MAX_LOGS)
+            _logsInfo.RemoveAt(0);
     }
 
-
-    #region IBluLogger implementation
-
-    public void Log(LogInfo logInfo)
+    private void IncreaseLogCont(BluLogType logType)
     {
-        _logsInfo.Add(logInfo);
-        switch (logInfo.LogType) {
+        switch (logType) {
         case BluLogType.Normal:
             _qtNormalLogs++;
             break;
@@ -174,10 +161,18 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             break;
         case BluLogType.Error:
             _qtErrorLogs++;
-            if (_isPauseOnError)
-                Debug.Break();
             break;
         }
+    }
+
+
+    #region IBluLogger implementation
+
+    public void Log(LogInfo logInfo)
+    {
+        _logsInfo.Add(logInfo);
+        IncreaseLogCont(logInfo.LogType);
+        TrimLogs();
     }
 
     #endregion
