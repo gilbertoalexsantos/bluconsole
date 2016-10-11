@@ -89,7 +89,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         DrawResizer();
 
-        GUILayout.BeginVertical();
+        GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
         DrawLogDetail();
         GUILayout.EndVertical();
 
@@ -153,7 +153,7 @@ public class BluConsoleEditorWindow : EditorWindow
         _selectedButtonStyle.hover = _selectedButtonStyle.normal;
         _selectedButtonStyle.focused = _selectedButtonStyle.normal;
 
-        _buttonWidth = position.width - 15.0f;
+        _buttonWidth = position.width;
         _buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
     }
 
@@ -260,7 +260,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void DrawLogList()
     {
-        _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition);
+        _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition, false, false);
 
         var logListHeight = WindowHeight;
         var buttonHeight = ButtonHeight;
@@ -346,12 +346,12 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void DrawResizer()
     {
-        GUILayout.Space(4.0f);
+        GUILayout.Space(ResizerHeight);
 
         // Don't ask me why... If we remove this 1.0f, there's one line with height one that isn't painted...
         var resizerY = _topPanelHeight - 1.0f;
 
-        _cursorChangeRect = new Rect(0, resizerY, position.width, 4.0f);
+        _cursorChangeRect = new Rect(0, resizerY, position.width, ResizerHeight);
 
         var cursorChangeBorderTopRect = new Rect(0, resizerY, position.width, 1.0f);
         var cursorChangeCenterRect = new Rect(0, resizerY + 1.0f, position.width, 2.0f);
@@ -521,6 +521,14 @@ public class BluConsoleEditorWindow : EditorWindow
         get
         {
             return 12;
+        }
+    }
+
+    private float ResizerHeight
+    {
+        get
+        {
+            return 4.0f;
         }
     }
 
