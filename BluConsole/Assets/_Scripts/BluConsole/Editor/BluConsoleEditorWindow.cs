@@ -17,8 +17,14 @@ public class BluConsoleEditorWindow : EditorWindow
     // LoggerClient
     private LoggerAssetClient _loggerAsset;
 
-    // Useful to reuse the GUIStyles
-    private Dictionary<string, object> _cache = new Dictionary<string, object>();
+    // Cache Variables
+    private GUIStyle _evenButtonStyle;
+    private GUIStyle _oddButtonStyle;
+    private GUIStyle _evenErrorButtonStyle;
+    private GUIStyle _oddButtonErrorStyle;
+    private GUIStyle _selectedButtonStyle;
+    private float _buttonWidth;
+    private float _buttonHeight;
 
     // Toolbar Variables
     private bool _isShowNormal = true;
@@ -56,7 +62,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void OnGUI()
     {
-        InvalidateCache();
+        InitVariables();
 
         Application.logMessageReceived -= LoggerServer.UnityLogHandler;
         Application.logMessageReceived += LoggerServer.UnityLogHandler;
@@ -90,6 +96,67 @@ public class BluConsoleEditorWindow : EditorWindow
         Repaint();
     }
 
+    private void InitVariables()
+    {
+        _evenButtonStyle = new GUIStyle(EditorStyles.label);
+        _evenButtonStyle.richText = true;
+        _evenButtonStyle.fontSize = FontSize;
+        _evenButtonStyle.alignment = TextAnchor.MiddleLeft;
+        _evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+        _evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+        _evenButtonStyle.normal.background = EvenButtonTexture;
+        _evenButtonStyle.active = _evenButtonStyle.normal;
+        _evenButtonStyle.hover = _evenButtonStyle.normal;
+        _evenButtonStyle.focused = _evenButtonStyle.normal;
+
+        _oddButtonStyle = new GUIStyle(EditorStyles.label);
+        _oddButtonStyle.richText = true;
+        _oddButtonStyle.fontSize = FontSize;
+        _oddButtonStyle.alignment = TextAnchor.MiddleLeft;
+        _oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+        _oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+        _oddButtonStyle.normal.background = OddButtonTexture;
+        _oddButtonStyle.active = _oddButtonStyle.normal;
+        _oddButtonStyle.hover = _oddButtonStyle.normal;
+        _oddButtonStyle.focused = _oddButtonStyle.normal;
+
+        _evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
+        _evenErrorButtonStyle.richText = true;
+        _evenErrorButtonStyle.fontSize = FontSize;
+        _evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
+        _evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+        _evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+        _evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
+        _evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
+        _evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
+        _evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
+
+        _oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
+        _oddButtonErrorStyle.richText = true;
+        _oddButtonErrorStyle.fontSize = FontSize;
+        _oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
+        _oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
+        _oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+        _oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
+        _oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
+        _oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
+        _oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
+
+        _selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
+        _selectedButtonStyle.richText = true;
+        _selectedButtonStyle.fontSize = FontSize;
+        _selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
+        _selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+        _selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+        _selectedButtonStyle.normal.background = BluConsoleEditorHelper.BlueTexture;
+        _selectedButtonStyle.active = _selectedButtonStyle.normal;
+        _selectedButtonStyle.hover = _selectedButtonStyle.normal;
+        _selectedButtonStyle.focused = _selectedButtonStyle.normal;
+
+        _buttonWidth = position.width - 15.0f;
+        _buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+    }
+
     private void OnBeforeCompile()
     {
         _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompilerError));
@@ -120,11 +187,6 @@ public class BluConsoleEditorWindow : EditorWindow
         _logDetailSelectedFrame = -1;
 
         LoggerServer.Register(_loggerAsset);
-    }
-
-    private void InvalidateCache()
-    {
-        _cache.Clear();
     }
 
     private void DrawTopToolbar()
@@ -201,6 +263,7 @@ public class BluConsoleEditorWindow : EditorWindow
         _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition);
 
         var logListHeight = WindowHeight;
+        var buttonHeight = ButtonHeight;
         var buttonY = 0.0f;
         var drawnButtons = 0;
 
@@ -217,13 +280,13 @@ public class BluConsoleEditorWindow : EditorWindow
             logsToShow[j++] = logsInfo[i];
         }
 
-        int qtToLog = (int)Mathf.Floor(logListHeight / ButtonHeight);
-        int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight);
+        int qtToLog = (int)Mathf.Floor(logListHeight / buttonHeight);
+        int qtTopEmptySpace = (int)(_logListBeginPosition.y / buttonHeight);
         qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
-        GUILayout.Space(qtTopEmptySpace * ButtonHeight);
+        GUILayout.Space(qtTopEmptySpace * buttonHeight);
 
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
             LogInfo logInfo = logsToShow[i];
@@ -235,8 +298,8 @@ public class BluConsoleEditorWindow : EditorWindow
                 showMessage = logInfo.Message.Replace(System.Environment.NewLine, " ");
             }
             showMessage = "  " + showMessage;
-            var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
+            var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
             var actualLogLineStyle = EvenButtonStyle;
             if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
@@ -246,7 +309,10 @@ public class BluConsoleEditorWindow : EditorWindow
                     SelectedButtonStyle : (drawnButtons % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
             }
 
-            if (GUILayout.Button(content, actualLogLineStyle, GUILayout.Height(ButtonHeight))) {
+            if (GUILayout.Button(content,
+                                 actualLogLineStyle, 
+                                 GUILayout.Height(buttonHeight),
+                                 GUILayout.Width(ButtonWidth))) {
                 if (i == _logListSelectedMessage) {
                     if (IsDoubleClickLogListButton()) {
                         _logListLastTimeClicked = 0.0f;
@@ -263,17 +329,17 @@ public class BluConsoleEditorWindow : EditorWindow
                 _logDetailSelectedFrame = -1;
             }
 
-            buttonY += ButtonHeight;
+            buttonY += buttonHeight;
             drawnButtons++;
         }
 
         if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logListBeginPosition.x, _logListBeginPosition.y + size * ButtonHeight, 
-                                     position.width, qtFillCenterLog * ButtonHeight), 
+            GUI.DrawTexture(new Rect(_logListBeginPosition.x, _logListBeginPosition.y + size * buttonHeight, 
+                                     position.width, qtFillCenterLog * buttonHeight), 
                             EvenButtonTexture);
         }
 
-        GUILayout.Space(qtBotEmptySpace * ButtonHeight);
+        GUILayout.Space(qtBotEmptySpace * buttonHeight);
 
         GUILayout.EndScrollView();
     }
@@ -324,19 +390,20 @@ public class BluConsoleEditorWindow : EditorWindow
         }
 
         var logDetailHeight = WindowHeight;
+        var buttonHeight = ButtonHeight;
         var buttonY = 0.0f;
         var drawnButtons = 0;
 
         var log = _loggerAsset[_logListSelectedMessage];
         var size = log.CallStack.Count;
 
-        int qtToLog = (int)Mathf.Floor(logDetailHeight / ButtonHeight);
-        int qtTopEmptySpace = (int)(_logDetailBeginPosition.y / ButtonHeight);
+        int qtToLog = (int)Mathf.Floor(logDetailHeight / buttonHeight);
+        int qtTopEmptySpace = (int)(_logDetailBeginPosition.y / buttonHeight);
         qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
-        GUILayout.Space(qtTopEmptySpace * ButtonHeight);
+        GUILayout.Space(qtTopEmptySpace * buttonHeight);
 
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
             var frame = log.CallStack[i];
@@ -348,7 +415,7 @@ public class BluConsoleEditorWindow : EditorWindow
             var actualLogLineStyle = i == _logDetailSelectedFrame ?
                 SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
 
-            if (GUILayout.Button(methodName, actualLogLineStyle, GUILayout.Height(ButtonHeight))) {
+            if (GUILayout.Button(methodName, actualLogLineStyle, GUILayout.Height(buttonHeight))) {
                 if (i == _logDetailSelectedFrame) {
                     if (IsDoubleClickLogDetailButton()) {
                         _logDetailLastTimeClicked = 0.0f;
@@ -363,12 +430,12 @@ public class BluConsoleEditorWindow : EditorWindow
         }
 
         if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y + size * ButtonHeight, 
-                                     position.width, qtFillCenterLog * ButtonHeight), 
+            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y + size * buttonHeight, 
+                                     position.width, qtFillCenterLog * buttonHeight), 
                             EvenButtonTexture);
         }
 
-        GUILayout.Space(qtBotEmptySpace * ButtonHeight);
+        GUILayout.Space(qtBotEmptySpace * buttonHeight);
 
         GUILayout.EndScrollView();
     }
@@ -433,16 +500,19 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
+    private float ButtonWidth
+    {
+        get
+        {
+            return _buttonWidth;
+        }
+    }
+
     private float ButtonHeight
     {
         get
         {
-            if (_cache.ContainsKey("buttonLineHeight"))
-                return (float)_cache["buttonLineHeight"];
-
-            _cache.Add("buttonLineHeight", EvenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f); 
-
-            return (float)_cache["buttonLineHeight"];
+            return _buttonHeight;
         }
     }
 
@@ -562,22 +632,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_cache.ContainsKey("evenButtonStyle"))
-                return (GUIStyle)_cache["evenButtonStyle"];
-            
-            var _evenButtonStyle = new GUIStyle(EditorStyles.label);
-            _evenButtonStyle.richText = true;
-            _evenButtonStyle.fontSize = FontSize;
-            _evenButtonStyle.alignment = TextAnchor.MiddleLeft;
-            _evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-            _evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-            _evenButtonStyle.normal.background = EvenButtonTexture;
-            _evenButtonStyle.active = _evenButtonStyle.normal;
-            _evenButtonStyle.hover = _evenButtonStyle.normal;
-            _evenButtonStyle.focused = _evenButtonStyle.normal;
-
-            _cache.Add("evenButtonStyle", _evenButtonStyle);
-
             return _evenButtonStyle;
         }
     }
@@ -586,22 +640,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_cache.ContainsKey("oddButtonStyle"))
-                return (GUIStyle)_cache["oddButtonStyle"];
-
-            var _oddButtonStyle = new GUIStyle(EditorStyles.label);
-            _oddButtonStyle.richText = true;
-            _oddButtonStyle.fontSize = FontSize;
-            _oddButtonStyle.alignment = TextAnchor.MiddleLeft;
-            _oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-            _oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-            _oddButtonStyle.normal.background = OddButtonTexture;
-            _oddButtonStyle.active = _oddButtonStyle.normal;
-            _oddButtonStyle.hover = _oddButtonStyle.normal;
-            _oddButtonStyle.focused = _oddButtonStyle.normal;
-
-            _cache.Add("oddButtonStyle", _oddButtonStyle);
-
             return _oddButtonStyle;
         }
     }
@@ -610,22 +648,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_cache.ContainsKey("evenErrorButtonStyle"))
-                return (GUIStyle)_cache["evenErrorButtonStyle"];
-
-            var _evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
-            _evenErrorButtonStyle.richText = true;
-            _evenErrorButtonStyle.fontSize = FontSize;
-            _evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
-            _evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-            _evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-            _evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
-            _evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
-            _evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
-            _evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
-
-            _cache.Add("evenErrorButtonStyle", _evenErrorButtonStyle);
-
             return _evenErrorButtonStyle;
         }
     }
@@ -634,22 +656,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_cache.ContainsKey("oddButtonErrorStyle"))
-                return (GUIStyle)_cache["oddButtonErrorStyle"];
-
-            var _oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
-            _oddButtonErrorStyle.richText = true;
-            _oddButtonErrorStyle.fontSize = FontSize;
-            _oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
-            _oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-            _oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
-            _oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
-            _oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
-            _oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
-            _oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
-
-            _cache.Add("oddButtonErrorStyle", _oddButtonErrorStyle);
-
             return _oddButtonErrorStyle;
         }
     }
@@ -658,22 +664,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         get
         {
-            if (_cache.ContainsKey("selectedButtonStyle"))
-                return (GUIStyle)_cache["selectedButtonStyle"];
-
-            var _selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
-            _selectedButtonStyle.richText = true;
-            _selectedButtonStyle.fontSize = FontSize;
-            _selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
-            _selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-            _selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-            _selectedButtonStyle.normal.background = BluConsoleEditorHelper.BlueTexture;
-            _selectedButtonStyle.active = _selectedButtonStyle.normal;
-            _selectedButtonStyle.hover = _selectedButtonStyle.normal;
-            _selectedButtonStyle.focused = _selectedButtonStyle.normal;
-
-            _cache.Add("selectedButtonStyle", _selectedButtonStyle);
-
             return _selectedButtonStyle;
         }
     }
