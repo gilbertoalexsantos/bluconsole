@@ -169,6 +169,9 @@ public static class LoggerServer
         case LogType.Error:
             bluLogType = BluLogType.Error;
             break;
+        case LogType.Exception:
+            bluLogType = BluLogType.Error;
+            break;
         }
 
         return bluLogType;
