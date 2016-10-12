@@ -4,6 +4,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Text;
 
 
 namespace BluConsole
@@ -13,8 +14,12 @@ namespace BluConsole
 public class LogStackFrame
 {
 
-    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER = @"(.*):(.*)\s*\(.*\(at\s*(.*):(\d+)";
-    private static readonly string REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER = @"(.*):(.*)\s*\(.*\)";
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER = 
+        @"(.*):(.*)\s*\(.*\(at\s*(.*):(\d+)";
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON = 
+        @"(.*)\s*\(.*\(at\s*(.*):(\d+)";
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER = 
+        @"(.*):(.*)\s*\(.*\)";
 
     [SerializeField] private string _className;
     [SerializeField] private string _methodName;
@@ -97,6 +102,10 @@ public class LogStackFrame
     {
         MatchCollection matchWithLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
+
+        MatchCollection matchWithLineNumberWithoutColon = 
+            Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON);
+        
         MatchCollection matchWithoutLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
 
@@ -105,6 +114,24 @@ public class LogStackFrame
                                      methodName: matchWithLineNumber[0].Groups[2].Value,
                                      fileRelativePath: matchWithLineNumber[0].Groups[3].Value,
                                      line: Convert.ToInt32(matchWithLineNumber[0].Groups[4].Value));
+        } else if (matchWithLineNumberWithoutColon.Count > 0) {
+            string classNameWithMethodName = matchWithLineNumberWithoutColon[0].Groups[1].Value.Replace(" ", "");
+
+            string className = classNameWithMethodName;
+            string methodName = classNameWithMethodName;
+
+            var classNameWithMethodNameByPoint = classNameWithMethodName.Split('.');
+            if (classNameWithMethodNameByPoint.Length > 0) {
+                className = classNameWithMethodNameByPoint[0];
+                for (int i = 1; i + 1 < classNameWithMethodNameByPoint.Length; i++)
+                    className += "." + classNameWithMethodNameByPoint[i];
+                methodName = classNameWithMethodNameByPoint[classNameWithMethodNameByPoint.Length - 1];
+            }
+
+            return new LogStackFrame(className: className,
+                                     methodName: methodName,
+                                     fileRelativePath: matchWithLineNumberWithoutColon[0].Groups[2].Value,
+                                     line: Convert.ToInt32(matchWithLineNumberWithoutColon[0].Groups[3].Value));
         } else if (matchWithoutLineNumber.Count > 0) {
             return new LogStackFrame(className: matchWithoutLineNumber[0].Groups[1].Value,
                                      methodName: matchWithoutLineNumber[0].Groups[2].Value,
@@ -120,9 +147,17 @@ public class LogStackFrame
     {
         MatchCollection matchWithLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
+        
+        MatchCollection matchWithLineNumberWithoutColon = 
+            Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON);
+        
         MatchCollection matchWithoutLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
-        return matchWithLineNumber.Count > 0 || matchWithoutLineNumber.Count > 0;
+        
+        return 
+            matchWithLineNumber.Count > 0             || 
+            matchWithLineNumberWithoutColon.Count > 0 || 
+            matchWithoutLineNumber.Count > 0;
     }
 
 }
