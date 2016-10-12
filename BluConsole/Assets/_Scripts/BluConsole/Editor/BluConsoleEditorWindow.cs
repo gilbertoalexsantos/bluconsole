@@ -159,7 +159,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void OnBeforeCompile()
     {
-        _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompilerError));
+        _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompileMessage));
     }
 
     private void OnAfterCompile()
@@ -292,7 +292,7 @@ public class BluConsoleEditorWindow : EditorWindow
             LogInfo logInfo = logsToShow[i];
 
             string showMessage = null;
-            if (logInfo.IsCompilerError) {
+            if (logInfo.IsCompileMessage) {
                 showMessage = logInfo.RawMessage;
             } else {
                 showMessage = logInfo.Message.Replace(System.Environment.NewLine, " ");
@@ -302,7 +302,7 @@ public class BluConsoleEditorWindow : EditorWindow
             var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
 
             var actualLogLineStyle = EvenButtonStyle;
-            if (logInfo.IsCompilerError && i != _logListSelectedMessage) {
+            if (logInfo.IsCompileMessage && logInfo.LogType == BluLogType.Error && i != _logListSelectedMessage) {
                 actualLogLineStyle = drawnButtons % 2 == 0 ? EvenErrorButtonStyle : OddButtonErrorStyle;
             } else {
                 actualLogLineStyle = i == _logListSelectedMessage ?
@@ -391,8 +391,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
         var logDetailHeight = WindowHeight;
         var buttonHeight = ButtonHeight;
-        var buttonY = 0.0f;
-        var drawnButtons = 0;
 
         var log = _loggerAsset[_logListSelectedMessage];
         var size = log.CallStack.Count;
@@ -409,7 +407,7 @@ public class BluConsoleEditorWindow : EditorWindow
             var frame = log.CallStack[i];
             var methodName = frame.FormattedMethodName;
 
-            if (log.IsCompilerError)
+            if (log.IsCompileMessage)
                 methodName = log.RawMessage;
 
             var actualLogLineStyle = i == _logDetailSelectedFrame ?

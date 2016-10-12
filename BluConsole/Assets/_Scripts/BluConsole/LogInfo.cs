@@ -37,7 +37,7 @@ public class LogInfo
     [SerializeField] private string _message;
     [SerializeField] private List<LogStackFrame> _callStack;
     [SerializeField] private BluLogType _logType;
-    [SerializeField] private bool _isCompilerError;
+    [SerializeField] private bool _isCompilerMessage;
 
     public string RawMessage
     {
@@ -71,11 +71,11 @@ public class LogInfo
         }
     }
 
-    public bool IsCompilerError
+    public bool IsCompileMessage
     {
         get
         {
-            return _isCompilerError;
+            return _isCompilerMessage;
         }
     }
 
@@ -83,13 +83,13 @@ public class LogInfo
                    string message,
                    List<LogStackFrame> callStack,
                    BluLogType logType,
-                   bool isCompilerError)
+                   bool isCompileMessage)
     {
         _rawMessage = rawMessage;
         _message = message;
         _callStack = callStack;
         _logType = logType;
-        _isCompilerError = isCompilerError;
+        _isCompilerMessage = isCompileMessage;
     }
 
 }

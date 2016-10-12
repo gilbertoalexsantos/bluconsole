@@ -133,7 +133,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     public void ClearExceptCompileErrors()
     {
-        _logsInfo = _logsInfo.Where(log => log.IsCompilerError).ToList();
+        _logsInfo = _logsInfo.Where(log => log.IsCompileMessage && log.LogType == BluLogType.Error).ToList();
         _qtNormalLogs = 0;
         _qtWarningLogs = 0;
         _qtErrorLogs = _logsInfo.Count;

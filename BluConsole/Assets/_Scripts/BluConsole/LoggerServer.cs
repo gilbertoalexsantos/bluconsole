@@ -68,7 +68,7 @@ public static class LoggerServer
                 callStack = GetCallStackFromUnityMessage(message);
         
             BluLogType bluLogType = GetLogType(logType);
-            var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompilerError(message));
+            var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompileMessage(message));
             Call(logInfo);
         }
     }
@@ -83,9 +83,11 @@ public static class LoggerServer
         }
     }
 
-    private static bool IsCompilerError(string unityMessage)
+    private static bool IsCompileMessage(string unityMessage)
     {
-        return Regex.Match(unityMessage, @".*:\s*error.*:.*").Success;
+        bool warningMatch = Regex.Match(unityMessage, @".*:\s*warning.*:.*").Success;
+        bool errorMatch = Regex.Match(unityMessage, @".*:\s*error.*:.*").Success;
+        return warningMatch || errorMatch;
     }
 
     [StackTraceIgnore]
