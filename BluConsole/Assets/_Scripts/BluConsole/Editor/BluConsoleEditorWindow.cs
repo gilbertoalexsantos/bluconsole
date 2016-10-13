@@ -27,6 +27,7 @@ public class BluConsoleEditorWindow : EditorWindow
     private float _buttonHeight;
 
     // Toolbar Variables
+    private float _toolbarHeight;
     private bool _isShowNormal = true;
     private bool _isShowWarnings = true;
     private bool _isShowErrors = true;
@@ -82,12 +83,14 @@ public class BluConsoleEditorWindow : EditorWindow
             _isPlaying = false;
         }
 
+        DrawResizer();
+
         GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
         DrawTopToolbar();
         DrawLogList();
         GUILayout.EndVertical();
 
-        DrawResizer();
+        GUILayout.Space(ResizerHeight);
 
         GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
         DrawLogDetail();
@@ -155,6 +158,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         _buttonWidth = position.width;
         _buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+        _toolbarHeight = EditorStyles.toolbarButton.CalcSize(new GUIContent("Clear")).y;
     }
 
     private void OnBeforeCompile()
@@ -262,10 +266,8 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition, false, false);
 
-        var logListHeight = WindowHeight;
-        var buttonHeight = ButtonHeight;
+        var logListHeight = _topPanelHeight - _toolbarHeight;
         var buttonY = 0.0f;
-        var drawnButtons = 0;
 
         // Filtering by SearchString
         var logsInfo =
@@ -279,17 +281,21 @@ public class BluConsoleEditorWindow : EditorWindow
             size++;
             logsToShow[j++] = logsInfo[i];
         }
+            
+        int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight) + 1;
+        qtToLog = Mathf.Clamp(qtToLog, 0, size);
 
-        int qtToLog = (int)Mathf.Floor(logListHeight / buttonHeight);
-        int qtTopEmptySpace = (int)(_logListBeginPosition.y / buttonHeight);
+        int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight);
         qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
+
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
-        GUILayout.Space(qtTopEmptySpace * buttonHeight);
+        GUILayout.Space(qtTopEmptySpace * ButtonHeight);
 
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
             LogInfo logInfo = logsToShow[i];
+            bool isEven = i % 2 == 0;
 
             string showMessage = null;
             if (logInfo.IsCompileMessage) {
@@ -303,15 +309,15 @@ public class BluConsoleEditorWindow : EditorWindow
 
             var actualLogLineStyle = EvenButtonStyle;
             if (logInfo.IsCompileMessage && logInfo.LogType == BluLogType.Error && i != _logListSelectedMessage) {
-                actualLogLineStyle = drawnButtons % 2 == 0 ? EvenErrorButtonStyle : OddButtonErrorStyle;
+                actualLogLineStyle = isEven ? EvenErrorButtonStyle : OddButtonErrorStyle;
             } else {
                 actualLogLineStyle = i == _logListSelectedMessage ?
-                    SelectedButtonStyle : (drawnButtons % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
+                    SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
             }
 
             if (GUILayout.Button(content,
                                  actualLogLineStyle, 
-                                 GUILayout.Height(buttonHeight),
+                                 GUILayout.Height(ButtonHeight),
                                  GUILayout.Width(ButtonWidth))) {
                 if (i == _logListSelectedMessage) {
                     if (IsDoubleClickLogListButton()) {
@@ -329,25 +335,22 @@ public class BluConsoleEditorWindow : EditorWindow
                 _logDetailSelectedFrame = -1;
             }
 
-            buttonY += buttonHeight;
-            drawnButtons++;
+            buttonY += ButtonHeight;
         }
 
         if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logListBeginPosition.x, _logListBeginPosition.y + size * buttonHeight, 
-                                     position.width, qtFillCenterLog * buttonHeight), 
+            GUI.DrawTexture(new Rect(_logListBeginPosition.x, _logListBeginPosition.y + size * ButtonHeight, 
+                                     position.width, qtFillCenterLog * ButtonHeight), 
                             EvenButtonTexture);
         }
 
-        GUILayout.Space(qtBotEmptySpace * buttonHeight);
+        GUILayout.Space(qtBotEmptySpace * ButtonHeight);
 
         GUILayout.EndScrollView();
     }
 
     private void DrawResizer()
     {
-        GUILayout.Space(ResizerHeight);
-
         // Don't ask me why... If we remove this 1.0f, there's one line with height one that isn't painted...
         var resizerY = _topPanelHeight - 1.0f;
 
