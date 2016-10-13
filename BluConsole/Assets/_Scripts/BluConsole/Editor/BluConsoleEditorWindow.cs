@@ -268,6 +268,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         var logListHeight = _topPanelHeight - _toolbarHeight;
         var buttonY = 0.0f;
+        var buttonWidth = ButtonWidth;
 
         // Filtering by SearchString
         var logsInfo =
@@ -283,13 +284,15 @@ public class BluConsoleEditorWindow : EditorWindow
         }
             
         int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight) + 1;
-        qtToLog = Mathf.Clamp(qtToLog, 0, size);
 
         int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight);
         qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
 
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
+
+        if (size * ButtonHeight > logListHeight)
+            buttonWidth -= 15.0f;
 
         GUILayout.Space(qtTopEmptySpace * ButtonHeight);
 
@@ -318,7 +321,7 @@ public class BluConsoleEditorWindow : EditorWindow
             if (GUILayout.Button(content,
                                  actualLogLineStyle, 
                                  GUILayout.Height(ButtonHeight),
-                                 GUILayout.Width(ButtonWidth))) {
+                                 GUILayout.Width(buttonWidth))) {
                 if (i == _logListSelectedMessage) {
                     if (IsDoubleClickLogListButton()) {
                         _logListLastTimeClicked = 0.0f;
@@ -394,6 +397,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
         var logDetailHeight = WindowHeight;
         var buttonHeight = ButtonHeight;
+        var buttonWidth = ButtonWidth;
 
         var log = _loggerAsset[_logListSelectedMessage];
         var size = log.CallStack.Count;
@@ -404,6 +408,14 @@ public class BluConsoleEditorWindow : EditorWindow
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
+        for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
+            var frame = log.CallStack[i];
+            var message = frame.FormattedMethodName;
+            if (log.IsCompileMessage)
+                message = log.RawMessage;
+            buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(message, log.LogType));
+        }
+            
         GUILayout.Space(qtTopEmptySpace * buttonHeight);
 
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
@@ -416,7 +428,10 @@ public class BluConsoleEditorWindow : EditorWindow
             var actualLogLineStyle = i == _logDetailSelectedFrame ?
                 SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
 
-            if (GUILayout.Button(methodName, actualLogLineStyle, GUILayout.Height(buttonHeight))) {
+            if (GUILayout.Button(methodName, 
+                                 actualLogLineStyle, 
+                                 GUILayout.Height(buttonHeight),
+                                 GUILayout.Width(buttonWidth))) {
                 if (i == _logDetailSelectedFrame) {
                     if (IsDoubleClickLogDetailButton()) {
                         _logDetailLastTimeClicked = 0.0f;
@@ -439,6 +454,10 @@ public class BluConsoleEditorWindow : EditorWindow
         GUILayout.Space(qtBotEmptySpace * buttonHeight);
 
         GUILayout.EndScrollView();
+    }
+
+    private float GetButtonWidth(string message, BluLogType logType) {
+        return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
     }
 
     private Texture2D GetIcon(BluLogType logType)
