@@ -308,7 +308,7 @@ public class BluConsoleEditorWindow : EditorWindow
             }
             showMessage = "  " + showMessage;
 
-            var content = new GUIContent(showMessage, GetIcon(logInfo.LogType));
+            var content = new GUIContent(showMessage);
 
             var actualLogLineStyle = EvenButtonStyle;
             if (logInfo.IsCompileMessage && logInfo.LogType == BluLogType.Error && i != _logListSelectedMessage) {
@@ -318,10 +318,21 @@ public class BluConsoleEditorWindow : EditorWindow
                     SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
             }
 
-            if (GUILayout.Button(content,
-                                 actualLogLineStyle, 
-                                 GUILayout.Height(ButtonHeight),
-                                 GUILayout.Width(buttonWidth))) {
+            GUILayout.BeginHorizontal(GUILayout.Width(buttonWidth));
+
+            var contentImage = new GUIContent(GetIcon(logInfo.LogType));
+            var contentImageWidth = actualLogLineStyle.CalcSize(contentImage).x;
+
+            bool imageClicked = GUILayout.Button(GetIcon(logInfo.LogType), 
+                                                 actualLogLineStyle, 
+                                                 GUILayout.Height(ButtonHeight));
+
+            bool buttonClicked = GUILayout.Button(content,
+                                                  actualLogLineStyle, 
+                                                  GUILayout.Height(ButtonHeight),
+                                                  GUILayout.Width(buttonWidth - contentImageWidth));
+
+            if (imageClicked || buttonClicked) {
                 if (i == _logListSelectedMessage) {
                     if (IsDoubleClickLogListButton()) {
                         _logListLastTimeClicked = 0.0f;
@@ -337,6 +348,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
                 _logDetailSelectedFrame = -1;
             }
+
+            GUILayout.EndHorizontal();
 
             buttonY += ButtonHeight;
         }
@@ -395,7 +408,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return;
         }
 
-        var logDetailHeight = WindowHeight;
+        var logDetailHeight = WindowHeight - _topPanelHeight;
         var buttonHeight = ButtonHeight;
         var buttonWidth = ButtonWidth;
 
@@ -408,6 +421,9 @@ public class BluConsoleEditorWindow : EditorWindow
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
+        if (size * ButtonHeight > logDetailHeight)
+            buttonWidth -= 15.0f;
+
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
             var frame = log.CallStack[i];
             var message = frame.FormattedMethodName;
@@ -415,7 +431,7 @@ public class BluConsoleEditorWindow : EditorWindow
                 message = log.RawMessage;
             buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(message, log.LogType));
         }
-            
+
         GUILayout.Space(qtTopEmptySpace * buttonHeight);
 
         for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
@@ -456,7 +472,9 @@ public class BluConsoleEditorWindow : EditorWindow
         GUILayout.EndScrollView();
     }
 
-    private float GetButtonWidth(string message, BluLogType logType) {
+    private float GetButtonWidth(string message,
+                                 BluLogType logType)
+    {
         return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
     }
 
