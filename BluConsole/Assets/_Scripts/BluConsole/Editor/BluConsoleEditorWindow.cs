@@ -23,6 +23,13 @@ public class BluConsoleEditorWindow : EditorWindow
     private GUIStyle _evenErrorButtonStyle;
     private GUIStyle _oddButtonErrorStyle;
     private GUIStyle _selectedButtonStyle;
+    private Texture2D _selectedButtonTexture;
+    private Texture2D _oddErrorButtonTexture;
+    private Texture2D _evenErrorButtonTexture;
+    private Texture2D _oddButtonTexture;
+    private Texture2D _evenButtonTexture;
+    private Texture2D _sizeLinerBorderTexture;
+    private Texture2D _sizeLinerCenterTexture;
     private float _buttonWidth;
     private float _buttonHeight;
 
@@ -151,7 +158,7 @@ public class BluConsoleEditorWindow : EditorWindow
         _selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
         _selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
         _selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-        _selectedButtonStyle.normal.background = BluConsoleEditorHelper.BlueTexture;
+        _selectedButtonStyle.normal.background = SelectedButtonTexture;
         _selectedButtonStyle.active = _selectedButtonStyle.normal;
         _selectedButtonStyle.hover = _selectedButtonStyle.normal;
         _selectedButtonStyle.focused = _selectedButtonStyle.normal;
@@ -626,51 +633,81 @@ public class BluConsoleEditorWindow : EditorWindow
         }
     }
 
+    private Color SelectedButtonColor
+    {
+        get
+        {
+            return new Color(0.5f, 0.5f, 1);
+        }
+    }
+        
     private Texture2D SizeLinerCenterTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
+            if (_sizeLinerCenterTexture == null)
+                _sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
+            return _sizeLinerCenterTexture;
         }
     }
-
+        
     private Texture2D SizeLinerBorderTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
+            if (_sizeLinerBorderTexture == null)
+                _sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
+            return _sizeLinerBorderTexture;
         }
     }
-
+        
     private Texture2D EvenButtonTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(EvenButtonColor);
+            if (_evenButtonTexture == null)
+                _evenButtonTexture = BluConsoleEditorHelper.GetTexture(EvenButtonColor);
+            return _evenButtonTexture;
         }
     }
-
+        
     private Texture2D OddButtonTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(OddButtonColor);
+            if (_oddButtonTexture == null)
+                _oddButtonTexture = BluConsoleEditorHelper.GetTexture(OddButtonColor);
+            return _oddButtonTexture;
         }
     }
-
+        
     private Texture2D EvenErrorButtonTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
+            if (_evenErrorButtonTexture == null)
+                _evenErrorButtonTexture = BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
+            return _evenErrorButtonTexture;
         }
     }
-
+        
     private Texture2D OddErrorButtonTexture
     {
         get
         {
-            return BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
+            if (_oddErrorButtonTexture == null)
+                _oddErrorButtonTexture = BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
+            return _oddErrorButtonTexture;
+        }
+    }
+        
+    private Texture2D SelectedButtonTexture
+    {
+        get
+        {
+            if (_selectedButtonTexture == null)
+                _selectedButtonTexture = BluConsoleEditorHelper.GetTexture(SelectedButtonColor);
+            return _selectedButtonTexture;
         }
     }
 
