@@ -93,8 +93,10 @@ public class BluConsoleEditorWindow : EditorWindow
         DrawResizer();
 
         GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
+
         DrawTopToolbar();
         DrawLogList();
+
         GUILayout.EndVertical();
 
         GUILayout.Space(ResizerHeight);
@@ -289,17 +291,31 @@ public class BluConsoleEditorWindow : EditorWindow
             size++;
             logsToShow[j++] = logsInfo[i];
         }
-            
-        int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight) + 1;
+               
+        int qtTopEmptySpace = Mathf.CeilToInt(_logListBeginPosition.y / ButtonHeight) - 1;
+        qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
 
-        int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight);
-        qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
+        int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight);
+        qtToLog += 2;
+
+        int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
         int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
-        int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
         if (size * ButtonHeight > logListHeight)
             buttonWidth -= 15.0f;
+
+        // <BEG> Hacky checks because of crazy GUI system of Layout/Repaint
+        int totalToLog = qtTopEmptySpace + qtToLog + qtBotEmptySpace;
+        if (totalToLog > size) {
+            qtTopEmptySpace -= totalToLog - size;
+            qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
+        }
+
+        if (totalToLog > size) {
+            qtToLog -= size - totalToLog;
+        }
+        // <END> Hacky checks because of crazy GUI system of Layout/Repaint
 
         GUILayout.Space(qtTopEmptySpace * ButtonHeight);
 
@@ -324,7 +340,7 @@ public class BluConsoleEditorWindow : EditorWindow
                 actualLogLineStyle = i == _logListSelectedMessage ?
                     SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
             }
-
+                
             GUILayout.BeginHorizontal(GUILayout.Width(buttonWidth));
 
             var contentImage = new GUIContent(GetIcon(logInfo.LogType));
@@ -366,7 +382,7 @@ public class BluConsoleEditorWindow : EditorWindow
                                      position.width, qtFillCenterLog * ButtonHeight), 
                             EvenButtonTexture);
         }
-
+            
         GUILayout.Space(qtBotEmptySpace * ButtonHeight);
 
         GUILayout.EndScrollView();
@@ -640,7 +656,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return new Color(0.5f, 0.5f, 1);
         }
     }
-        
+
     private Texture2D SizeLinerCenterTexture
     {
         get
@@ -650,7 +666,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _sizeLinerCenterTexture;
         }
     }
-        
+
     private Texture2D SizeLinerBorderTexture
     {
         get
@@ -660,7 +676,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _sizeLinerBorderTexture;
         }
     }
-        
+
     private Texture2D EvenButtonTexture
     {
         get
@@ -670,7 +686,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _evenButtonTexture;
         }
     }
-        
+
     private Texture2D OddButtonTexture
     {
         get
@@ -680,7 +696,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _oddButtonTexture;
         }
     }
-        
+
     private Texture2D EvenErrorButtonTexture
     {
         get
@@ -690,7 +706,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _evenErrorButtonTexture;
         }
     }
-        
+
     private Texture2D OddErrorButtonTexture
     {
         get
@@ -700,7 +716,7 @@ public class BluConsoleEditorWindow : EditorWindow
             return _oddErrorButtonTexture;
         }
     }
-        
+
     private Texture2D SelectedButtonTexture
     {
         get
