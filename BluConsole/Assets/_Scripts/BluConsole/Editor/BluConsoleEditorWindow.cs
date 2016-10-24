@@ -292,11 +292,11 @@ public class BluConsoleEditorWindow : EditorWindow
             logsToShow[j++] = logsInfo[i];
         }
                
-        int qtTopEmptySpace = Mathf.CeilToInt(_logListBeginPosition.y / ButtonHeight) - 1;
+        int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight) - 1;
         qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
 
         int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight);
-        qtToLog += 2;
+        qtToLog += 3;
 
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
@@ -312,9 +312,8 @@ public class BluConsoleEditorWindow : EditorWindow
             qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
         }
 
-        if (totalToLog > size) {
+        if (totalToLog > size)
             qtToLog -= size - totalToLog;
-        }
         // <END> Hacky checks because of crazy GUI system of Layout/Repaint
 
         GUILayout.Space(qtTopEmptySpace * ButtonHeight);
@@ -431,28 +430,81 @@ public class BluConsoleEditorWindow : EditorWindow
             return;
         }
 
-        var logDetailHeight = WindowHeight - _topPanelHeight;
+        var logDetailHeight = WindowHeight - _topPanelHeight - ResizerHeight;
         var buttonHeight = ButtonHeight;
         var buttonWidth = ButtonWidth;
 
-        var log = _loggerAsset[_logListSelectedMessage];
+        // Filtering by SearchString
+        var logsInfo =
+            string.IsNullOrEmpty(_searchString) ? _loggerAsset.LogsInfo : _loggerAsset.GetLogsInfoFiltered(_searchString);
+
+        int cntLogs = 0, indexOfSelectedLog = 0;
+        for (int i = 0; i < logsInfo.Count; i++) {
+            if (!CanLog(logsInfo[i]))
+                continue;
+            if (_logListSelectedMessage == cntLogs++) {
+                indexOfSelectedLog = i;
+                break;
+            }
+        }
+
+        var log = logsInfo[indexOfSelectedLog];
         var size = log.CallStack.Count;
 
-        int qtToLog = (int)Mathf.Floor(logDetailHeight / buttonHeight);
-        int qtTopEmptySpace = (int)(_logDetailBeginPosition.y / buttonHeight);
-        qtTopEmptySpace = Mathf.Clamp(qtTopEmptySpace, 0, Mathf.Max(0, size - qtToLog));
-        int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
+        int qtTopEmptySpace = Mathf.CeilToInt(_logDetailBeginPosition.y / ButtonHeight) - 1;
+        qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
+
+        int qtToLog = Mathf.CeilToInt(logDetailHeight / ButtonHeight);
+        qtToLog += 2;
+
         int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
 
-        if (size * ButtonHeight > logDetailHeight)
+        int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
+
+        // <BEG> Hacky checks because of crazy GUI system of Layout/Repaint
+        int totalToLog = qtTopEmptySpace + qtToLog + qtBotEmptySpace;
+        if (totalToLog > size) {
+            qtTopEmptySpace -= totalToLog - size;
+            qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
+        }
+
+        if (totalToLog > size) {
+            qtToLog -= size - totalToLog;
+        }
+        // <END> Hacky checks because of crazy GUI system of Layout/Repaint
+
+        if ((size+1) * ButtonHeight > logDetailHeight)
             buttonWidth -= 15.0f;
 
-        for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
+        for (int i = 0; i < size; i++) {
             var frame = log.CallStack[i];
             var message = frame.FormattedMethodName;
             if (log.IsCompileMessage)
                 message = log.RawMessage;
             buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(message, log.LogType));
+        }
+
+        if (size > 0 && qtTopEmptySpace == 0) {
+            buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(log.Message, log.LogType));
+
+            var style = _logDetailSelectedFrame == -2 ? SelectedButtonStyle : EvenButtonStyle;
+            if (GUILayout.Button(log.IsCompileMessage ? log.Message : log.RawMessage, 
+                                 style, 
+                                 GUILayout.Height(buttonHeight),
+                                 GUILayout.Width(buttonWidth))) {
+                if (_logDetailSelectedFrame == -2) {
+                    if (IsDoubleClickLogDetailButton()) {
+                        _logDetailLastTimeClicked = 0.0f;
+                        if (log.CallStack.Count > 0) {
+                            JumpToSource(log.CallStack[0]);
+                        }
+                    } else {
+                        _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
+                    }
+                } else {
+                    _logDetailSelectedFrame = -2;
+                }
+            }
         }
 
         GUILayout.Space(qtTopEmptySpace * buttonHeight);
@@ -485,7 +537,7 @@ public class BluConsoleEditorWindow : EditorWindow
         }
 
         if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y + size * buttonHeight, 
+            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y + (size+1) * buttonHeight, 
                                      position.width, qtFillCenterLog * buttonHeight), 
                             EvenButtonTexture);
         }
