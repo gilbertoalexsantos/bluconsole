@@ -63,7 +63,8 @@ public class LogStackFrame
         get
         {
             var formattedFileRelativePath = _fileRelativePath;
-            if (!String.IsNullOrEmpty(_fileRelativePath)) {
+            if (!String.IsNullOrEmpty(_fileRelativePath))
+            {
                 var startSubName = _fileRelativePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
 
                 if (startSubName > 0)
@@ -77,10 +78,11 @@ public class LogStackFrame
         }
     }
 
-    public LogStackFrame(string className,
-                         string methodName,
-                         string fileRelativePath,
-                         int line)
+    public LogStackFrame(
+        string className,
+        string methodName,
+        string fileRelativePath,
+        int line)
     {
         _className = className;
         _methodName = methodName;
@@ -88,7 +90,8 @@ public class LogStackFrame
         _line = line;
     }
 
-    public static LogStackFrame Create(StackFrame frame)
+    public static LogStackFrame Create(
+        StackFrame frame)
     {
         MethodBase method = frame.GetMethod();
 
@@ -98,7 +101,8 @@ public class LogStackFrame
                                  line: frame.GetFileLineNumber());
     }
 
-    public static LogStackFrame Create(string unityStackFrame)
+    public static LogStackFrame Create(
+        string unityStackFrame)
     {
         MatchCollection matchWithLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
@@ -109,19 +113,23 @@ public class LogStackFrame
         MatchCollection matchWithoutLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
 
-        if (matchWithLineNumber.Count > 0) {
+        if (matchWithLineNumber.Count > 0)
+        {
             return new LogStackFrame(className: matchWithLineNumber[0].Groups[1].Value,
                                      methodName: matchWithLineNumber[0].Groups[2].Value,
                                      fileRelativePath: matchWithLineNumber[0].Groups[3].Value,
                                      line: Convert.ToInt32(matchWithLineNumber[0].Groups[4].Value));
-        } else if (matchWithLineNumberWithoutColon.Count > 0) {
+        }
+        else if (matchWithLineNumberWithoutColon.Count > 0)
+        {
             string classNameWithMethodName = matchWithLineNumberWithoutColon[0].Groups[1].Value.Replace(" ", "");
 
             string className = classNameWithMethodName;
             string methodName = classNameWithMethodName;
 
             var classNameWithMethodNameByPoint = classNameWithMethodName.Split('.');
-            if (classNameWithMethodNameByPoint.Length > 0) {
+            if (classNameWithMethodNameByPoint.Length > 0)
+            {
                 className = classNameWithMethodNameByPoint[0];
                 for (int i = 1; i + 1 < classNameWithMethodNameByPoint.Length; i++)
                     className += "." + classNameWithMethodNameByPoint[i];
@@ -132,18 +140,23 @@ public class LogStackFrame
                                      methodName: methodName,
                                      fileRelativePath: matchWithLineNumberWithoutColon[0].Groups[2].Value,
                                      line: Convert.ToInt32(matchWithLineNumberWithoutColon[0].Groups[3].Value));
-        } else if (matchWithoutLineNumber.Count > 0) {
+        }
+        else if (matchWithoutLineNumber.Count > 0)
+        {
             return new LogStackFrame(className: matchWithoutLineNumber[0].Groups[1].Value,
                                      methodName: matchWithoutLineNumber[0].Groups[2].Value,
                                      fileRelativePath: matchWithoutLineNumber[0].Groups[3].Value,
                                      line: -1);
-        } else {
+        }
+        else
+        {
             throw new Exception("Can't create it. Call CanGetInformation to check " +
-            "if can create an instance from an unityStackFrame");
+                "if can create an instance from an unityStackFrame");
         }
     }
 
-    public static bool CanGetInformation(string unityStackFrame)
+    public static bool CanGetInformation(
+        string unityStackFrame)
     {
         MatchCollection matchWithLineNumber = 
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
@@ -155,9 +168,9 @@ public class LogStackFrame
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
         
         return 
-            matchWithLineNumber.Count > 0             || 
-            matchWithLineNumberWithoutColon.Count > 0 || 
-            matchWithoutLineNumber.Count > 0;
+            matchWithLineNumber.Count > 0 ||
+        matchWithLineNumberWithoutColon.Count > 0 ||
+        matchWithoutLineNumber.Count > 0;
     }
 
 }

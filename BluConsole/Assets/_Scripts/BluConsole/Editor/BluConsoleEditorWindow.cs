@@ -12,812 +12,902 @@ using System.Collections.Generic;
 namespace BluConsole.Editor
 {
 
+
 public class BluConsoleEditorWindow : EditorWindow
 {
-    // LoggerClient
-    private LoggerAssetClient _loggerAsset;
+	// LoggerClient
+	private LoggerAssetClient _loggerAsset;
 
-    // Cache Variables
-    private GUIStyle _evenButtonStyle;
-    private GUIStyle _oddButtonStyle;
-    private GUIStyle _evenErrorButtonStyle;
-    private GUIStyle _oddButtonErrorStyle;
-    private GUIStyle _selectedButtonStyle;
-    private Texture2D _selectedButtonTexture;
-    private Texture2D _oddErrorButtonTexture;
-    private Texture2D _evenErrorButtonTexture;
-    private Texture2D _oddButtonTexture;
-    private Texture2D _evenButtonTexture;
-    private Texture2D _sizeLinerBorderTexture;
-    private Texture2D _sizeLinerCenterTexture;
-    private float _buttonWidth;
-    private float _buttonHeight;
+	// Layout variables
+	private float _drawYPos;
 
-    // Toolbar Variables
-    private float _toolbarHeight;
-    private bool _isShowNormal = true;
-    private bool _isShowWarnings = true;
-    private bool _isShowErrors = true;
-    private bool _isClearOnPlay = false;
-    private string _searchString = "";
+	// Cache Variables
+	private GUIStyle _evenButtonStyle;
+	private GUIStyle _oddButtonStyle;
+	private GUIStyle _evenErrorButtonStyle;
+	private GUIStyle _oddButtonErrorStyle;
+	private GUIStyle _selectedButtonStyle;
 
-    // LogList Variables
-    private Vector2 _logListBeginPosition;
-    private int _logListSelectedMessage = -1;
-    private double _logListLastTimeClicked = 0.0;
+	private Texture2D _selectedButtonTexture;
+	private Texture2D _oddErrorButtonTexture;
+	private Texture2D _evenErrorButtonTexture;
+	private Texture2D _oddButtonTexture;
+	private Texture2D _evenButtonTexture;
+	private Texture2D _sizeLinerBorderTexture;
+	private Texture2D _sizeLinerCenterTexture;
 
-    // Resizer
-    private float _topPanelHeight;
-    private Rect _cursorChangeRect;
-    private bool _isResizing = false;
+	private float _buttonWidth;
+	private float _buttonHeight;
 
-    // LogDetail Variables
-    private Vector2 _logDetailBeginPosition;
-    private int _logDetailSelectedFrame = -1;
-    private double _logDetailLastTimeClicked = 0.0;
+	// Toolbar Variables
+	private bool _isShowNormal = true;
+	private bool _isShowWarnings = true;
+	private bool _isShowErrors = true;
+	private bool _isClearOnPlay = false;
+	private string _searchString = "";
 
-    // Compiling
-    private bool _isCompiling = false;
-    private bool _isPlaying = false;
-    private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
+	// LogList Variables
+	private Vector2 _logListScrollPosition;
+	private int _logListSelectedMessage = -1;
+	private double _logListLastTimeClicked = 0.0;
 
-    [MenuItem("Window/BluConsole")]
-    public static void ShowWindow()
-    {
-        var window = EditorWindow.GetWindow<BluConsoleEditorWindow>("BluConsole");
-        window._topPanelHeight = window.position.height / 2.0f;
-    }
+	// Resizer
+	private float _topPanelHeight;
+	private Rect _cursorChangeRect;
+	private bool _isResizing = false;
 
-    private void OnGUI()
-    {
-        InitVariables();
+	// LogDetail Variables
+	private Vector2 _logDetailScrollPosition;
+	private int _logDetailSelectedFrame = -1;
+	private double _logDetailLastTimeClicked = 0.0;
 
-        Application.logMessageReceived -= LoggerServer.UnityLogHandler;
-        Application.logMessageReceived += LoggerServer.UnityLogHandler;
+	// Compiling
+	private bool _isCompiling = false;
+	private bool _isPlaying = false;
+	private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
 
-        if (EditorApplication.isCompiling && !_isCompiling) {
-            _isCompiling = true;
-            OnBeforeCompile();
-        } else if (!EditorApplication.isCompiling && _isCompiling) {
-            _isCompiling = false;
-            OnAfterCompile();
-        }
+	[MenuItem("Window/BluConsole")]
+	public static void ShowWindow()
+	{
+		var window = EditorWindow.GetWindow<BluConsoleEditorWindow>("BluConsole");
+		window._topPanelHeight = window.position.height / 2.0f;
+	}
 
-        if (EditorApplication.isPlaying && !_isPlaying) {
-            _isPlaying = true;
-            OnBeginPlay();
-        } else if (!EditorApplication.isPlaying && _isPlaying) {
-            _isPlaying = false;
-        }
+	private void OnGUI()
+	{
+		InitVariables();
 
-        DrawResizer();
+		Application.logMessageReceived -= LoggerServer.UnityLogHandler;
+		Application.logMessageReceived += LoggerServer.UnityLogHandler;
 
-        GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
+		if (EditorApplication.isCompiling && !_isCompiling)
+		{
+			_isCompiling = true;
+			OnBeforeCompile();
+		}
+		else if (!EditorApplication.isCompiling && _isCompiling)
+		{
+			_isCompiling = false;
+			OnAfterCompile();
+		}
 
-        DrawTopToolbar();
-        DrawLogList();
+		if (EditorApplication.isPlaying && !_isPlaying)
+		{
+			_isPlaying = true;
+			OnBeginPlay();
+		}
+		else if (!EditorApplication.isPlaying && _isPlaying)
+		{
+			_isPlaying = false;
+		}
 
-        GUILayout.EndVertical();
+		DrawResizer();
 
-        GUILayout.Space(ResizerHeight);
+		GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
 
-        GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
-        DrawLogDetail();
-        GUILayout.EndVertical();
+		_drawYPos += DrawTopToolbar();
+		DrawLogList();
 
-        Repaint();
-    }
+		GUILayout.EndVertical();
 
-    private void InitVariables()
-    {
-        _evenButtonStyle = new GUIStyle(EditorStyles.label);
-        _evenButtonStyle.richText = true;
-        _evenButtonStyle.fontSize = FontSize;
-        _evenButtonStyle.alignment = TextAnchor.MiddleLeft;
-        _evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-        _evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-        _evenButtonStyle.normal.background = EvenButtonTexture;
-        _evenButtonStyle.active = _evenButtonStyle.normal;
-        _evenButtonStyle.hover = _evenButtonStyle.normal;
-        _evenButtonStyle.focused = _evenButtonStyle.normal;
+		GUILayout.Space(ResizerHeight);
 
-        _oddButtonStyle = new GUIStyle(EditorStyles.label);
-        _oddButtonStyle.richText = true;
-        _oddButtonStyle.fontSize = FontSize;
-        _oddButtonStyle.alignment = TextAnchor.MiddleLeft;
-        _oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-        _oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-        _oddButtonStyle.normal.background = OddButtonTexture;
-        _oddButtonStyle.active = _oddButtonStyle.normal;
-        _oddButtonStyle.hover = _oddButtonStyle.normal;
-        _oddButtonStyle.focused = _oddButtonStyle.normal;
+		GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
+		_drawYPos = _topPanelHeight + ResizerHeight;
+		DrawLogDetail();
+		GUILayout.EndVertical();
 
-        _evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
-        _evenErrorButtonStyle.richText = true;
-        _evenErrorButtonStyle.fontSize = FontSize;
-        _evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
-        _evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-        _evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-        _evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
-        _evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
-        _evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
-        _evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
+		Repaint();
+	}
 
-        _oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
-        _oddButtonErrorStyle.richText = true;
-        _oddButtonErrorStyle.fontSize = FontSize;
-        _oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
-        _oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-        _oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
-        _oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
-        _oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
-        _oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
-        _oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
+	private void InitVariables()
+	{
+		_evenButtonStyle = new GUIStyle(EditorStyles.label);
+		_evenButtonStyle.richText = true;
+		_evenButtonStyle.fontSize = FontSize;
+		_evenButtonStyle.alignment = TextAnchor.MiddleLeft;
+		_evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+		_evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_evenButtonStyle.normal.background = EvenButtonTexture;
+		_evenButtonStyle.active = _evenButtonStyle.normal;
+		_evenButtonStyle.hover = _evenButtonStyle.normal;
+		_evenButtonStyle.focused = _evenButtonStyle.normal;
 
-        _selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
-        _selectedButtonStyle.richText = true;
-        _selectedButtonStyle.fontSize = FontSize;
-        _selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
-        _selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-        _selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
-        _selectedButtonStyle.normal.background = SelectedButtonTexture;
-        _selectedButtonStyle.active = _selectedButtonStyle.normal;
-        _selectedButtonStyle.hover = _selectedButtonStyle.normal;
-        _selectedButtonStyle.focused = _selectedButtonStyle.normal;
+		_oddButtonStyle = new GUIStyle(EditorStyles.label);
+		_oddButtonStyle.richText = true;
+		_oddButtonStyle.fontSize = FontSize;
+		_oddButtonStyle.alignment = TextAnchor.MiddleLeft;
+		_oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+		_oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_oddButtonStyle.normal.background = OddButtonTexture;
+		_oddButtonStyle.active = _oddButtonStyle.normal;
+		_oddButtonStyle.hover = _oddButtonStyle.normal;
+		_oddButtonStyle.focused = _oddButtonStyle.normal;
 
-        _buttonWidth = position.width;
-        _buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
-        _toolbarHeight = EditorStyles.toolbarButton.CalcSize(new GUIContent("Clear")).y;
-    }
+		_evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
+		_evenErrorButtonStyle.richText = true;
+		_evenErrorButtonStyle.fontSize = FontSize;
+		_evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
+		_evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+		_evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
+		_evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
+		_evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
+		_evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
 
-    private void OnBeforeCompile()
-    {
-        _dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompileMessage));
-    }
+		_oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
+		_oddButtonErrorStyle.richText = true;
+		_oddButtonErrorStyle.fontSize = FontSize;
+		_oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
+		_oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
+		_oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+		_oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
+		_oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
+		_oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
+		_oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
 
-    private void OnAfterCompile()
-    {
-        HashSet<LogInfo> logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile,
-                                                              new LogInfoComparer());
-        _loggerAsset.Clear(log => logsBlackList.Contains(log));
-    }
+		_selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
+		_selectedButtonStyle.richText = true;
+		_selectedButtonStyle.fontSize = FontSize;
+		_selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
+		_selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
+		_selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_selectedButtonStyle.normal.background = SelectedButtonTexture;
+		_selectedButtonStyle.active = _selectedButtonStyle.normal;
+		_selectedButtonStyle.hover = _selectedButtonStyle.normal;
+		_selectedButtonStyle.focused = _selectedButtonStyle.normal;
 
-    private void OnBeginPlay()
-    {
-        if (_isClearOnPlay)
-            _loggerAsset.Clear();
-    }
+		_buttonWidth = position.width;
+		_buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+		_drawYPos = 0f;
+	}
 
-    private void OnEnable()
-    {
-        if (_loggerAsset == null) {
-            _loggerAsset = LoggerServer.GetLoggerClient<LoggerAssetClient>() as LoggerAssetClient;
-            if (_loggerAsset == null)
-                _loggerAsset = LoggerAssetClient.GetOrCreate();
-        }
+	private void OnBeforeCompile()
+	{
+		_dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompileMessage));
+	}
 
-        _logListSelectedMessage = -1;
-        _logDetailSelectedFrame = -1;
+	private void OnAfterCompile()
+	{
+		HashSet<LogInfo> logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
+		_loggerAsset.Clear(log => logsBlackList.Contains(log));
+	}
 
-        LoggerServer.Register(_loggerAsset);
-    }
+	private void OnBeginPlay()
+	{
+		if (_isClearOnPlay)
+			_loggerAsset.Clear();
+	}
 
-    private void DrawTopToolbar()
-    {
-        GUILayout.BeginHorizontal(EditorStyles.toolbar);
+	private void OnEnable()
+	{
+		if (_loggerAsset == null)
+		{
+			_loggerAsset = LoggerServer.GetLoggerClient<LoggerAssetClient>() as LoggerAssetClient;
+			if (_loggerAsset == null)
+				_loggerAsset = LoggerAssetClient.GetOrCreate();
+		}
 
+		_logListSelectedMessage = -1;
+		_logDetailSelectedFrame = -1;
 
-        // Clear/Collapse/ClearOnPlay/ErrorPause Area
-        if (BluConsoleEditorHelper.ButtonClamped("Clear", EditorStyles.toolbarButton)) {
-            _loggerAsset.ClearExceptCompileErrors();
-            _logListSelectedMessage = -1;
-            _logDetailSelectedFrame = -1;
-        }
+		LoggerServer.Register(_loggerAsset);
+	}
 
-        GUILayout.Space(6.0f);
+	private float DrawTopToolbar()
+	{
+		float height = EditorStyles.toolbarButton.CalcSize(new GUIContent("Clear")).y;
+		GUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.Height(height));
 
-        _isClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_isClearOnPlay,
-                                                              "Clear on Play",
-                                                              EditorStyles.toolbarButton);
-        _loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError,
-                                                                           "Pause on Error",
-                                                                           EditorStyles.toolbarButton);
+		// Clear/Collapse/ClearOnPlay/ErrorPause Area
+		if (BluConsoleEditorHelper.ButtonClamped("Clear", EditorStyles.toolbarButton))
+		{
+			_loggerAsset.ClearExceptCompileErrors();
+			_logListSelectedMessage = -1;
+			_logDetailSelectedFrame = -1;
+		}
 
+		GUILayout.Space(6.0f);
 
-        GUILayout.FlexibleSpace();
-
-
-        // Search Area
-        _searchString = EditorGUILayout.TextArea(_searchString,
-                                                 BluConsoleEditorHelper.ToolbarSearchTextField,
-                                                 GUILayout.Width(200.0f));
-        if (GUILayout.Button("", BluConsoleEditorHelper.ToolbarSearchCancelButtonStyle)) {
-            _searchString = "";
-            GUI.FocusControl(null);
-        }
-
-
-        GUILayout.Space(10.0f);
+		_isClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_isClearOnPlay,
+		                                                      "Clear on Play",
+		                                                      EditorStyles.toolbarButton);
+		_loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError,
+		                                                                   "Pause on Error",
+		                                                                   EditorStyles.toolbarButton);
 
 
-        // Info/Warning/Error buttons Area
-        int maxLogs = LoggerAssetClient.MAX_LOGS;
-        string qtNormalLogs = _loggerAsset.QtNormalLogs.ToString();
-        if (_loggerAsset.QtNormalLogs > maxLogs)
-            qtNormalLogs = maxLogs.ToString() + "+";
+		GUILayout.FlexibleSpace();
 
-        string qtWarningLogs = _loggerAsset.QtWarningsLogs.ToString();
-        if (_loggerAsset.QtWarningsLogs > maxLogs)
-            qtWarningLogs = maxLogs.ToString() + "+";
 
-        string qtErrorLogs = _loggerAsset.QtErrorsLogs.ToString();
-        if (_loggerAsset.QtErrorsLogs > LoggerAssetClient.MAX_LOGS)
-            qtErrorLogs = maxLogs.ToString() + "+";
+		// Search Area
+		_searchString = EditorGUILayout.TextArea(_searchString,
+		                                         BluConsoleEditorHelper.ToolbarSearchTextField,
+		                                         GUILayout.Width(200.0f));
+		if (GUILayout.Button("", BluConsoleEditorHelper.ToolbarSearchCancelButtonStyle))
+		{
+			_searchString = "";
+			GUI.FocusControl(null);
+		}
+
+
+		GUILayout.Space(10.0f);
+
+
+		// Info/Warning/Error buttons Area
+		int maxLogs = LoggerAssetClient.MAX_LOGS;
+		string qtNormalLogs = _loggerAsset.QtNormalLogs.ToString();
+		if (_loggerAsset.QtNormalLogs > maxLogs)
+			qtNormalLogs = maxLogs.ToString() + "+";
+
+		string qtWarningLogs = _loggerAsset.QtWarningsLogs.ToString();
+		if (_loggerAsset.QtWarningsLogs > maxLogs)
+			qtWarningLogs = maxLogs.ToString() + "+";
+
+		string qtErrorLogs = _loggerAsset.QtErrorsLogs.ToString();
+		if (_loggerAsset.QtErrorsLogs > LoggerAssetClient.MAX_LOGS)
+			qtErrorLogs = maxLogs.ToString() + "+";
         
-        _isShowNormal =
+		_isShowNormal =
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
-                                                 BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
-                                                 EditorStyles.toolbarButton);
-        _isShowWarnings =
+		                                               BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
+		                                               EditorStyles.toolbarButton);
+		_isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
-                                                 BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
-                                                 EditorStyles.toolbarButton);
-        _isShowErrors =
+		                                               BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
+		                                               EditorStyles.toolbarButton);
+		_isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
-                                                 BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
-                                                 EditorStyles.toolbarButton);
-
-
-        GUILayout.EndHorizontal();
-    }
-
-    private void DrawLogList()
-    {
-        _logListBeginPosition = GUILayout.BeginScrollView(_logListBeginPosition, false, false);
-
-        var logListHeight = _topPanelHeight - _toolbarHeight;
-        var buttonY = 0.0f;
-        var buttonWidth = ButtonWidth;
-
-        // Filtering by SearchString
-        var logsInfo =
-            string.IsNullOrEmpty(_searchString) ? _loggerAsset.LogsInfo : _loggerAsset.GetLogsInfoFiltered(_searchString);
-
-        LogInfo[] logsToShow = new LogInfo[logsInfo.Count];
-        int size = 0;
-        for (int i = 0, j = 0; i < logsInfo.Count; i++) {
-            if (!CanLog(logsInfo[i]))
-                continue;
-            size++;
-            logsToShow[j++] = logsInfo[i];
-        }
-               
-        int qtTopEmptySpace = (int)(_logListBeginPosition.y / ButtonHeight) - 1;
-        qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
-
-        int qtToLog = Mathf.CeilToInt(logListHeight / ButtonHeight);
-        qtToLog += 3;
-
-        int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
-
-        int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
-
-        if (size * ButtonHeight > logListHeight)
-            buttonWidth -= 15.0f;
-
-        // <BEG> Hacky checks because of crazy GUI system of Layout/Repaint
-        int totalToLog = qtTopEmptySpace + qtToLog + qtBotEmptySpace;
-        if (totalToLog > size) {
-            qtTopEmptySpace -= totalToLog - size;
-            qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
-        }
-
-        if (totalToLog > size)
-            qtToLog -= size - totalToLog;
-        // <END> Hacky checks because of crazy GUI system of Layout/Repaint
-
-        GUILayout.Space(qtTopEmptySpace * ButtonHeight);
-
-        for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
-            LogInfo logInfo = logsToShow[i];
-            bool isEven = i % 2 == 0;
-
-            string showMessage = null;
-            if (logInfo.IsCompileMessage) {
-                showMessage = logInfo.RawMessage;
-            } else {
-                showMessage = logInfo.Message.Replace(System.Environment.NewLine, " ");
-            }
-            showMessage = "  " + showMessage;
-
-            var content = new GUIContent(showMessage);
-
-            var actualLogLineStyle = EvenButtonStyle;
-            if (logInfo.IsCompileMessage && logInfo.LogType == BluLogType.Error && i != _logListSelectedMessage) {
-                actualLogLineStyle = isEven ? EvenErrorButtonStyle : OddButtonErrorStyle;
-            } else {
-                actualLogLineStyle = i == _logListSelectedMessage ?
-                    SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
-            }
-                
-            GUILayout.BeginHorizontal(GUILayout.Width(buttonWidth));
-
-            var contentImage = new GUIContent(GetIcon(logInfo.LogType));
-            var contentImageWidth = actualLogLineStyle.CalcSize(contentImage).x;
-
-            bool imageClicked = GUILayout.Button(GetIcon(logInfo.LogType), 
-                                                 actualLogLineStyle, 
-                                                 GUILayout.Height(ButtonHeight));
-
-            bool buttonClicked = GUILayout.Button(content,
-                                                  actualLogLineStyle, 
-                                                  GUILayout.Height(ButtonHeight),
-                                                  GUILayout.Width(buttonWidth - contentImageWidth));
-
-            if (imageClicked || buttonClicked) {
-                if (i == _logListSelectedMessage) {
-                    if (IsDoubleClickLogListButton()) {
-                        _logListLastTimeClicked = 0.0f;
-                        if (logInfo.CallStack.Count > 0) {
-                            JumpToSource(logInfo.CallStack[0]);
-                        }
-                    } else {
-                        _logListLastTimeClicked = EditorApplication.timeSinceStartup;
-                    }
-                } else {
-                    _logListSelectedMessage = i;
-                }
-
-                _logDetailSelectedFrame = -1;
-            }
-
-            GUILayout.EndHorizontal();
-
-            buttonY += ButtonHeight;
-        }
-
-        if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logListBeginPosition.x, _logListBeginPosition.y + size * ButtonHeight, 
-                                     position.width, qtFillCenterLog * ButtonHeight), 
-                            EvenButtonTexture);
-        }
-            
-        GUILayout.Space(qtBotEmptySpace * ButtonHeight);
-
-        GUILayout.EndScrollView();
-    }
-
-    private void DrawResizer()
-    {
-        // Don't ask me why... If we remove this 1.0f, there's one line with height one that isn't painted...
-        var resizerY = _topPanelHeight - 1.0f;
-
-        _cursorChangeRect = new Rect(0, resizerY, position.width, ResizerHeight);
-
-        var cursorChangeBorderTopRect = new Rect(0, resizerY, position.width, 1.0f);
-        var cursorChangeCenterRect = new Rect(0, resizerY + 1.0f, position.width, 2.0f);
-        var cursorChangeBorderBottomRect = new Rect(0, resizerY + 3.0f, position.width, 1.0f);
-
-        GUI.DrawTexture(cursorChangeBorderTopRect, SizeLinerBorderTexture);
-        GUI.DrawTexture(cursorChangeCenterRect, SizeLinerCenterTexture);
-        GUI.DrawTexture(cursorChangeBorderBottomRect, SizeLinerBorderTexture);
-        EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
-
-        if (Event.current.type == EventType.MouseDown && _cursorChangeRect.Contains(Event.current.mousePosition))
-            _isResizing = true;
-        else if (Event.current.rawType == EventType.MouseUp)
-            _isResizing = false;
-
-        if (_isResizing) {
-            _topPanelHeight = Event.current.mousePosition.y;
-            _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
-        }
-
-        _topPanelHeight = Mathf.Clamp(_topPanelHeight, MinHeightOfTopAndBottom, position.height - MinHeightOfTopAndBottom);
-    }
-
-    private void DrawLogDetail()
-    {
-        _logDetailBeginPosition = GUILayout.BeginScrollView(_logDetailBeginPosition);
-
-        if (_logListSelectedMessage == -1 ||
-            _loggerAsset.QtLogs == 0 ||
-            _loggerAsset.QtLogs < _logListSelectedMessage + 1) {
-            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y, 
-                                     position.width, position.height), 
-                            EvenButtonTexture);
-            GUILayout.EndScrollView();
-            return;
-        }
-
-        var logDetailHeight = WindowHeight - _topPanelHeight - ResizerHeight;
-        var buttonHeight = ButtonHeight;
-        var buttonWidth = ButtonWidth;
-
-        // Filtering by SearchString
-        var logsInfo =
-            string.IsNullOrEmpty(_searchString) ? _loggerAsset.LogsInfo : _loggerAsset.GetLogsInfoFiltered(_searchString);
-
-        int cntLogs = 0, indexOfSelectedLog = 0;
-        for (int i = 0; i < logsInfo.Count; i++) {
-            if (!CanLog(logsInfo[i]))
-                continue;
-            if (_logListSelectedMessage == cntLogs++) {
-                indexOfSelectedLog = i;
-                break;
-            }
-        }
-
-        var log = logsInfo[indexOfSelectedLog];
-        var size = log.CallStack.Count;
-
-        int qtTopEmptySpace = Mathf.CeilToInt(_logDetailBeginPosition.y / ButtonHeight) - 1;
-        qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
-
-        int qtToLog = Mathf.CeilToInt(logDetailHeight / ButtonHeight);
-        qtToLog += 2;
-
-        int qtFillCenterLog = size < qtToLog ? qtToLog - size : 0;
-
-        int qtBotEmptySpace = Mathf.Max(0, size - qtToLog - qtTopEmptySpace);
-
-        // <BEG> Hacky checks because of crazy GUI system of Layout/Repaint
-        int totalToLog = qtTopEmptySpace + qtToLog + qtBotEmptySpace;
-        if (totalToLog > size) {
-            qtTopEmptySpace -= totalToLog - size;
-            qtTopEmptySpace = Mathf.Max(qtTopEmptySpace, 0);
-        }
-
-        if (totalToLog > size) {
-            qtToLog -= size - totalToLog;
-        }
-        // <END> Hacky checks because of crazy GUI system of Layout/Repaint
-
-        if ((size+1) * ButtonHeight > logDetailHeight)
-            buttonWidth -= 15.0f;
-
-        for (int i = 0; i < size; i++) {
-            var frame = log.CallStack[i];
-            var message = frame.FormattedMethodName;
-            if (log.IsCompileMessage)
-                message = log.RawMessage;
-            buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(message, log.LogType));
-        }
-
-        if (size > 0 && qtTopEmptySpace == 0) {
-            buttonWidth = Mathf.Max(buttonWidth, GetButtonWidth(log.Message, log.LogType));
-
-            var style = _logDetailSelectedFrame == -2 ? SelectedButtonStyle : EvenButtonStyle;
-            if (GUILayout.Button(log.IsCompileMessage ? log.Message : log.RawMessage, 
-                                 style, 
-                                 GUILayout.Height(buttonHeight),
-                                 GUILayout.Width(buttonWidth))) {
-                if (_logDetailSelectedFrame == -2) {
-                    if (IsDoubleClickLogDetailButton()) {
-                        _logDetailLastTimeClicked = 0.0f;
-                        if (log.CallStack.Count > 0) {
-                            JumpToSource(log.CallStack[0]);
-                        }
-                    } else {
-                        _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                    }
-                } else {
-                    _logDetailSelectedFrame = -2;
-                }
-            }
-        }
-
-        GUILayout.Space(qtTopEmptySpace * buttonHeight);
-
-        for (int i = qtTopEmptySpace, j = 0; i < size && j < qtToLog; i++, j++) {
-            var frame = log.CallStack[i];
-            var methodName = frame.FormattedMethodName;
-
-            if (log.IsCompileMessage)
-                methodName = log.RawMessage;
-
-            var actualLogLineStyle = i == _logDetailSelectedFrame ?
-                SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
-
-            if (GUILayout.Button(methodName, 
-                                 actualLogLineStyle, 
-                                 GUILayout.Height(buttonHeight),
-                                 GUILayout.Width(buttonWidth))) {
-                if (i == _logDetailSelectedFrame) {
-                    if (IsDoubleClickLogDetailButton()) {
-                        _logDetailLastTimeClicked = 0.0f;
-                        JumpToSource(frame);
-                    } else {
-                        _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                    }
-                } else {
-                    _logDetailSelectedFrame = i;
-                }
-            }
-        }
-
-        if (qtFillCenterLog > 0) {
-            GUI.DrawTexture(new Rect(_logDetailBeginPosition.x, _logDetailBeginPosition.y + (size+1) * buttonHeight, 
-                                     position.width, qtFillCenterLog * buttonHeight), 
-                            EvenButtonTexture);
-        }
-
-        GUILayout.Space(qtBotEmptySpace * buttonHeight);
-
-        GUILayout.EndScrollView();
-    }
-
-    private float GetButtonWidth(string message,
-                                 BluLogType logType)
-    {
-        return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
-    }
-
-    private Texture2D GetIcon(BluLogType logType)
-    {
-        switch (logType) {
-        case BluLogType.Normal:
-            return BluConsoleEditorHelper.InfoIcon;
-        case BluLogType.Warning:
-            return BluConsoleEditorHelper.WarningIcon;
-        case BluLogType.Error:
-            return BluConsoleEditorHelper.ErrorIcon;
-        default:
-            return BluConsoleEditorHelper.InfoIcon;
-        }
-    }
-
-    private bool CanLog(LogInfo log)
-    {
-        return (((int)log.LogType) & LogTypeMask) != 0;
-    }
-
-    private bool IsDoubleClickLogListButton()
-    {
-        return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f;
-    }
-
-    private bool IsDoubleClickLogDetailButton()
-    {
-        return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f;
-    }
-
-    private void JumpToSource(LogStackFrame frame)
-    {
-        var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FileRelativePath);
-        if (System.IO.File.Exists(filename)) {
-            UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(frame.FileRelativePath, frame.Line);
-        }
-    }
-
-    private int LogTypeMask
-    {
-        get
-        {
-            int mask = 0;
-            if (_isShowNormal)
-                mask |= (int)BluLogType.Normal;
-            if (_isShowWarnings)
-                mask |= (int)BluLogType.Warning;
-            if (_isShowErrors)
-                mask |= (int)BluLogType.Error;
-            return mask;
-        }
-    }
-
-    private float WindowHeight
-    {
-        get
-        {
-            return position.height;
-        }
-    }
-
-    private float ButtonWidth
-    {
-        get
-        {
-            return _buttonWidth;
-        }
-    }
-
-    private float ButtonHeight
-    {
-        get
-        {
-            return _buttonHeight;
-        }
-    }
-
-    private int FontSize
-    {
-        get
-        {
-            return 12;
-        }
-    }
-
-    private float ResizerHeight
-    {
-        get
-        {
-            return 4.0f;
-        }
-    }
-
-    private float MinHeightOfTopAndBottom
-    {
-        get
-        {
-            return 60.0f;
-        }
-    }
-
-    private Color SizerLineCenterColour
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(162, 162, 162);
-        }
-    }
-
-    private Color SizerLineBorderColour
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(130, 130, 130);
-        }
-    }
-
-    private Color EvenButtonColor
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(222, 222, 222);
-        }
-    }
-
-    private Color OddButtonColor
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(216, 216, 216);
-        }
-    }
-
-    private Color EvenErrorButtonColor
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-        }
-    }
-
-    private Color OddErrorButtonColor
-    {
-        get
-        {
-            return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-        }
-    }
-
-    private Color SelectedButtonColor
-    {
-        get
-        {
-            return new Color(0.5f, 0.5f, 1);
-        }
-    }
-
-    private Texture2D SizeLinerCenterTexture
-    {
-        get
-        {
-            if (_sizeLinerCenterTexture == null)
-                _sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
-            return _sizeLinerCenterTexture;
-        }
-    }
-
-    private Texture2D SizeLinerBorderTexture
-    {
-        get
-        {
-            if (_sizeLinerBorderTexture == null)
-                _sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
-            return _sizeLinerBorderTexture;
-        }
-    }
-
-    private Texture2D EvenButtonTexture
-    {
-        get
-        {
-            if (_evenButtonTexture == null)
-                _evenButtonTexture = BluConsoleEditorHelper.GetTexture(EvenButtonColor);
-            return _evenButtonTexture;
-        }
-    }
-
-    private Texture2D OddButtonTexture
-    {
-        get
-        {
-            if (_oddButtonTexture == null)
-                _oddButtonTexture = BluConsoleEditorHelper.GetTexture(OddButtonColor);
-            return _oddButtonTexture;
-        }
-    }
-
-    private Texture2D EvenErrorButtonTexture
-    {
-        get
-        {
-            if (_evenErrorButtonTexture == null)
-                _evenErrorButtonTexture = BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
-            return _evenErrorButtonTexture;
-        }
-    }
-
-    private Texture2D OddErrorButtonTexture
-    {
-        get
-        {
-            if (_oddErrorButtonTexture == null)
-                _oddErrorButtonTexture = BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
-            return _oddErrorButtonTexture;
-        }
-    }
-
-    private Texture2D SelectedButtonTexture
-    {
-        get
-        {
-            if (_selectedButtonTexture == null)
-                _selectedButtonTexture = BluConsoleEditorHelper.GetTexture(SelectedButtonColor);
-            return _selectedButtonTexture;
-        }
-    }
-
-    private GUIStyle EvenButtonStyle
-    {
-        get
-        {
-            return _evenButtonStyle;
-        }
-    }
-
-    private GUIStyle OddButtonStyle
-    {
-        get
-        {
-            return _oddButtonStyle;
-        }
-    }
-
-    private GUIStyle EvenErrorButtonStyle
-    {
-        get
-        {
-            return _evenErrorButtonStyle;
-        }
-    }
-
-    private GUIStyle OddButtonErrorStyle
-    {
-        get
-        {
-            return _oddButtonErrorStyle;
-        }
-    }
-
-    private GUIStyle SelectedButtonStyle
-    {
-        get
-        {
-            return _selectedButtonStyle;
-        }
-    }
+		                                               BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
+		                                               EditorStyles.toolbarButton);
+
+
+		GUILayout.EndHorizontal();
+
+		return height;
+	}
+
+
+	#region LogList
+
+
+	private void DrawLogList()
+	{
+		LogInfo[] logs = LogsFiltered;
+
+		float windowWidth = WindowWidth;
+		float windowHeight = _topPanelHeight - DrawYPos;
+
+		float buttonWidth = ButtonWidth;
+		if (logs.Length * ButtonHeight > windowHeight)
+			buttonWidth -= 15f;
+
+		float viewWidth = buttonWidth;
+		float viewHeight = logs.Length * ButtonHeight;
+
+		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
+		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
+
+		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
+		                                             scrollPosition: _logListScrollPosition, 
+		                                             viewRect: scrollViewViewRect);
+
+		int firstRenderLogIndex = (int)(_logListScrollPosition.y / ButtonHeight);
+		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, logs.Length);
+
+		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
+		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, logs.Length);
+
+		float buttonY = firstRenderLogIndex * ButtonHeight;
+
+		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
+		{
+			LogInfo logInfo = logs[i];
+
+			var style = GetLogListStyle(i, logInfo);
+			string showMessage = GetLogListMessage(logInfo);
+			var content = new GUIContent(showMessage);
+			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
+			var contentImageWidth = style.CalcSize(contentImage).x;
+
+			var buttonRect = new Rect(x: contentImageWidth, y: buttonY, width: viewWidth, height: ButtonHeight);
+			var imageRect = new Rect(x: 0, y: buttonY, width: contentImageWidth, height: ButtonHeight);
+
+			bool buttonClicked = GUI.Button(buttonRect, content, style);
+			bool imageClicked = GUI.Button(imageRect, contentImage, style);
+
+			if (imageClicked || buttonClicked)
+			{
+				if (i == _logListSelectedMessage)
+				{
+					if (IsDoubleClickLogListButton)
+					{
+						_logListLastTimeClicked = 0.0f;
+						if (logInfo.CallStack.Count > 0)
+						{
+							JumpToSource(logInfo.CallStack[0]);
+						}
+					}
+					else
+					{
+						_logListLastTimeClicked = EditorApplication.timeSinceStartup;
+					}
+				}
+				else
+				{
+					_logListSelectedMessage = i;
+				}
+
+				_logDetailSelectedFrame = -1;
+			}
+
+
+
+			buttonY += ButtonHeight;
+		}
+
+		GUI.EndScrollView();
+	}
+
+	private string GetLogListMessage(
+		LogInfo log)
+	{
+		string showMessage = null;
+		if (log.IsCompileMessage)
+			showMessage = log.RawMessage;
+		else
+			showMessage = log.Message.Replace(System.Environment.NewLine, " ");
+		showMessage = "  " + showMessage;
+		return showMessage;
+	}
+
+	private GUIStyle GetLogListStyle(
+		int index,
+		LogInfo log)
+	{
+		bool isEven = index % 2 == 0 ? true : false;
+
+		var logLineStyle = EvenButtonStyle;
+		if (log.IsCompileMessage && log.LogType == BluLogType.Error && index != _logListSelectedMessage)
+		{
+			logLineStyle = isEven ? EvenErrorButtonStyle : OddButtonErrorStyle;
+		}
+		else
+		{
+			logLineStyle = index == _logListSelectedMessage ?
+                SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
+		}
+
+		return logLineStyle;
+	}
+
+
+	#endregion LogList
+
+
+	private void DrawResizer()
+	{
+		// Don't ask me why... If we remove this 1.0f, there's one line with height one that isn't painted...
+		var resizerY = _topPanelHeight - 1.0f;
+
+		_cursorChangeRect = new Rect(0, resizerY, position.width, ResizerHeight);
+
+		var cursorChangeBorderTopRect = new Rect(0, resizerY, position.width, 1.0f);
+		var cursorChangeCenterRect = new Rect(0, resizerY + 1.0f, position.width, 2.0f);
+		var cursorChangeBorderBottomRect = new Rect(0, resizerY + 3.0f, position.width, 1.0f);
+
+		GUI.DrawTexture(cursorChangeBorderTopRect, SizeLinerBorderTexture);
+		GUI.DrawTexture(cursorChangeCenterRect, SizeLinerCenterTexture);
+		GUI.DrawTexture(cursorChangeBorderBottomRect, SizeLinerBorderTexture);
+		EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
+
+		if (Event.current.type == EventType.MouseDown && _cursorChangeRect.Contains(Event.current.mousePosition))
+			_isResizing = true;
+		else if (Event.current.rawType == EventType.MouseUp)
+			_isResizing = false;
+
+		if (_isResizing)
+		{
+			_topPanelHeight = Event.current.mousePosition.y;
+			_cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
+		}
+
+		_topPanelHeight = Mathf.Clamp(_topPanelHeight,
+		                              MinHeightOfTopAndBottom,
+		                              position.height - MinHeightOfTopAndBottom);
+	}
+
+	private void DrawLogDetail()
+	{
+		LogInfo[] logs = LogsFiltered;
+		var windowHeight = WindowHeight - DrawYPos;
+
+		if (_logListSelectedMessage == -1 || logs.Length == 0 || _logListSelectedMessage >= logs.Length)
+		{
+			var rect = new Rect(x: 0, y: DrawYPos, width: WindowWidth, height: windowHeight);
+			GUI.DrawTexture(rect, EvenButtonTexture);
+			return;
+		}
+
+		var log = logs[_logListSelectedMessage];
+		var size = log.CallStack.Count;
+		var sizePlus = size + 1;
+
+		// Getting maximum width
+		float viewWidth = WindowWidth;
+		if (log.IsCompileMessage)
+			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(log.Message, log.LogType));
+		else
+			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(log.RawMessage, log.LogType));
+		for (int i = 0; i < size; i++)
+		{
+			var frame = log.CallStack[i];
+			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
+			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(message, log.LogType));
+		}
+
+		float viewHeight = sizePlus * ButtonHeight;
+
+		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: WindowWidth, height: windowHeight);
+		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
+
+		_logDetailScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
+		                                               scrollPosition: _logDetailScrollPosition, 
+		                                               viewRect: scrollViewViewRect);
+
+		int firstRenderLogIndex = (int)(_logDetailScrollPosition.y / ButtonHeight);
+		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, sizePlus);
+
+		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
+		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, sizePlus);
+
+		float buttonY = firstRenderLogIndex * ButtonHeight;
+
+		// Return if doesn't has nothing to show
+		if (_logListSelectedMessage == -1 || logs.Length == 0 || _logListSelectedMessage >= logs.Length)
+		{
+			GUI.EndScrollView();
+			return;
+		}
+
+		// Logging first message
+		if (firstRenderLogIndex == 0)
+		{
+			var style = _logDetailSelectedFrame == -2 ? SelectedButtonStyle : EvenButtonStyle;
+			var buttonRect = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+
+			var message = log.IsCompileMessage ? log.Message : log.RawMessage;
+			var content = new GUIContent(message);
+
+			if (GUI.Button(buttonRect, content, style))
+			{
+				if (_logDetailSelectedFrame == -2)
+				{
+					if (IsDoubleClickLogDetailButton)
+					{
+						_logDetailLastTimeClicked = 0.0f;
+						if (log.CallStack.Count > 0)
+							JumpToSource(log.CallStack[0]);
+					}
+					else
+					{
+						_logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
+					}
+				}
+				else
+				{
+					_logDetailSelectedFrame = -2;
+				}
+			}
+
+			buttonY += ButtonHeight;
+		}
+
+		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i+1 < lastRenderLogIndex; i++)
+		{
+			var frame = log.CallStack[i];
+			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
+			var content = new GUIContent(message);
+
+			var style = i == _logDetailSelectedFrame ? SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
+			var buttonRect = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+
+			if (GUI.Button(buttonRect, content, style))
+			{
+				if (i == _logDetailSelectedFrame)
+				{
+					if (IsDoubleClickLogDetailButton)
+					{
+						_logDetailLastTimeClicked = 0.0f;
+						JumpToSource(frame);
+					}
+					else
+					{
+						_logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
+					}
+				}
+				else
+				{
+					_logDetailSelectedFrame = i;
+				}
+			}
+
+			buttonY += ButtonHeight;
+		}
+
+		GUI.EndScrollView();
+	}
+
+
+	#region Gets
+
+	private float GetMaxButtonWidth(IEnumerable<LogInfo> logs)
+	{
+		float maxWidth = -1f;
+		foreach (LogInfo log in logs)
+		{
+			float width = GetButtonWidth(log.Message, log.LogType);
+			maxWidth = Mathf.Max(maxWidth, width);
+		}
+		return maxWidth;
+	}
+
+	private float GetButtonWidth(
+		string message,
+		BluLogType logType)
+	{
+		return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
+	}
+
+	private Texture2D GetIcon(
+		BluLogType logType)
+	{
+		switch (logType)
+		{
+		case BluLogType.Normal:
+			return BluConsoleEditorHelper.InfoIcon;
+		case BluLogType.Warning:
+			return BluConsoleEditorHelper.WarningIcon;
+		case BluLogType.Error:
+			return BluConsoleEditorHelper.ErrorIcon;
+		default:
+			return BluConsoleEditorHelper.InfoIcon;
+		}
+	}
+
+	private bool CanLog(
+		LogInfo log)
+	{
+		return (((int)log.LogType) & LogTypeMask) != 0;
+	}
+
+	private void JumpToSource(
+		LogStackFrame frame)
+	{
+		var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FileRelativePath);
+		if (System.IO.File.Exists(filename))
+		{
+			UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(frame.FileRelativePath, frame.Line);
+		}
+	}
+
+
+	#endregion Gets
+
+	#region Properties
+
+	private bool IsDoubleClickLogListButton
+	{
+		get 
+		{
+			return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f;
+		}
+	}
+
+	private bool IsDoubleClickLogDetailButton
+	{
+		get
+		{
+			return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f;
+		}
+	}
+
+	private LogInfo[] LogsFiltered
+	{
+		get
+		{
+			List<LogInfo> logs = null;
+			if (string.IsNullOrEmpty(_searchString))
+				logs = _loggerAsset.LogsInfo;
+			else
+				logs = _loggerAsset.GetLogsInfoFiltered(_searchString);
+
+			int size = 0;
+			for (int i = 0; i < logs.Count; i++)
+			{
+				if (CanLog(logs[i]))
+					size++;
+			}
+
+			LogInfo[] logsToShow = new LogInfo[size];
+			for (int i = 0, j = 0; i < logs.Count; i++)
+			{
+				if (!CanLog(logs[i]))
+					continue;
+				logsToShow[j++] = logs[i];
+			}
+
+			return logsToShow;
+		}
+	}
+
+	private int LogTypeMask
+	{
+		get
+		{
+			int mask = 0;
+			if (_isShowNormal)
+				mask |= (int)BluLogType.Normal;
+			if (_isShowWarnings)
+				mask |= (int)BluLogType.Warning;
+			if (_isShowErrors)
+				mask |= (int)BluLogType.Error;
+			return mask;
+		}
+	}
+
+	private float DrawYPos
+	{
+		get
+		{
+			return _drawYPos;
+		}
+	}
+
+	private float WindowWidth
+	{
+		get
+		{
+			return position.width;
+		}
+	}
+
+	private float WindowHeight
+	{
+		get
+		{
+			return position.height;
+		}
+	}
+
+	private float ButtonWidth
+	{
+		get
+		{
+			return _buttonWidth;
+		}
+	}
+
+	private float ButtonHeight
+	{
+		get
+		{
+			return _buttonHeight;
+		}
+	}
+
+	private int FontSize
+	{
+		get
+		{
+			return 12;
+		}
+	}
+
+	private float ResizerHeight
+	{
+		get
+		{
+			return 4.0f;
+		}
+	}
+
+	private float MinHeightOfTopAndBottom
+	{
+		get
+		{
+			return 60.0f;
+		}
+	}
+
+	private Color SizerLineCenterColour
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(162, 162, 162);
+		}
+	}
+
+	private Color SizerLineBorderColour
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(130, 130, 130);
+		}
+	}
+
+	private Color EvenButtonColor
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(222, 222, 222);
+		}
+	}
+
+	private Color OddButtonColor
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(216, 216, 216);
+		}
+	}
+
+	private Color EvenErrorButtonColor
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
+		}
+	}
+
+	private Color OddErrorButtonColor
+	{
+		get
+		{
+			return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
+		}
+	}
+
+	private Color SelectedButtonColor
+	{
+		get
+		{
+			return new Color(0.5f, 0.5f, 1);
+		}
+	}
+
+	private Texture2D SizeLinerCenterTexture
+	{
+		get
+		{
+			if (_sizeLinerCenterTexture == null)
+				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
+			return _sizeLinerCenterTexture;
+		}
+	}
+
+	private Texture2D SizeLinerBorderTexture
+	{
+		get
+		{
+			if (_sizeLinerBorderTexture == null)
+				_sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
+			return _sizeLinerBorderTexture;
+		}
+	}
+
+	private Texture2D EvenButtonTexture
+	{
+		get
+		{
+			if (_evenButtonTexture == null)
+				_evenButtonTexture = BluConsoleEditorHelper.GetTexture(EvenButtonColor);
+			return _evenButtonTexture;
+		}
+	}
+
+	private Texture2D OddButtonTexture
+	{
+		get
+		{
+			if (_oddButtonTexture == null)
+				_oddButtonTexture = BluConsoleEditorHelper.GetTexture(OddButtonColor);
+			return _oddButtonTexture;
+		}
+	}
+
+	private Texture2D EvenErrorButtonTexture
+	{
+		get
+		{
+			if (_evenErrorButtonTexture == null)
+				_evenErrorButtonTexture = BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
+			return _evenErrorButtonTexture;
+		}
+	}
+
+	private Texture2D OddErrorButtonTexture
+	{
+		get
+		{
+			if (_oddErrorButtonTexture == null)
+				_oddErrorButtonTexture = BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
+			return _oddErrorButtonTexture;
+		}
+	}
+
+	private Texture2D SelectedButtonTexture
+	{
+		get
+		{
+			if (_selectedButtonTexture == null)
+				_selectedButtonTexture = BluConsoleEditorHelper.GetTexture(SelectedButtonColor);
+			return _selectedButtonTexture;
+		}
+	}
+
+	private GUIStyle EvenButtonStyle
+	{
+		get
+		{
+			return _evenButtonStyle;
+		}
+	}
+
+	private GUIStyle OddButtonStyle
+	{
+		get
+		{
+			return _oddButtonStyle;
+		}
+	}
+
+	private GUIStyle EvenErrorButtonStyle
+	{
+		get
+		{
+			return _evenErrorButtonStyle;
+		}
+	}
+
+	private GUIStyle OddButtonErrorStyle
+	{
+		get
+		{
+			return _oddButtonErrorStyle;
+		}
+	}
+
+	private GUIStyle SelectedButtonStyle
+	{
+		get
+		{
+			return _selectedButtonStyle;
+		}
+	}
+
+
+	#endregion Properties
 
 }
 

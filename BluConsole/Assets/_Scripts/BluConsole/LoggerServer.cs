@@ -17,29 +17,34 @@ public static class LoggerServer
 {
 
     private static HashSet<ILogger> _loggers = new HashSet<ILogger>();
-    private static HashSet<KeyValuePair<string, string>> _logBlackList = 
+    private static HashSet<KeyValuePair<string, string>> _logBlackList =
         new HashSet<KeyValuePair<string, string>>() {
-            new KeyValuePair<string, string>("CallLogCallback", "Application"),
+                new KeyValuePair<string, string>("CallLogCallback", "Application"),
             new KeyValuePair<string, string>("Internal_Log", "Debug"),
-            new KeyValuePair<string, string>("Internal_Log", "DebugLogHandler"),
+                new KeyValuePair<string, string>("Internal_Log", "DebugLogHandler"),
             new KeyValuePair<string, string>("Log*", "Debug"),
-            new KeyValuePair<string, string>("Log*", "DebugLogHandler"),
+                new KeyValuePair<string, string>("Log*", "DebugLogHandler"),
             new KeyValuePair<string, string>("Log*", "Logger"),
-            new KeyValuePair<string, string>("LogFormat", "Debug"),
+			new KeyValuePair<string, string>("LogFormat", "Debug"),
             new KeyValuePair<string, string>("LogFormat", "DebugLogHandler"),
         };
 
-    public static void Register(ILogger logger)
+    public static void Register(
+        ILogger logger)
     {
-        lock (_loggers) {
+        lock (_loggers)
+        {
             _loggers.Add(logger);
         }
     }
 
-    public static void Unregister(ILogger logger)
+    public static void Unregister(
+        ILogger logger)
     {
-        lock (_loggers) {
-            if (_loggers.Contains(logger)) {
+        lock (_loggers)
+        {
+            if (_loggers.Contains(logger))
+            {
                 _loggers.Remove(logger);
             }
         }
@@ -54,11 +59,13 @@ public static class LoggerServer
     }
 
     [StackTraceIgnore]
-    public static void UnityLogHandler(string message,
-                                       string stackTrace,
-                                       LogType logType)
+    public static void UnityLogHandler(
+        string message,
+        string stackTrace,
+        LogType logType)
     {
-        lock (_loggers) {
+        lock (_loggers)
+        {
             string extractedMessage = ExtractMessageFromUnityMessage(message);
 
             List<LogStackFrame> callStack = GetCallStack();
@@ -73,17 +80,22 @@ public static class LoggerServer
         }
     }
 
-    private static string ExtractMessageFromUnityMessage(string message)
+    private static string ExtractMessageFromUnityMessage(
+        string message)
     {
         MatchCollection match = Regex.Matches(message, @".*:.*:\s*(.*)");
-        if (match.Count > 0) {
+        if (match.Count > 0)
+        {
             return match[0].Groups[1].Value;
-        } else {
+        }
+        else
+        {
             return message;
         }
     }
 
-    private static bool IsCompileMessage(string unityMessage)
+    private static bool IsCompileMessage(
+        string unityMessage)
     {
         bool warningMatch = Regex.Match(unityMessage, @".*:\s*warning.*:.*").Success;
         bool errorMatch = Regex.Match(unityMessage, @".*:\s*error.*:.*").Success;
@@ -98,7 +110,8 @@ public static class LoggerServer
         var stackTrace = new StackTrace(true);          
         StackFrame[] stackFrames = stackTrace.GetFrames(); 
 
-        foreach (StackFrame stackFrame in stackFrames) {
+        foreach (StackFrame stackFrame in stackFrames)
+        {
             MethodBase method = stackFrame.GetMethod();
 
             if (IsNoise(method))
@@ -110,26 +123,32 @@ public static class LoggerServer
         return callStack;
     }
 
-    private static List<LogStackFrame> GetCallStack(string unityStackTrace)
+    private static List<LogStackFrame> GetCallStack(
+        string unityStackTrace)
     {
         var callStack = new List<LogStackFrame>();
 
         Regex
             .Split(unityStackTrace, System.Environment.NewLine)
-            .Where(line => !string.IsNullOrEmpty(line))
-            .Where(line => LogStackFrame.CanGetInformation(line))
+            .Where(
+                line => !string.IsNullOrEmpty(line))
+            .Where(
+                line => LogStackFrame.CanGetInformation(line))
             .ToList()
-            .ForEach(line => callStack.Add(LogStackFrame.Create(line)));
+            .ForEach(
+                line => callStack.Add(LogStackFrame.Create(line)));
 
         return callStack;
     }
 
-    private static List<LogStackFrame> GetCallStackFromUnityMessage(string message)
+    private static List<LogStackFrame> GetCallStackFromUnityMessage(
+        string message)
     {
         var callStack = new List<LogStackFrame>();
 
         MatchCollection match = Regex.Matches(message, @"(.*)\((\d+).*");
-        if (match.Count > 0) {
+        if (match.Count > 0)
+        {
             string fileRelativePath = match[0].Groups[1].Value;
             int line = Convert.ToInt32(match[0].Groups[2].Value);
 
@@ -144,12 +163,14 @@ public static class LoggerServer
         return callStack;
     }
 
-    private static bool IsNoise(MethodBase method)
+    private static bool IsNoise(
+        MethodBase method)
     {
         if (method.IsDefined(typeof(StackTraceIgnore), true))
             return true;
 
-        foreach (var pair in _logBlackList) {
+        foreach (var pair in _logBlackList)
+        {
             if (Regex.Match(method.Name, pair.Key).Success &&
                 Regex.Match(method.DeclaringType.Name, pair.Value).Success)
                 return true;
@@ -158,11 +179,13 @@ public static class LoggerServer
         return false;
     }
 
-    private static BluLogType GetLogType(LogType logType)
+    private static BluLogType GetLogType(
+        LogType logType)
     {
         BluLogType bluLogType = BluLogType.Normal;
 
-        switch (logType) {
+        switch (logType)
+        {
         case LogType.Warning:
             bluLogType = BluLogType.Warning;
             break;
@@ -177,7 +200,8 @@ public static class LoggerServer
         return bluLogType;
     }
 
-    private static void Call(LogInfo log)
+    private static void Call(
+        LogInfo log)
     {
         foreach (ILogger logger in _loggers)
             logger.Log(log);

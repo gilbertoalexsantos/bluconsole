@@ -13,16 +13,20 @@ public class LogInfoComparer : IEqualityComparer<LogInfo>
     
     #region IEqualityComparer implementation
 
-    public bool Equals(LogInfo x,
-                       LogInfo y)
+
+    public bool Equals(
+        LogInfo x,
+        LogInfo y)
     {
         return x.RawMessage == y.RawMessage;
     }
 
-    public int GetHashCode(LogInfo obj)
+    public int GetHashCode(
+        LogInfo obj)
     {
         return obj.RawMessage.GetHashCode();
     }
+
 
     #endregion
     
@@ -79,11 +83,12 @@ public class LogInfo
         }
     }
 
-    public LogInfo(string rawMessage,
-                   string message,
-                   List<LogStackFrame> callStack,
-                   BluLogType logType,
-                   bool isCompileMessage)
+    public LogInfo(
+        string rawMessage,
+        string message,
+        List<LogStackFrame> callStack,
+        BluLogType logType,
+        bool isCompileMessage)
     {
         _rawMessage = rawMessage;
         _message = message;
