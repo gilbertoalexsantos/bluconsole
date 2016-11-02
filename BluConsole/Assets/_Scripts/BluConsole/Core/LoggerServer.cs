@@ -29,6 +29,17 @@ public static class LoggerServer
             new KeyValuePair<string, string>("LogFormat", "DebugLogHandler"),
         };
 
+    static LoggerServer()
+    {
+        RegisterForUnityLogHandler();
+    }
+
+    public static void RegisterForUnityLogHandler()
+    {
+        Application.logMessageReceived -= LoggerServer.UnityLogHandler;
+        Application.logMessageReceived += LoggerServer.UnityLogHandler;
+    }
+
     public static void Register(
         ILogger logger)
     {

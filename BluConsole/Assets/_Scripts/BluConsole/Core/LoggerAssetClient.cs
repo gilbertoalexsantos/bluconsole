@@ -147,8 +147,14 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
 	private void OnEnable()
 	{
+        EditorApplication.playmodeStateChanged += OnPlaymodeStateChanged;
 		hideFlags = HideFlags.HideAndDontSave;
 	}
+
+    private void OnPlaymodeStateChanged()
+    {
+        LoggerServer.RegisterForUnityLogHandler();
+    }
 
 	private void TrimLogs()
 	{

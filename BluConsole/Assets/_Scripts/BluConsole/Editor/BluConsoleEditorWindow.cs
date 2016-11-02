@@ -7,6 +7,10 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.VersionControl;
+using System.Diagnostics;
+using System.Text;
+using System.IO;
 
 
 namespace BluConsole.Editor
@@ -15,6 +19,8 @@ namespace BluConsole.Editor
 
 public class BluConsoleEditorWindow : EditorWindow
 {
+	private readonly int MAX_LENGTH_MESSAGE = 1000;
+
 	// LoggerClient
 	private LoggerAssetClient _loggerAsset;
 
@@ -76,9 +82,6 @@ public class BluConsoleEditorWindow : EditorWindow
 	private void OnGUI()
 	{
 		InitVariables();
-
-		Application.logMessageReceived -= LoggerServer.UnityLogHandler;
-		Application.logMessageReceived += LoggerServer.UnityLogHandler;
 
 		if (EditorApplication.isCompiling && !_isCompiling)
 		{
@@ -184,13 +187,15 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void OnBeforeCompile()
 	{
-		_dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(log => log.IsCompileMessage));
+		_dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(
+					log => log.IsCompileMessage));
 	}
 
 	private void OnAfterCompile()
 	{
 		HashSet<LogInfo> logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
-		_loggerAsset.Clear(log => logsBlackList.Contains(log));
+		_loggerAsset.Clear(
+				log => logsBlackList.Contains(log));
 	}
 
 	private void OnBeginPlay()
@@ -523,7 +528,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			buttonY += ButtonHeight;
 		}
 
-		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i+1 < lastRenderLogIndex; i++)
+		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i + 1 < lastRenderLogIndex; i++)
 		{
 			var frame = log.CallStack[i];
 			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
@@ -561,14 +566,22 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	#region Gets
 
-	private float GetMaxButtonWidth(IEnumerable<LogInfo> logs)
+
+	private string GetTruncatedMessage(
+		string message)
+	{
+		if (message.Length < MAX_LENGTH_MESSAGE)
+			return message;
+
+		return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: MAX_LENGTH_MESSAGE));
+	}
+
+	private float GetMaxButtonWidth(
+		IEnumerable<LogInfo> logs)
 	{
 		float maxWidth = -1f;
 		foreach (LogInfo log in logs)
-		{
-			float width = GetButtonWidth(log.Message, log.LogType);
-			maxWidth = Mathf.Max(maxWidth, width);
-		}
+			maxWidth = Mathf.Max(maxWidth, GetButtonWidth(log.Message, log.LogType));
 		return maxWidth;
 	}
 
@@ -614,11 +627,13 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	#endregion Gets
 
+
 	#region Properties
+
 
 	private bool IsDoubleClickLogListButton
 	{
-		get 
+		get
 		{
 			return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f;
 		}
