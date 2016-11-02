@@ -330,7 +330,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			LogInfo logInfo = logs[i];
 
 			var style = GetLogListStyle(i, logInfo);
-			string showMessage = GetLogListMessage(logInfo);
+			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
 			var content = new GUIContent(showMessage);
 			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
 			var contentImageWidth = style.CalcSize(contentImage).x;
@@ -461,13 +461,14 @@ public class BluConsoleEditorWindow : EditorWindow
 		// Getting maximum width
 		float viewWidth = WindowWidth;
 		if (log.IsCompileMessage)
-			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(log.Message, log.LogType));
+			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.Message), log.LogType));
 		else
-			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(log.RawMessage, log.LogType));
+			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.RawMessage), log.LogType));
 		for (int i = 0; i < size; i++)
 		{
 			var frame = log.CallStack[i];
 			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
+			message = GetTruncatedMessage(message);
 			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(message, log.LogType));
 		}
 
@@ -502,6 +503,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			var buttonRect = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
 
 			var message = log.IsCompileMessage ? log.Message : log.RawMessage;
+			message = GetTruncatedMessage(message);
 			var content = new GUIContent(message);
 
 			if (GUI.Button(buttonRect, content, style))
@@ -532,6 +534,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			var frame = log.CallStack[i];
 			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
+			message = GetTruncatedMessage(message);
 			var content = new GUIContent(message);
 
 			var style = i == _logDetailSelectedFrame ? SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
@@ -570,19 +573,10 @@ public class BluConsoleEditorWindow : EditorWindow
 	private string GetTruncatedMessage(
 		string message)
 	{
-		if (message.Length < MAX_LENGTH_MESSAGE)
+		if (message.Length <= MAX_LENGTH_MESSAGE)
 			return message;
 
 		return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: MAX_LENGTH_MESSAGE));
-	}
-
-	private float GetMaxButtonWidth(
-		IEnumerable<LogInfo> logs)
-	{
-		float maxWidth = -1f;
-		foreach (LogInfo log in logs)
-			maxWidth = Mathf.Max(maxWidth, GetButtonWidth(log.Message, log.LogType));
-		return maxWidth;
 	}
 
 	private float GetButtonWidth(
