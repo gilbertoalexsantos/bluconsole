@@ -1,16 +1,10 @@
 ﻿#if UNITY_EDITOR
 
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEditor;
 using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.VersionControl;
-using System.Diagnostics;
-using System.Text;
-using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 
 namespace BluConsole.Editor
@@ -340,10 +334,14 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			bool buttonClicked = GUI.Button(buttonRect, content, style);
 			bool imageClicked = GUI.Button(imageRect, contentImage, style);
+			bool isLeftClick = (buttonClicked || imageClicked) ? Event.current.button == 0 : false;
 
 			if (imageClicked || buttonClicked)
 			{
-				if (i == _logListSelectedMessage)
+				if (!isLeftClick && i == _logListSelectedMessage)
+					DrawPopup(logInfo);
+
+				if (isLeftClick && i == _logListSelectedMessage)
 				{
 					if (IsDoubleClickLogListButton)
 					{
@@ -365,8 +363,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 				_logDetailSelectedFrame = -1;
 			}
-
-
 
 			buttonY += ButtonHeight;
 		}
@@ -508,7 +504,12 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			if (GUI.Button(buttonRect, content, style))
 			{
-				if (_logDetailSelectedFrame == -2)
+				bool isLeftClick = Event.current.button == 0;
+
+				if (!isLeftClick && _logDetailSelectedFrame == -2)
+					DrawPopup(log);
+
+				if (isLeftClick && _logDetailSelectedFrame == -2)
 				{
 					if (IsDoubleClickLogDetailButton)
 					{
@@ -542,7 +543,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			if (GUI.Button(buttonRect, content, style))
 			{
-				if (i == _logDetailSelectedFrame)
+				bool isLeftClick = Event.current.button == 0;
+
+				if (isLeftClick && i == _logDetailSelectedFrame)
 				{
 					if (IsDoubleClickLogDetailButton)
 					{
@@ -564,6 +567,17 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 
 		GUI.EndScrollView();
+	}
+
+	private void DrawPopup(LogInfo log)
+	{
+		GenericMenu.MenuFunction copyCallback = () => {
+			EditorGUIUtility.systemCopyBuffer = log.IsCompileMessage ? log.RawMessage : log.Message;
+		};
+
+		GenericMenu menu = new GenericMenu();
+		menu.AddItem(content: new GUIContent("Copy"), on: false, func: copyCallback);
+		menu.ShowAsContext();
 	}
 
 
