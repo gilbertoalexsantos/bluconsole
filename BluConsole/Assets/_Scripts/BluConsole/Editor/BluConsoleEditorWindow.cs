@@ -1,6 +1,7 @@
 ﻿#if UNITY_EDITOR
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -70,6 +71,13 @@ public class BluConsoleEditorWindow : EditorWindow
 	public static void ShowWindow()
 	{
 		var window = EditorWindow.GetWindow<BluConsoleEditorWindow>("BluConsole");
+
+		var consoleIcon = BluConsoleEditorHelper.ConsoleIcon;
+		if (consoleIcon != null)
+			window.titleContent = new GUIContent("BluConsole", consoleIcon);
+		else
+			window.titleContent = new GUIContent("BluConsole");
+		
 		window._topPanelHeight = window.position.height / 2.0f;
 	}
 
@@ -124,7 +132,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		_evenButtonStyle.fontSize = FontSize;
 		_evenButtonStyle.alignment = TextAnchor.MiddleLeft;
 		_evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_evenButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_evenButtonStyle.padding = new RectOffset(0, 0, 0, 0);
 		_evenButtonStyle.normal.background = EvenButtonTexture;
 		_evenButtonStyle.active = _evenButtonStyle.normal;
 		_evenButtonStyle.hover = _evenButtonStyle.normal;
@@ -135,7 +143,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		_oddButtonStyle.fontSize = FontSize;
 		_oddButtonStyle.alignment = TextAnchor.MiddleLeft;
 		_oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_oddButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_oddButtonStyle.padding = new RectOffset(0, 0, 0, 0);
 		_oddButtonStyle.normal.background = OddButtonTexture;
 		_oddButtonStyle.active = _oddButtonStyle.normal;
 		_oddButtonStyle.hover = _oddButtonStyle.normal;
@@ -146,7 +154,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		_evenErrorButtonStyle.fontSize = FontSize;
 		_evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
 		_evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_evenErrorButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_evenErrorButtonStyle.padding = new RectOffset(0, 0, 0, 0);
 		_evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
 		_evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
 		_evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
@@ -157,7 +165,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		_oddButtonErrorStyle.fontSize = FontSize;
 		_oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
 		_oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-		_oddButtonErrorStyle.padding = new RectOffset(7, 0, 0, 0);
+		_oddButtonErrorStyle.padding = new RectOffset(0, 0, 0, 0);
 		_oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
 		_oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
 		_oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
@@ -168,7 +176,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		_selectedButtonStyle.fontSize = FontSize;
 		_selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
 		_selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_selectedButtonStyle.padding = new RectOffset(7, 0, 0, 0);
+		_selectedButtonStyle.padding = new RectOffset(0, 0, 0, 0);
 		_selectedButtonStyle.normal.background = SelectedButtonTexture;
 		_selectedButtonStyle.active = _selectedButtonStyle.normal;
 		_selectedButtonStyle.hover = _selectedButtonStyle.normal;
@@ -269,16 +277,16 @@ public class BluConsoleEditorWindow : EditorWindow
         
 		_isShowNormal =
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
-		                                               BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
-		                                               EditorStyles.toolbarButton);
+			                                     BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
+			                                     EditorStyles.toolbarButton);
 		_isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
-		                                               BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
-		                                               EditorStyles.toolbarButton);
+			                                     BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
+			                                     EditorStyles.toolbarButton);
 		_isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
-		                                               BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
-		                                               EditorStyles.toolbarButton);
+			                                     BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
+			                                     EditorStyles.toolbarButton);
 
 
 		GUILayout.EndHorizontal();
@@ -378,7 +386,6 @@ public class BluConsoleEditorWindow : EditorWindow
 			showMessage = log.RawMessage;
 		else
 			showMessage = log.Message.Replace(System.Environment.NewLine, " ");
-		showMessage = "  " + showMessage;
 		return showMessage;
 	}
 
@@ -569,7 +576,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUI.EndScrollView();
 	}
 
-	private void DrawPopup(LogInfo log)
+	private void DrawPopup(
+		LogInfo log)
 	{
 		GenericMenu.MenuFunction copyCallback = () => {
 			EditorGUIUtility.systemCopyBuffer = log.IsCompileMessage ? log.RawMessage : log.Message;
@@ -597,7 +605,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		string message,
 		BluLogType logType)
 	{
-		return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
+		return EvenButtonStyle.CalcSize(new GUIContent(message, GetIconSmall(logType))).x;
 	}
 
 	private Texture2D GetIcon(
@@ -613,6 +621,22 @@ public class BluConsoleEditorWindow : EditorWindow
 			return BluConsoleEditorHelper.ErrorIcon;
 		default:
 			return BluConsoleEditorHelper.InfoIcon;
+		}
+	}
+
+	private Texture2D GetIconSmall(
+		BluLogType logType)
+	{
+		switch (logType)
+		{
+		case BluLogType.Normal:
+			return BluConsoleEditorHelper.InfoIconSmall;
+		case BluLogType.Warning:
+			return BluConsoleEditorHelper.WarningIconSmall;
+		case BluLogType.Error:
+			return BluConsoleEditorHelper.ErrorIconSmall;
+		default:
+			return BluConsoleEditorHelper.InfoIconSmall;
 		}
 	}
 

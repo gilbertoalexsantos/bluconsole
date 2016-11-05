@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 using System.Collections;
+using System.Reflection;
+using System;
+using System.Text;
 
 
 namespace BluConsole.Editor
@@ -11,6 +14,11 @@ namespace BluConsole.Editor
 
 public static class BluConsoleEditorHelper
 {
+
+	// Cached variables
+	private static Texture2D _consoleIcon = null;
+	private static bool _hasConsoleIcon = true;
+
 
 	#region Buttons
 
@@ -48,37 +56,37 @@ public static class BluConsoleEditorHelper
 	public static GUIContent InfoGUIContent(
 		string text)
 	{
-		return new GUIContent(text, InfoIcon);
+		return new GUIContent(text, InfoIconSmall);
 	}
 
 	public static GUIContent InfoGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), InfoIcon);
+		return new GUIContent(value.ToString(), InfoIconSmall);
 	}
 
 	public static GUIContent WarningGUIContent(
 		string text)
 	{
-		return new GUIContent(text, WarningIcon);
+		return new GUIContent(text, WarningIconSmall);
 	}
 
 	public static GUIContent WarningGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), WarningIcon);
+		return new GUIContent(value.ToString(), WarningIconSmall);
 	}
 
 	public static GUIContent ErrorGUIContent(
 		string text)
 	{
-		return new GUIContent(text, ErrorIcon);
+		return new GUIContent(text, ErrorIconSmall);
 	}
 
 	public static GUIContent ErrorGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), ErrorIcon);
+		return new GUIContent(value.ToString(), ErrorIconSmall);
 	}
 
 
@@ -92,6 +100,14 @@ public static class BluConsoleEditorHelper
 	{
 		get
 		{
+			return EditorGUIUtility.FindTexture("d_console.infoicon");
+		}
+	}
+
+	public static Texture2D InfoIconSmall
+	{
+		get
+		{
 			return EditorGUIUtility.FindTexture("d_console.infoicon.sml");
 		}
 	}
@@ -100,11 +116,27 @@ public static class BluConsoleEditorHelper
 	{
 		get
 		{
+			return EditorGUIUtility.FindTexture("d_console.warnicon");
+		}
+	}
+
+	public static Texture2D WarningIconSmall
+	{
+		get
+		{
 			return EditorGUIUtility.FindTexture("d_console.warnicon.sml");
 		}
 	}
 
 	public static Texture2D ErrorIcon
+	{
+		get
+		{
+			return EditorGUIUtility.FindTexture("d_console.erroricon");
+		}
+	}
+
+	public static Texture2D ErrorIconSmall
 	{
 		get
 		{
@@ -124,6 +156,31 @@ public static class BluConsoleEditorHelper
 				}
 			}
 			return EditorGUIUtility.whiteTexture;
+		}
+	}
+
+	public static Texture2D ConsoleIcon
+	{
+		get
+		{
+			if (_consoleIcon == null && _hasConsoleIcon)
+			{
+				var methodInfo = typeof(EditorGUIUtility).GetMethod("LoadIcon", 
+				                                                    BindingFlags.Static | BindingFlags.NonPublic);
+				
+				var parameters = new object[] {
+					"UnityEditor.ConsoleWindow"
+				};
+
+				_consoleIcon = methodInfo.Invoke(null, parameters) as Texture2D;
+
+				if (_consoleIcon == null)
+				{
+					_hasConsoleIcon = false;
+				}
+			}
+
+			return _consoleIcon;
 		}
 	}
 
