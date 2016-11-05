@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Text;
 
 
 namespace BluConsole
@@ -10,7 +10,7 @@ namespace BluConsole
 
 public class LogInfoComparer : IEqualityComparer<LogInfo>
 {
-    
+
     #region IEqualityComparer implementation
 
 
@@ -18,7 +18,7 @@ public class LogInfoComparer : IEqualityComparer<LogInfo>
         LogInfo x,
         LogInfo y)
     {
-        return x.RawMessage == y.RawMessage;
+        return x.Identifier == y.Identifier;
     }
 
     public int GetHashCode(
@@ -29,7 +29,7 @@ public class LogInfoComparer : IEqualityComparer<LogInfo>
 
 
     #endregion
-    
+
 }
 
 
@@ -37,11 +37,20 @@ public class LogInfoComparer : IEqualityComparer<LogInfo>
 public class LogInfo
 {
 
+    [SerializeField] private string _identifier;
     [SerializeField] private string _rawMessage;
     [SerializeField] private string _message;
     [SerializeField] private List<LogStackFrame> _callStack;
     [SerializeField] private BluLogType _logType;
     [SerializeField] private bool _isCompilerMessage;
+
+    public string Identifier
+    {
+        get
+        {
+            return _identifier;
+        }
+    }
 
     public string RawMessage
     {
@@ -95,6 +104,22 @@ public class LogInfo
         _callStack = callStack;
         _logType = logType;
         _isCompilerMessage = isCompileMessage;
+
+        StringBuilder identifier = new StringBuilder();
+        identifier.Append(_rawMessage.GetHashCode().ToString());
+        identifier.Append("$");
+        identifier.Append(_logType.ToString());
+        identifier.Append("$");
+        identifier.Append(callStack.Count);
+        foreach (LogStackFrame frame in callStack)
+        {
+            identifier.Append("$");
+            identifier.Append(frame.ClassName);
+            identifier.Append("$");
+            identifier.Append(frame.Line.ToString());
+        }
+
+        _identifier = identifier.ToString();
     }
 
 }

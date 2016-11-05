@@ -14,7 +14,8 @@ namespace BluConsole.Editor
 
 public class BluConsoleEditorWindow : EditorWindow
 {
-	private readonly int MAX_LENGTH_MESSAGE = 1000;
+	private readonly int MAX_LENGTH_MESSAGE = 999;
+	private readonly int MAX_LENGTH_COLLAPSE = 999;
 
 	// LoggerClient
 	private LoggerAssetClient _loggerAsset;
@@ -28,6 +29,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	private GUIStyle _evenErrorButtonStyle;
 	private GUIStyle _oddButtonErrorStyle;
 	private GUIStyle _selectedButtonStyle;
+	private GUIStyle _collapseStyle;
 
 	private Texture2D _selectedButtonTexture;
 	private Texture2D _oddErrorButtonTexture;
@@ -45,6 +47,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	private bool _isShowWarnings = true;
 	private bool _isShowErrors = true;
 	private bool _isClearOnPlay = false;
+	private bool _isCollapse = false;
 	private string _searchString = "";
 
 	// LogList Variables
@@ -182,6 +185,18 @@ public class BluConsoleEditorWindow : EditorWindow
 		_selectedButtonStyle.hover = _selectedButtonStyle.normal;
 		_selectedButtonStyle.focused = _selectedButtonStyle.normal;
 
+		foreach (var style in GUI.skin.customStyles)
+		{
+			if (style.name == "CN CountBadge")
+			{
+				_collapseStyle = style;
+				break;
+			}
+		}
+
+		if (_collapseStyle == null)
+			_collapseStyle = EvenButtonStyle;
+
 		_buttonWidth = position.width;
 		_buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
 		_drawYPos = 0f;
@@ -190,12 +205,12 @@ public class BluConsoleEditorWindow : EditorWindow
 	private void OnBeforeCompile()
 	{
 		_dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(
-					log => log.IsCompileMessage));
+				log => log.IsCompileMessage));
 	}
 
 	private void OnAfterCompile()
 	{
-		HashSet<LogInfo> logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
+		var logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
 		_loggerAsset.Clear(
 				log => logsBlackList.Contains(log));
 	}
@@ -236,6 +251,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		GUILayout.Space(6.0f);
 
+		_isCollapse = BluConsoleEditorHelper.ToggleClamped(_isCollapse,
+		                                                   "Collapse",
+		                                                   EditorStyles.toolbarButton);
 		_isClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_isClearOnPlay,
 		                                                      "Clear on Play",
 		                                                      EditorStyles.toolbarButton);
@@ -277,16 +295,16 @@ public class BluConsoleEditorWindow : EditorWindow
         
 		_isShowNormal =
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
-			                                     BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
-			                                     EditorStyles.toolbarButton);
+		                                               BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
+		                                               EditorStyles.toolbarButton);
 		_isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
-			                                     BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
-			                                     EditorStyles.toolbarButton);
+		                                               BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
+		                                               EditorStyles.toolbarButton);
 		_isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
-			                                     BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
-			                                     EditorStyles.toolbarButton);
+		                                               BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
+		                                               EditorStyles.toolbarButton);
 
 
 		GUILayout.EndHorizontal();
@@ -300,7 +318,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void DrawLogList()
 	{
-		LogInfo[] logs = LogsFiltered;
+		CountedLog[] logs = _isCollapse ? LogsFilteredByTypeAndCollapse : LogsFilteredByType;
 
 		float windowWidth = WindowWidth;
 		float windowHeight = _topPanelHeight - DrawYPos;
@@ -333,7 +351,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
 		{
-			LogInfo logInfo = logs[i];
+			LogInfo logInfo = logs[i].Log;
+			int quantity = logs[i].Quantity;
 
 			var style = GetLogListStyle(i, logInfo);
 			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
@@ -341,12 +360,33 @@ public class BluConsoleEditorWindow : EditorWindow
 			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
 			var contentImageWidth = style.CalcSize(contentImage).x;
 
-			var buttonRect = new Rect(x: contentImageWidth, y: buttonY, width: viewWidth, height: ButtonHeight);
-			var imageRect = new Rect(x: 0, y: buttonY, width: contentImageWidth, height: ButtonHeight);
+			var buttonRect = new Rect(x: contentImageWidth, 
+			                          y: buttonY, 
+			                          width: viewWidth - contentImageWidth, 
+			                          height: ButtonHeight);
+			var imageRect = new Rect(x: 0, 
+			                         y: buttonY, 
+			                         width: contentImageWidth, 
+			                         height: ButtonHeight);
 
 			bool buttonClicked = GUI.Button(buttonRect, content, style);
 			bool imageClicked = GUI.Button(imageRect, contentImage, style);
 			bool isLeftClick = (buttonClicked || imageClicked) ? Event.current.button == 0 : false;
+
+			if (_isCollapse)
+			{
+				var collapseCount = Mathf.Min(quantity, MAX_LENGTH_COLLAPSE);
+				var collapseText = collapseCount.ToString();
+				var collapseContent = new GUIContent(collapseText);
+				var collapseSize = CollapseStyle.CalcSize(collapseContent);
+
+				var collapseRect = new Rect(x: viewWidth - collapseSize.x - 5f,
+				                            y: (buttonY + buttonY + ButtonHeight - collapseSize.y) * 0.5f,
+				                            width: collapseSize.x,
+				                            height: collapseSize.y);
+
+				GUI.Label(collapseRect, collapseContent, _collapseStyle);
+			}
 
 			if (imageClicked || buttonClicked)
 			{
@@ -451,7 +491,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void DrawLogDetail()
 	{
-		LogInfo[] logs = LogsFiltered;
+		CountedLog[] logs = _isCollapse ? LogsFilteredByTypeAndCollapse : LogsFilteredByType;
 		var windowHeight = WindowHeight - DrawYPos;
 
 		{
@@ -464,7 +504,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			return;
 		}
 
-		var log = logs[_logListSelectedMessage];
+		var log = logs[_logListSelectedMessage].Log;
 		var size = log.CallStack.Count;
 		var sizePlus = size + 1;
 
@@ -688,7 +728,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private LogInfo[] LogsFiltered
+	private CountedLog[] LogsFilteredByType
 	{
 		get
 		{
@@ -705,15 +745,44 @@ public class BluConsoleEditorWindow : EditorWindow
 					size++;
 			}
 
-			LogInfo[] logsToShow = new LogInfo[size];
+			CountedLog[] logsToShow = new CountedLog[size];
 			for (int i = 0, j = 0; i < logs.Count; i++)
 			{
 				if (!CanLog(logs[i]))
 					continue;
-				logsToShow[j++] = logs[i];
+				logsToShow[j++] = new CountedLog(logs[i], 1);
 			}
 
 			return logsToShow;
+		}
+	}
+
+	private CountedLog[] LogsFilteredByTypeAndCollapse
+	{
+		get
+		{
+			var collapseDictionary = new Dictionary<string, CountedLog>();
+
+			var logs = LogsFilteredByType;
+			List<CountedLog> logsFiltered = new List<CountedLog>(logs.Length);
+			for (int i = 0; i < logs.Length; i++)
+			{
+				var log = logs[i].Log;
+
+				CountedLog logInDict;
+				if (collapseDictionary.TryGetValue(log.Identifier, out logInDict))
+				{
+					logInDict.Quantity++;
+				}
+				else
+				{
+					logInDict = new CountedLog(log, 1);
+					collapseDictionary.Add(log.Identifier, logInDict);
+					logsFiltered.Add(logInDict);
+				}
+			}
+
+			return logsFiltered.ToArray();
 		}
 	}
 
@@ -959,6 +1028,14 @@ public class BluConsoleEditorWindow : EditorWindow
 		get
 		{
 			return _selectedButtonStyle;
+		}
+	}
+
+	private GUIStyle CollapseStyle
+	{
+		get
+		{
+			return _collapseStyle;
 		}
 	}
 
