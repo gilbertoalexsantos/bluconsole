@@ -315,6 +315,10 @@ public class BluConsoleEditorWindow : EditorWindow
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
 
+		{
+			GUI.DrawTexture(scrollViewPosition, EvenButtonTexture);
+		}
+
 		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
 		                                             scrollPosition: _logListScrollPosition, 
 		                                             viewRect: scrollViewViewRect);
@@ -450,10 +454,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		LogInfo[] logs = LogsFiltered;
 		var windowHeight = WindowHeight - DrawYPos;
 
-		if (_logListSelectedMessage == -1 || logs.Length == 0 || _logListSelectedMessage >= logs.Length)
 		{
 			var rect = new Rect(x: 0, y: DrawYPos, width: WindowWidth, height: windowHeight);
 			GUI.DrawTexture(rect, EvenButtonTexture);
+		}
+
+		if (_logListSelectedMessage == -1 || logs.Length == 0 || _logListSelectedMessage >= logs.Length)
+		{
 			return;
 		}
 
@@ -507,6 +514,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			var message = log.IsCompileMessage ? log.Message : log.RawMessage;
 			message = GetTruncatedMessage(message);
+			message = "  " + message;
 			var content = new GUIContent(message);
 
 			if (GUI.Button(buttonRect, content, style))
@@ -543,6 +551,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			var frame = log.CallStack[i];
 			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
 			message = GetTruncatedMessage(message);
+			message = "  " + message;
 			var content = new GUIContent(message);
 
 			var style = i == _logDetailSelectedFrame ? SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
