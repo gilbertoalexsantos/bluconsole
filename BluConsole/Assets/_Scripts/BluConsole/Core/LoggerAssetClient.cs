@@ -15,184 +15,252 @@ namespace BluConsole
 public class LoggerAssetClient : ScriptableObject, ILogger
 {
 
-	public static readonly int MAX_LOGS = 999;
+    public static readonly int MAX_LOGS = 5000;
 
-	[SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
-	[SerializeField] private bool _isClearOnPlay = true;
-	[SerializeField] private bool _isPauseOnError = false;
-	[SerializeField] private int _qtNormalLogs = 0;
-	[SerializeField] private int _qtWarningLogs = 0;
-	[SerializeField] private int _qtErrorLogs = 0;
+    [SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
+    [SerializeField] private List<CountedLog> _countedLogs = new List<CountedLog>();
+    [SerializeField] private Dictionary<LogInfo, CountedLog> _collapsedLogs = 
+        new Dictionary<LogInfo, CountedLog>(new LogInfoComparer());
+    [SerializeField] private bool _isClearOnPlay = true;
+    [SerializeField] private bool _isPauseOnError = false;
+    [SerializeField] private int _qtNormalLogs = 0;
+    [SerializeField] private int _qtWarningLogs = 0;
+    [SerializeField] private int _qtErrorLogs = 0;
 
-	public List<LogInfo> LogsInfo
-	{
-		get
-		{
-			return _logsInfo;
-		}
-	}
+    public List<LogInfo> LogsInfo
+    {
+        get
+        {
+            return _logsInfo;
+        }
+    }
 
-	public bool IsClearOnPlay
-	{
-		get
-		{
-			return _isClearOnPlay;
-		}
-		set
-		{
-			_isClearOnPlay = value;
-		}
-	}
+    public List<CountedLog> CountedLogs
+    {
+        get
+        {
+            return _countedLogs;
+        }
+    }
 
-	public bool IsPauseOnError
-	{
-		get
-		{
-			return _isPauseOnError;
-		}
-		set
-		{
-			_isPauseOnError = value;
-		}
-	}
+    public bool IsClearOnPlay
+    {
+        get
+        {
+            return _isClearOnPlay;
+        }
+        set
+        {
+            _isClearOnPlay = value;
+        }
+    }
 
-	public int QtNormalLogs
-	{
-		get
-		{
-			return _qtNormalLogs;
-		}
-	}
+    public bool IsPauseOnError
+    {
+        get
+        {
+            return _isPauseOnError;
+        }
+        set
+        {
+            _isPauseOnError = value;
+        }
+    }
 
-	public int QtWarningsLogs
-	{
-		get
-		{
-			return _qtWarningLogs;
-		}
-	}
+    public int QtNormalLogs
+    {
+        get
+        {
+            return _qtNormalLogs;
+        }
+    }
 
-	public int QtErrorsLogs
-	{
-		get
-		{
-			return _qtErrorLogs;
-		}
-	}
+    public int QtWarningsLogs
+    {
+        get
+        {
+            return _qtWarningLogs;
+        }
+    }
 
-	public int QtLogs
-	{
-		get
-		{
-			return QtNormalLogs + QtWarningsLogs + QtErrorsLogs;
-		}
-	}
+    public int QtErrorsLogs
+    {
+        get
+        {
+            return _qtErrorLogs;
+        }
+    }
 
-	public LogInfo this[int i]
-	{
-		get
-		{
-			return _logsInfo[i];
-		}
-	}
+    public int QtLogs
+    {
+        get
+        {
+            return QtNormalLogs + QtWarningsLogs + QtErrorsLogs;
+        }
+    }
 
-	public static LoggerAssetClient GetOrCreate()
-	{
-		var loggerAsset = ScriptableObject.FindObjectOfType<LoggerAssetClient>();
+    public static LoggerAssetClient GetOrCreate()
+    {
+        var loggerAsset = ScriptableObject.FindObjectOfType<LoggerAssetClient>();
 
-		if (loggerAsset == null)
-			loggerAsset = ScriptableObject.CreateInstance<LoggerAssetClient>();
+        if (loggerAsset == null)
+            loggerAsset = ScriptableObject.CreateInstance<LoggerAssetClient>();
 
-		return loggerAsset;
-	}
+        return loggerAsset;
+    }
 
-	public List<LogInfo> GetLogsInfoFiltered(
-		string patternHelmLike)
-	{
-		string[] patterns = patternHelmLike.ToLower().Split(' ');
-		return _logsInfo.Where(
-				log => patterns.All(
-					pattern => log.Message.ToLower().Contains(pattern))).ToList();
-	}
+    public List<LogInfo> GetLogsInfoFiltered(
+        string patternHelmLike)
+    {
+        string[] patterns = patternHelmLike.ToLower().Split(' ');
+        return _logsInfo.Where(log => patterns.All(pattern => log.Message.ToLower().Contains(pattern))).ToList();
+    }
 
-	public void Clear()
-	{
-		_logsInfo.Clear();
-		_qtNormalLogs = 0;
-		_qtWarningLogs = 0;
-		_qtErrorLogs = 0;
-	}
+    public void Clear()
+    {
+        _logsInfo.Clear();
+        _countedLogs.Clear();
+        _collapsedLogs.Clear();
+        _qtNormalLogs = 0;
+        _qtWarningLogs = 0;
+        _qtErrorLogs = 0;
+    }
 
-	public void Clear(
-		Predicate<LogInfo> cmp)
-	{
-		_logsInfo = _logsInfo.Where(
-				log => !cmp(log)).ToList();
-		_qtNormalLogs = 0;
-		_qtWarningLogs = 0;
-		_qtErrorLogs = 0;
+    public void Clear(
+        Predicate<LogInfo> cmp)
+    {
+        _countedLogs.Clear();
+        _collapsedLogs.Clear();
+        _qtNormalLogs = 0;
+        _qtWarningLogs = 0;
+        _qtErrorLogs = 0;
 
-		foreach (var log in _logsInfo)
-			IncreaseLogCont(log.LogType);
-	}
+        List<LogInfo> newLogs = new List<LogInfo>(_logsInfo.Count);
+        for (int i = 0; i < _logsInfo.Count; i++)
+        {
+            LogInfo log = _logsInfo[i];
+            if (cmp(log))
+                continue;
+            
+            newLogs.Add(log);
+            IncreaseLogCount(log.LogType);
 
-	public void ClearExceptCompileErrors()
-	{
-		_logsInfo = _logsInfo.Where(
-				log => log.IsCompileMessage && log.LogType == BluLogType.Error).ToList();
-		_qtNormalLogs = 0;
-		_qtWarningLogs = 0;
-		_qtErrorLogs = _logsInfo.Count;
-	}
+            CountedLog countedLog;
+            if (_collapsedLogs.TryGetValue(log, out countedLog))
+            {
+                countedLog.Quantity++;
+            }
+            else
+            {
+                countedLog = new CountedLog(log, 1);
+                _countedLogs.Add(countedLog);
+                _collapsedLogs.Add(log, countedLog);
+            }
+        }
 
-	private void OnEnable()
-	{
+        _logsInfo = newLogs;
+    }
+
+    public void ClearExceptCompileErrors()
+    {
+        Clear((log) => !(log.IsCompileMessage && log.LogType == BluLogType.Error));
+    }
+
+    private void OnEnable()
+    {
         EditorApplication.playmodeStateChanged += OnPlaymodeStateChanged;
-		hideFlags = HideFlags.HideAndDontSave;
-	}
+        hideFlags = HideFlags.HideAndDontSave;
+    }
 
     private void OnPlaymodeStateChanged()
     {
         LoggerServer.RegisterForUnityLogHandler();
     }
 
-	private void TrimLogs()
-	{
-		while (_logsInfo.Count > MAX_LOGS)
-			_logsInfo.RemoveAt(0);
-	}
+    private void TrimLogs()
+    {
+        while (_logsInfo.Count > MAX_LOGS)
+        {
+            LogInfo log = _logsInfo[0];
 
-	private void IncreaseLogCont(
-		BluLogType logType)
-	{
-		switch (logType)
-		{
-		case BluLogType.Normal:
-			_qtNormalLogs++;
-			break;
-		case BluLogType.Warning:
-			_qtWarningLogs++;
-			break;
-		case BluLogType.Error:
-			_qtErrorLogs++;
-			break;
-		}
-	}
+            DecreaseLogCount(log.LogType);
+            _logsInfo.RemoveAt(0);
+
+            CountedLog countedLog;
+            if (_collapsedLogs.TryGetValue(log, out countedLog))
+            {
+                countedLog.Quantity--;
+
+                if (countedLog.Quantity == 0)
+                {
+                    _countedLogs.RemoveAt(0);
+                    _collapsedLogs.Remove(log);
+                }
+            }
+        }
+    }
+
+    private void IncreaseLogCount(
+        BluLogType logType)
+    {
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            _qtNormalLogs++;
+            break;
+        case BluLogType.Warning:
+            _qtWarningLogs++;
+            break;
+        case BluLogType.Error:
+            _qtErrorLogs++;
+            break;
+        }
+    }
+
+    private void DecreaseLogCount(
+        BluLogType logType)
+    {
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            _qtNormalLogs--;
+            break;
+        case BluLogType.Warning:
+            _qtWarningLogs--;
+            break;
+        case BluLogType.Error:
+            _qtErrorLogs--;
+            break;
+        }
+    }
 
 
-	#region IBluLogger implementation
+    #region IBluLogger implementation
 
 
-	public void Log(
-		LogInfo logInfo)
-	{
-		_logsInfo.Add(logInfo);
-		IncreaseLogCont(logInfo.LogType);
-		TrimLogs();
-	}
+    public void Log(
+        LogInfo logInfo)
+    {
+        _logsInfo.Add(logInfo);
+        IncreaseLogCount(logInfo.LogType);
+
+        CountedLog countedLog;
+        if (_collapsedLogs.TryGetValue(logInfo, out countedLog))
+        {
+            countedLog.Quantity++;
+        }
+        else
+        {
+            countedLog = new CountedLog(logInfo, 1);
+            _countedLogs.Add(countedLog);
+            _collapsedLogs.Add(logInfo, countedLog);
+        }
+            
+        TrimLogs();
+    }
 
 
-	#endregion
+    #endregion
 
 
 }
