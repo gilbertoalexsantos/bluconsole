@@ -24,7 +24,7 @@ public class LogInfoComparer : IEqualityComparer<LogInfo>
     public int GetHashCode(
         LogInfo obj)
     {
-        return obj.RawMessage.GetHashCode();
+        return obj.Identifier.GetHashCode();
     }
 
 
