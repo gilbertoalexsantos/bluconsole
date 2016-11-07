@@ -11,9 +11,9 @@ using UnityEngine;
 namespace BluConsole.Editor
 {
 
-
 public class BluConsoleEditorWindow : EditorWindow
 {
+	private readonly int MAX_LOGS = 999;
 	private readonly int MAX_LENGTH_MESSAGE = 999;
 	private readonly int MAX_LENGTH_COLLAPSE = 999;
 
@@ -25,7 +25,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	// Cache Variables
 	private List<CountedLog> _countedLogs = new List<CountedLog>();
-	private int _qtLogs = -1;
 	private bool _isCountedLogsDirty = true;
 
 	private GUIStyle _evenButtonStyle;
@@ -74,6 +73,9 @@ public class BluConsoleEditorWindow : EditorWindow
 	private bool _isPlaying = false;
 	private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
 
+	// Scroll Logic
+	private bool _isFollowScroll = false;
+
 	[MenuItem("Window/BluConsole")]
 	public static void ShowWindow()
 	{
@@ -90,8 +92,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void OnGUI()
 	{
-		if (_qtLogs != _loggerAsset.QtLogs)
-			SetCountedLogsDirty();
+		_loggerAsset.OnNewLogOrTrimLogEvent -= OnNewLogOrTrimLog;
+		_loggerAsset.OnNewLogOrTrimLogEvent += OnNewLogOrTrimLog;
 
 		InitVariables();
 
@@ -131,8 +133,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		_drawYPos = _topPanelHeight + ResizerHeight;
 		DrawLogDetail();
 		GUILayout.EndVertical();
-
-		_qtLogs = _loggerAsset.QtLogs;
 
 		Repaint();
 	}
@@ -253,6 +253,11 @@ public class BluConsoleEditorWindow : EditorWindow
 		SetCountedLogsDirty();
 	}
 
+	private void OnNewLogOrTrimLog()
+	{
+		SetCountedLogsDirty();
+	}
+
 	private float DrawTopToolbar()
 	{
 		float height = EditorStyles.toolbarButton.CalcSize(new GUIContent("Clear")).y;
@@ -308,17 +313,17 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
 		// Info/Warning/Error buttons Area
-		int maxLogs = LoggerAssetClient.MAX_LOGS;
+		int maxLogs = MAX_LOGS;
 		string qtNormalLogs = _loggerAsset.QtNormalLogs.ToString();
-		if (_loggerAsset.QtNormalLogs > maxLogs)
+		if (_loggerAsset.QtNormalLogs >= maxLogs)
 			qtNormalLogs = maxLogs.ToString() + "+";
 
 		string qtWarningLogs = _loggerAsset.QtWarningsLogs.ToString();
-		if (_loggerAsset.QtWarningsLogs > maxLogs)
+		if (_loggerAsset.QtWarningsLogs >= maxLogs)
 			qtWarningLogs = maxLogs.ToString() + "+";
 
 		string qtErrorLogs = _loggerAsset.QtErrorsLogs.ToString();
-		if (_loggerAsset.QtErrorsLogs > LoggerAssetClient.MAX_LOGS)
+		if (_loggerAsset.QtErrorsLogs >= maxLogs)
 			qtErrorLogs = maxLogs.ToString() + "+";
         
 
@@ -460,6 +465,12 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 
 		GUI.EndScrollView();
+
+		if (!IsFollowScroll)
+			return;
+
+		float endY = viewHeight - (windowHeight / ButtonHeight);
+		_logListScrollPosition.y = endY;
 	}
 
 	private string GetLogListMessage(
@@ -857,6 +868,15 @@ public class BluConsoleEditorWindow : EditorWindow
 		return logsFiltered;
 	}
 
+	private bool IsFollowScroll
+	{
+		get
+		{
+			return false;
+			return _isFollowScroll && Application.isPlaying;
+		}
+	}
+
 	private bool IsDoubleClickLogListButton
 	{
 		get
@@ -870,64 +890,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		get
 		{
 			return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f;
-		}
-	}
-
-	private CountedLog[] LogsFilteredByType
-	{
-		get
-		{
-			List<LogInfo> logs = null;
-			if (string.IsNullOrEmpty(_searchString))
-				logs = _loggerAsset.LogsInfo;
-			else
-				logs = _loggerAsset.GetLogsInfoFiltered(_searchString);
-
-			int size = 0;
-			for (int i = 0; i < logs.Count; i++)
-			{
-				if (CanLog(logs[i]))
-					size++;
-			}
-
-			CountedLog[] logsToShow = new CountedLog[size];
-			for (int i = 0, j = 0; i < logs.Count; i++)
-			{
-				if (!CanLog(logs[i]))
-					continue;
-				logsToShow[j++] = new CountedLog(logs[i], 1);
-			}
-
-			return logsToShow;
-		}
-	}
-
-	private CountedLog[] LogsFilteredByTypeAndCollapse
-	{
-		get
-		{
-			var collapseDictionary = new Dictionary<string, CountedLog>();
-
-			var logs = LogsFilteredByType;
-			List<CountedLog> logsFiltered = new List<CountedLog>(logs.Length);
-			for (int i = 0; i < logs.Length; i++)
-			{
-				var log = logs[i].Log;
-
-				CountedLog logInDict;
-				if (collapseDictionary.TryGetValue(log.Identifier, out logInDict))
-				{
-					logInDict.Quantity++;
-				}
-				else
-				{
-					logInDict = new CountedLog(log, 1);
-					collapseDictionary.Add(log.Identifier, logInDict);
-					logsFiltered.Add(logInDict);
-				}
-			}
-
-			return logsFiltered.ToArray();
 		}
 	}
 

@@ -15,7 +15,7 @@ namespace BluConsole
 public class LoggerAssetClient : ScriptableObject, ILogger
 {
 
-    public static readonly int MAX_LOGS = 5000;
+    public static readonly int MAX_LOGS = 3000;
 
     [SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
     [SerializeField] private List<CountedLog> _countedLogs = new List<CountedLog>();
@@ -26,6 +26,8 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     [SerializeField] private int _qtNormalLogs = 0;
     [SerializeField] private int _qtWarningLogs = 0;
     [SerializeField] private int _qtErrorLogs = 0;
+
+    public event Action OnNewLogOrTrimLogEvent;
 
     public List<LogInfo> LogsInfo
     {
@@ -109,13 +111,6 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         return loggerAsset;
     }
 
-    public List<LogInfo> GetLogsInfoFiltered(
-        string patternHelmLike)
-    {
-        string[] patterns = patternHelmLike.ToLower().Split(' ');
-        return _logsInfo.Where(log => patterns.All(pattern => log.Message.ToLower().Contains(pattern))).ToList();
-    }
-
     public void Clear()
     {
         _logsInfo.Clear();
@@ -179,8 +174,12 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     private void TrimLogs()
     {
-        while (_logsInfo.Count > MAX_LOGS)
+        bool entered = false;
+
+        while (QtLogs > MAX_LOGS)
         {
+            entered = true;
+
             LogInfo log = _logsInfo[0];
 
             DecreaseLogCount(log.LogType);
@@ -193,11 +192,21 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
                 if (countedLog.Quantity == 0)
                 {
-                    _countedLogs.RemoveAt(0);
+                    for (int i = 0; i < _countedLogs.Count; i++)
+                    {
+                        if (_countedLogs[i].Log.Identifier == countedLog.Log.Identifier)
+                        {
+                            _countedLogs.RemoveAt(i);
+                            break;
+                        }
+                    }
                     _collapsedLogs.Remove(log);
                 }
             }
         }
+
+        if (entered)
+            CalOnNewLogOrTrimLogEvent();
     }
 
     private void IncreaseLogCount(
@@ -234,6 +243,12 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
+    private void CalOnNewLogOrTrimLogEvent()
+    {
+        if (OnNewLogOrTrimLogEvent != null)
+            OnNewLogOrTrimLogEvent();
+    }
+
 
     #region IBluLogger implementation
 
@@ -255,6 +270,8 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             _countedLogs.Add(countedLog);
             _collapsedLogs.Add(logInfo, countedLog);
         }
+
+        CalOnNewLogOrTrimLogEvent();
             
         TrimLogs();
     }
