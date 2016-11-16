@@ -316,24 +316,42 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
 		// Info/Warning/Error buttons Area
+		int qtNormalLogs = 0, qtWarningLogs = 0, qtErrorLogs = 0;
+		var logs = CountedLogsFilteredByFlags;
+		for (int i = 0; i < logs.Count; i++)
+		{
+			switch (logs[i].Log.LogType)
+			{
+			case BluLogType.Normal:
+				qtNormalLogs++;
+				break;
+			case BluLogType.Warning:
+				qtWarningLogs++;
+				break;
+			case BluLogType.Error:
+				qtErrorLogs++;
+				break;
+			}
+		}
+
 		int maxLogs = MAX_LOGS;
-		string qtNormalLogs = _loggerAsset.QtNormalLogs.ToString();
-		if (_loggerAsset.QtNormalLogs >= maxLogs)
-			qtNormalLogs = maxLogs.ToString() + "+";
+		string qtNormalLogsStr = qtNormalLogs.ToString();
+		if (qtNormalLogs >= maxLogs)
+			qtNormalLogsStr = maxLogs.ToString() + "+";
 
-		string qtWarningLogs = _loggerAsset.QtWarningsLogs.ToString();
-		if (_loggerAsset.QtWarningsLogs >= maxLogs)
-			qtWarningLogs = maxLogs.ToString() + "+";
+		string qtWarningLogsStr = qtWarningLogs.ToString();
+		if (qtWarningLogs >= maxLogs)
+			qtWarningLogsStr = maxLogs.ToString() + "+";
 
-		string qtErrorLogs = _loggerAsset.QtErrorsLogs.ToString();
-		if (_loggerAsset.QtErrorsLogs >= maxLogs)
-			qtErrorLogs = maxLogs.ToString() + "+";
+		string qtErrorLogsStr = qtErrorLogs.ToString();
+		if (qtErrorLogs >= maxLogs)
+			qtErrorLogsStr = maxLogs.ToString() + "+";
         
 
 		bool oldIsShowNormal = _isShowNormal;
 		_isShowNormal =
             BluConsoleEditorHelper.ToggleClamped(_isShowNormal,
-		                                         BluConsoleEditorHelper.InfoGUIContent(qtNormalLogs),
+		                                         BluConsoleEditorHelper.InfoGUIContent(qtNormalLogsStr),
 		                                         EditorStyles.toolbarButton);
 		if (oldIsShowNormal != _isShowNormal)
 			SetCountedLogsDirty();
@@ -342,7 +360,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		bool oldIsShowWarnings = _isShowWarnings;
 		_isShowWarnings =
             BluConsoleEditorHelper.ToggleClamped(_isShowWarnings,
-		                                         BluConsoleEditorHelper.WarningGUIContent(qtWarningLogs),
+		                                         BluConsoleEditorHelper.WarningGUIContent(qtWarningLogsStr),
 		                                         EditorStyles.toolbarButton);
 		if (oldIsShowWarnings != _isShowWarnings)
 			SetCountedLogsDirty();
@@ -351,7 +369,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		bool oldIsShowErrors = _isShowErrors;
 		_isShowErrors =
             BluConsoleEditorHelper.ToggleClamped(_isShowErrors,
-		                                         BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogs),
+		                                         BluConsoleEditorHelper.ErrorGUIContent(qtErrorLogsStr),
 		                                         EditorStyles.toolbarButton);
 		if (oldIsShowErrors != _isShowErrors)
 			SetCountedLogsDirty();
