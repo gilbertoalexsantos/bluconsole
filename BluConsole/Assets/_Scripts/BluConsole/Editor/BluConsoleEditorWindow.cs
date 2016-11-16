@@ -75,6 +75,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	// Scroll Logic
 	private bool _isFollowScroll = false;
+	private bool _hasScrollWheelUp = false;
 
 	[MenuItem("Window/BluConsole")]
 	public static void ShowWindow()
@@ -117,6 +118,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			_isPlaying = false;
 		}
+
+		_hasScrollWheelUp = Event.current.type == EventType.ScrollWheel && Event.current.delta.y < 0f;
 
 		DrawResizer();
 
@@ -358,7 +361,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		return height;
 	}
-
+		
 
 	#region LogList
 
@@ -382,6 +385,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		GUI.DrawTexture(scrollViewPosition, EvenButtonTexture);
 
+		Vector2 oldScrollPosition = _logListScrollPosition;
 		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
 		                                             scrollPosition: _logListScrollPosition, 
 		                                             viewRect: scrollViewViewRect);
@@ -393,6 +397,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, logs.Count);
 
 		float buttonY = firstRenderLogIndex * ButtonHeight;
+		bool hasSomeClick = false;
 
 		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
 		{
@@ -416,12 +421,15 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			bool buttonClicked = GUI.Button(buttonRect, content, style);
 			bool imageClicked = GUI.Button(imageRect, contentImage, style);
-			bool isLeftClick = (buttonClicked || imageClicked) ? Event.current.button == 0 : false;
+			bool hasClick = buttonClicked || imageClicked;
+			bool isLeftClick = hasClick ? Event.current.button == 0: false;
 
 			if (_isCollapse)
 			{
 				var collapseCount = Mathf.Min(quantity, MAX_LENGTH_COLLAPSE);
 				var collapseText = collapseCount.ToString();
+				if (collapseCount >= MAX_LENGTH_COLLAPSE)
+					collapseText += "+";
 				var collapseContent = new GUIContent(collapseText);
 				var collapseSize = CollapseStyle.CalcSize(collapseContent);
 
@@ -433,10 +441,12 @@ public class BluConsoleEditorWindow : EditorWindow
 				GUI.Label(collapseRect, collapseContent, _collapseStyle);
 			}
 
-			if (imageClicked || buttonClicked)
+			if (hasClick)
 			{
+				hasSomeClick = true;
+
 				if (!isLeftClick && i == _logListSelectedMessage)
-					DrawPopup(logInfo);
+					DrawPopup(Event.current, logInfo);
 
 				if (isLeftClick && i == _logListSelectedMessage)
 				{
@@ -466,10 +476,23 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		GUI.EndScrollView();
 
+
+		if (_hasScrollWheelUp || hasSomeClick)
+		{
+			_isFollowScroll = false;
+		}
+		else if (_logListScrollPosition != oldScrollPosition)
+		{
+			_isFollowScroll = false;
+			float topOffset = viewHeight - windowHeight;
+			if (_logListScrollPosition.y >= topOffset)
+				_isFollowScroll = true;
+		}
+
 		if (!IsFollowScroll)
 			return;
 
-		float endY = viewHeight - (windowHeight / ButtonHeight);
+		float endY = viewHeight - windowHeight;
 		_logListScrollPosition.y = endY;
 	}
 
@@ -613,7 +636,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				bool isLeftClick = Event.current.button == 0;
 
 				if (!isLeftClick && _logDetailSelectedFrame == -2)
-					DrawPopup(log);
+					DrawPopup(Event.current, log);
 
 				if (isLeftClick && _logDetailSelectedFrame == -2)
 				{
@@ -677,6 +700,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	}
 
 	private void DrawPopup(
+		Event clickEvent,
 		LogInfo log)
 	{
 		GenericMenu.MenuFunction copyCallback = () => {
@@ -686,6 +710,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		GenericMenu menu = new GenericMenu();
 		menu.AddItem(content: new GUIContent("Copy"), on: false, func: copyCallback);
 		menu.ShowAsContext();
+
+		clickEvent.Use();
 	}
 
 	private void SetCountedLogsDirty() 
@@ -810,7 +836,9 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private List<CountedLog> FilterByPatternHelmLike(string pattern, List<CountedLog> logs)
+	private List<CountedLog> FilterByPatternHelmLike(
+		string pattern, 
+		List<CountedLog> logs)
 	{
 		if (string.IsNullOrEmpty(pattern))
 			return logs;
@@ -839,7 +867,9 @@ public class BluConsoleEditorWindow : EditorWindow
 		return logsFiltered;
 	}
 
-	private List<LogInfo> FilterByPatternHelmLike(string pattern, List<LogInfo> logs)
+	private List<LogInfo> FilterByPatternHelmLike(
+		string pattern, 
+		List<LogInfo> logs)
 	{
 		if (string.IsNullOrEmpty(pattern))
 			return logs;
@@ -872,8 +902,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return false;
-			return _isFollowScroll && Application.isPlaying;
+			return _isFollowScroll;
 		}
 	}
 
