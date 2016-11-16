@@ -1,12 +1,17 @@
-﻿
+﻿using UnityEngine;
+using System;
+using System.Collections;
+
+
 namespace BluConsole
 {
 
+[Serializable]
 public class CountedLog
 {
 
-    private LogInfo _log;
-    private int _quantity;
+    [SerializeField] private LogInfo _log;
+    [SerializeField] private int _quantity;
 
     public LogInfo Log
     {

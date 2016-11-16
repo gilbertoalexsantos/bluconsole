@@ -19,8 +19,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     [SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
     [SerializeField] private List<CountedLog> _countedLogs = new List<CountedLog>();
-    [SerializeField] private Dictionary<LogInfo, CountedLog> _collapsedLogs = 
-        new Dictionary<LogInfo, CountedLog>(new LogInfoComparer());
+    private Dictionary<LogInfo, CountedLog> _collapsedLogs = new Dictionary<LogInfo, CountedLog>(new LogInfoComparer());
     [SerializeField] private bool _isClearOnPlay = true;
     [SerializeField] private bool _isPauseOnError = false;
     [SerializeField] private int _qtNormalLogs = 0;
@@ -243,6 +242,18 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
+    private void BuildCollapseLogsDictionary()
+    {
+        _collapsedLogs.Clear();
+
+        foreach (CountedLog countedLog in _countedLogs)
+        {
+            if (!_collapsedLogs.ContainsKey(countedLog.Log))
+                _collapsedLogs.Add(countedLog.Log, countedLog);
+        }
+    }
+        
+
     private void CalOnNewLogOrTrimLogEvent()
     {
         if (OnNewLogOrTrimLogEvent != null)
@@ -258,6 +269,10 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     {
         _logsInfo.Add(logInfo);
         IncreaseLogCount(logInfo.LogType);
+
+        // Unfortunally Dictionary is not serializable... So we need to construct it everytime =/
+        if (_collapsedLogs.Count == 0)
+            BuildCollapseLogsDictionary();
 
         CountedLog countedLog;
         if (_collapsedLogs.TryGetValue(logInfo, out countedLog))
