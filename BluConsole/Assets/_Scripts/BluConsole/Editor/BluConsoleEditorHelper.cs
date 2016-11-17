@@ -159,6 +159,7 @@ public static class BluConsoleEditorHelper
 		}
 	}
 
+	// TODO: Use another icon other than the Unity Console
 	public static Texture2D ConsoleIcon
 	{
 		get

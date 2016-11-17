@@ -854,6 +854,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
+	// TOOD: The two below functions are equal... Refactor that. DRY!
 	private List<CountedLog> FilterByPatternHelmLike(
 		string pattern, 
 		List<CountedLog> logs)

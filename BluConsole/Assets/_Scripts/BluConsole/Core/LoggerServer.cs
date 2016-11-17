@@ -17,6 +17,8 @@ public static class LoggerServer
 {
 
     private static HashSet<ILogger> _loggers = new HashSet<ILogger>();
+
+    // The KEY is REGEX like
     private static HashSet<KeyValuePair<string, string>> _logBlackList =
         new HashSet<KeyValuePair<string, string>>() {
                 new KeyValuePair<string, string>("CallLogCallback", "Application"),
@@ -34,6 +36,8 @@ public static class LoggerServer
         RegisterForUnityLogHandler();
     }
 
+    // TODO: Change that to be automatically... Ideally, the server shouldn't need to know anyone... But, the static
+    // constructor ain't being called after starting the game and stopping.
     public static void RegisterForUnityLogHandler()
     {
         Application.logMessageReceived -= LoggerServer.UnityLogHandler;
@@ -139,15 +143,13 @@ public static class LoggerServer
     {
         var callStack = new List<LogStackFrame>();
 
+        // I love that piece of code, really :D
         Regex
             .Split(unityStackTrace, System.Environment.NewLine)
-            .Where(
-                line => !string.IsNullOrEmpty(line))
-            .Where(
-                line => LogStackFrame.CanGetInformation(line))
+            .Where(line => !string.IsNullOrEmpty(line))
+            .Where(line => LogStackFrame.CanGetInformation(line))
             .ToList()
-            .ForEach(
-                line => callStack.Add(LogStackFrame.Create(line)));
+            .ForEach(line => callStack.Add(LogStackFrame.Create(line)));
 
         return callStack;
     }

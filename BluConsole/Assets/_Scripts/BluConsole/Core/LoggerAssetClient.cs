@@ -168,6 +168,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     private void OnPlaymodeStateChanged()
     {
+        // TOOD: This server register logic shouldn't be dependent of any client... Change that
         LoggerServer.RegisterForUnityLogHandler();
     }
 
@@ -182,6 +183,9 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             LogInfo log = _logsInfo[0];
 
             DecreaseLogCount(log.LogType);
+
+            // BNECK: We need to remove the first log... How to do that in an efficient way and without creating a lot
+            //        of bad smells
             _logsInfo.RemoveAt(0);
 
             CountedLog countedLog;
@@ -191,6 +195,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
                 if (countedLog.Quantity == 0)
                 {
+                    // BNECK: If we change this to HashSet, we'll need an ordered HashSet...
                     for (int i = 0; i < _countedLogs.Count; i++)
                     {
                         if (_countedLogs[i].Log.Identifier == countedLog.Log.Identifier)
@@ -270,7 +275,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         _logsInfo.Add(logInfo);
         IncreaseLogCount(logInfo.LogType);
 
-        // Unfortunally Dictionary is not serializable... So we need to construct it everytime =/
+        // BNECK: Unfortunally Dictionary is not serializable... So we need to construct it everytime =/
         if (_collapsedLogs.Count == 0)
             BuildCollapseLogsDictionary();
 
