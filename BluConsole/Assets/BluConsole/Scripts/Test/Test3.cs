@@ -1,10 +1,10 @@
-﻿using UnityEngine;
-using System.Collections;
-using BluConsole;
+﻿using BluConsole;
 
-namespace BluConsole.Test {
+namespace BluConsole.Test
+{
 
-public static class Test3 {
+public static class Test3
+{
 
     public static void LogLevelThree(string message, BluLogType type = BluLogType.Normal)
     {

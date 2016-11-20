@@ -1,14 +1,9 @@
-﻿using UnityEngine;
-using System.Collections;
-using UnityEditor;
-using BluConsole;
-using System;
-using System.Text;
-using System.IO;
-using UnityEngine.AI;
+﻿using BluConsole;
+using UnityEngine;
 
 
-namespace BluConsole.Test {
+namespace BluConsole.Test
+{
 
 public class TestManager : MonoBehaviour
 {

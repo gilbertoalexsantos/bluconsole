@@ -1,8 +1,10 @@
 ﻿using BluConsole;
 
-namespace BluConsole.Test {
+namespace BluConsole.Test
+{
 
-public static class Test1 {
+public static class Test1
+{
 
     public static void LogLevelOne(string message, BluLogType type = BluLogType.Normal)
     {

@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEditor;
 
 
 namespace BluConsole
@@ -88,7 +86,7 @@ public static class LoggerServer
                 callStack = GetCallStack(stackTrace);
             if (callStack.Count == 0)
                 callStack = GetCallStackFromUnityMessage(message);
-        
+
             BluLogType bluLogType = GetLogType(logType);
             var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompileMessage(message));
             Call(logInfo);
@@ -122,8 +120,8 @@ public static class LoggerServer
     {
         var callStack = new List<LogStackFrame>();
 
-        var stackTrace = new StackTrace(true);          
-        StackFrame[] stackFrames = stackTrace.GetFrames(); 
+        var stackTrace = new StackTrace(true);
+        StackFrame[] stackFrames = stackTrace.GetFrames();
 
         foreach (StackFrame stackFrame in stackFrames)
         {
@@ -133,7 +131,7 @@ public static class LoggerServer
                 continue;
 
             callStack.Add(LogStackFrame.Create(stackFrame));
-        } 
+        }
 
         return callStack;
     }
@@ -169,7 +167,7 @@ public static class LoggerServer
             string className = "";
             if (filePathSplitted.Length > 0)
                 className = filePathSplitted[filePathSplitted.Length - 1];
-            
+
             callStack.Add(new LogStackFrame(className, "", fileRelativePath, line));
         }
 

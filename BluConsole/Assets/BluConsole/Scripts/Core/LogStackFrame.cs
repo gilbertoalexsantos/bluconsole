@@ -1,10 +1,8 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
+﻿using System;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Reflection;
-using System.Text;
+using System.Text.RegularExpressions;
+using UnityEngine;
 
 
 namespace BluConsole
@@ -14,11 +12,11 @@ namespace BluConsole
 public class LogStackFrame
 {
 
-    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER = 
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER =
         @"(.*):(.*)\s*\(.*\(at\s*(.*):(\d+)";
-    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON = 
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON =
         @"(.*)\s*\(.*\(at\s*(.*):(\d+)";
-    private static readonly string REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER = 
+    private static readonly string REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER =
         @"(.*):(.*)\s*\(.*\)";
 
     [SerializeField] private string _className;
@@ -70,10 +68,10 @@ public class LogStackFrame
                 if (startSubName > 0)
                     formattedFileRelativePath = _fileRelativePath.Substring(startSubName);
             }
-            return String.Format("{0}.{1} (at {2}:{3})", 
-                                 _className, 
-                                 _methodName, 
-                                 formattedFileRelativePath, 
+            return String.Format("{0}.{1} (at {2}:{3})",
+                                 _className,
+                                 _methodName,
+                                 formattedFileRelativePath,
                                  _line);
         }
     }
@@ -104,13 +102,13 @@ public class LogStackFrame
     public static LogStackFrame Create(
         string unityStackFrame)
     {
-        MatchCollection matchWithLineNumber = 
+        MatchCollection matchWithLineNumber =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
 
-        MatchCollection matchWithLineNumberWithoutColon = 
+        MatchCollection matchWithLineNumberWithoutColon =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON);
-        
-        MatchCollection matchWithoutLineNumber = 
+
+        MatchCollection matchWithoutLineNumber =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
 
         if (matchWithLineNumber.Count > 0)
@@ -158,16 +156,16 @@ public class LogStackFrame
     public static bool CanGetInformation(
         string unityStackFrame)
     {
-        MatchCollection matchWithLineNumber = 
+        MatchCollection matchWithLineNumber =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER);
-        
-        MatchCollection matchWithLineNumberWithoutColon = 
+
+        MatchCollection matchWithLineNumberWithoutColon =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITH_LINE_NUMBER_WIHTOUT_COLON);
-        
-        MatchCollection matchWithoutLineNumber = 
+
+        MatchCollection matchWithoutLineNumber =
             Regex.Matches(unityStackFrame, REGEX_UNITY_STACK_TRACE_WITHOUT_LINE_NUMBER);
-        
-        return 
+
+        return
             matchWithLineNumber.Count > 0 ||
         matchWithLineNumberWithoutColon.Count > 0 ||
         matchWithoutLineNumber.Count > 0;

@@ -1,9 +1,5 @@
-﻿using System.Collections;
-
-
-namespace BluConsole
+﻿namespace BluConsole
 {
-
 
 public interface ILogger
 {

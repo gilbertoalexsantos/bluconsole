@@ -1,8 +1,7 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
 
 namespace BluConsole

@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
+﻿using System;
+using UnityEngine;
 
 
 namespace BluConsole
@@ -40,7 +39,7 @@ public class CountedLog
         _log = log;
         _quantity = quantity;
     }
-	
+
 }
 
 }

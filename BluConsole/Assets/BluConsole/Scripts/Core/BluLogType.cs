@@ -1,5 +1,4 @@
-﻿
-namespace BluConsole
+﻿namespace BluConsole
 {
 
 public enum BluLogType

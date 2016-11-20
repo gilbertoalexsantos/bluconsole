@@ -1,16 +1,13 @@
 ﻿#if UNITY_EDITOR
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEditor;
-using System.Collections;
-using System.Reflection;
+
 using System;
-using System.Text;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
 
 
 namespace BluConsole.Editor
 {
-
 
 public static class BluConsoleEditorHelper
 {
@@ -166,9 +163,9 @@ public static class BluConsoleEditorHelper
 		{
 			if (_consoleIcon == null && _hasConsoleIcon)
 			{
-				var methodInfo = typeof(EditorGUIUtility).GetMethod("LoadIcon", 
+				var methodInfo = typeof(EditorGUIUtility).GetMethod("LoadIcon",
 				                                                    BindingFlags.Static | BindingFlags.NonPublic);
-				
+
 				var parameters = new object[] {
 					"UnityEditor.ConsoleWindow"
 				};
@@ -237,8 +234,9 @@ public static class BluConsoleEditorHelper
 
 
 	#endregion
-	
+
 }
 
 }
+
 #endif
