@@ -8,6 +8,8 @@ using System.IO;
 using UnityEngine.AI;
 
 
+namespace BluConsole.Test {
+
 public class TestManager : MonoBehaviour
 {
 
@@ -115,5 +117,7 @@ public class TestManager : MonoBehaviour
         else if (type == BluLogType.Error)
             Debug.LogError(message);
     }
+
+}
 
 }

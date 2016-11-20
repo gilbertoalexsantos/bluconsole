@@ -2,6 +2,8 @@
 using System.Collections;
 using BluConsole;
 
+namespace BluConsole.Test {
+
 public static class Test3 {
 
     public static void LogLevelThree(string message, BluLogType type = BluLogType.Normal)
@@ -18,5 +20,7 @@ public static class Test3 {
     {
         Test4.LogLevelFive(message, type);
     }
+
+}
 
 }

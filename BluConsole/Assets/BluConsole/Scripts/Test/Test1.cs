@@ -1,5 +1,7 @@
 ﻿using BluConsole;
 
+namespace BluConsole.Test {
+
 public static class Test1 {
 
     public static void LogLevelOne(string message, BluLogType type = BluLogType.Normal)
@@ -26,5 +28,7 @@ public static class Test1 {
     {
         Test2.LogLevelFive(message, type);
     }
+
+}
 
 }
