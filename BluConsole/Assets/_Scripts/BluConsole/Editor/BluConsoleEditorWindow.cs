@@ -87,7 +87,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			window.titleContent = new GUIContent("BluConsole", consoleIcon);
 		else
 			window.titleContent = new GUIContent("BluConsole");
-		
+
 		window._topPanelHeight = window.position.height / 2.0f;
 	}
 
@@ -283,11 +283,11 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                                   EditorStyles.toolbarButton);
 		if (oldCollapseValue != _isCollapse)
 			SetCountedLogsDirty();
-		
+
 		_isClearOnPlay = BluConsoleEditorHelper.ToggleClamped(_isClearOnPlay,
 		                                                      "Clear on Play",
 		                                                      EditorStyles.toolbarButton);
-		
+
 		_loggerAsset.IsPauseOnError = BluConsoleEditorHelper.ToggleClamped(_loggerAsset.IsPauseOnError,
 		                                                                   "Pause on Error",
 		                                                                   EditorStyles.toolbarButton);
@@ -303,7 +303,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                         GUILayout.Width(200.0f));
 		if (oldSearchString != _searchString)
 			SetCountedLogsDirty();
-		
+
 		if (GUILayout.Button("", BluConsoleEditorHelper.ToolbarSearchCancelButtonStyle))
 		{
 			_searchString = "";
@@ -346,7 +346,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		string qtErrorLogsStr = qtErrorLogs.ToString();
 		if (qtErrorLogs >= maxLogs)
 			qtErrorLogsStr = maxLogs.ToString() + "+";
-        
+
 
 		bool oldIsShowNormal = _isShowNormal;
 		_isShowNormal =
@@ -379,7 +379,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		return height;
 	}
-		
+
 
 	#region LogList
 
@@ -404,8 +404,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUI.DrawTexture(scrollViewPosition, EvenButtonTexture);
 
 		Vector2 oldScrollPosition = _logListScrollPosition;
-		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
-		                                             scrollPosition: _logListScrollPosition, 
+		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition,
+		                                             scrollPosition: _logListScrollPosition,
 		                                             viewRect: scrollViewViewRect);
 
 		int firstRenderLogIndex = (int)(_logListScrollPosition.y / ButtonHeight);
@@ -428,13 +428,13 @@ public class BluConsoleEditorWindow : EditorWindow
 			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
 			var contentImageWidth = style.CalcSize(contentImage).x;
 
-			var buttonRect = new Rect(x: contentImageWidth, 
-			                          y: buttonY, 
-			                          width: viewWidth - contentImageWidth, 
+			var buttonRect = new Rect(x: contentImageWidth,
+			                          y: buttonY,
+			                          width: viewWidth - contentImageWidth,
 			                          height: ButtonHeight);
-			var imageRect = new Rect(x: 0, 
-			                         y: buttonY, 
-			                         width: contentImageWidth, 
+			var imageRect = new Rect(x: 0,
+			                         y: buttonY,
+			                         width: contentImageWidth,
 			                         height: ButtonHeight);
 
 			bool buttonClicked = GUI.Button(buttonRect, content, style);
@@ -619,8 +619,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: WindowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
 
-		_logDetailScrollPosition = GUI.BeginScrollView(position: scrollViewPosition, 
-		                                               scrollPosition: _logDetailScrollPosition, 
+		_logDetailScrollPosition = GUI.BeginScrollView(position: scrollViewPosition,
+		                                               scrollPosition: _logDetailScrollPosition,
 		                                               viewRect: scrollViewViewRect);
 
 		int firstRenderLogIndex = (int)(_logDetailScrollPosition.y / ButtonHeight);
@@ -732,7 +732,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		clickEvent.Use();
 	}
 
-	private void SetCountedLogsDirty() 
+	private void SetCountedLogsDirty()
 	{
 		_isCountedLogsDirty = true;
 	}
@@ -854,14 +854,14 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	// TOOD: The two below functions are equal... Refactor that. DRY!
+	// TODO: The two below functions are equal... Refactor that. DRY!
 	private List<CountedLog> FilterByPatternHelmLike(
-		string pattern, 
+		string pattern,
 		List<CountedLog> logs)
 	{
 		if (string.IsNullOrEmpty(pattern))
 			return logs;
-		
+
 		string[] patterns = pattern.ToLower().Split(' ');
 
 		List<CountedLog> logsFiltered = new List<CountedLog>(logs.Count);
@@ -887,7 +887,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	}
 
 	private List<LogInfo> FilterByPatternHelmLike(
-		string pattern, 
+		string pattern,
 		List<LogInfo> logs)
 	{
 		if (string.IsNullOrEmpty(pattern))

@@ -195,6 +195,7 @@ public static class LoggerServer
     private static BluLogType GetLogType(
         LogType logType)
     {
+
         BluLogType bluLogType = BluLogType.Normal;
 
         switch (logType)
@@ -219,7 +220,7 @@ public static class LoggerServer
         foreach (ILogger logger in _loggers)
             logger.Log(log);
     }
-        
+
 }
 
 }
