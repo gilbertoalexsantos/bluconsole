@@ -135,7 +135,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             LogInfo log = _logsInfo[i];
             if (cmp(log))
                 continue;
-            
+
             newLogs.Add(log);
             IncreaseLogCount(log.LogType);
 
@@ -257,7 +257,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
                 _collapsedLogs.Add(countedLog.Log, countedLog);
         }
     }
-        
+
 
     private void CalOnNewLogOrTrimLogEvent()
     {
@@ -292,8 +292,11 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
 
         CalOnNewLogOrTrimLogEvent();
-            
+
         TrimLogs();
+
+        if (_isPauseOnError && logInfo.LogType == BluLogType.Error)
+            Debug.Break();
     }
 
 
