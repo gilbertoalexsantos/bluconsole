@@ -78,3 +78,9 @@ Known Issues
 ----------------------------
 
 EMPTY
+
+
+Copying
+----------------------------
+
+[Copying](COPYING)
