@@ -67,10 +67,8 @@ TODO
 ----------------------------
 
 * Publish in AssetStore
-	* Generate a license and put in the header of all files
 	* Create a description file to the AssetStore (see [submission guideline](https://unity3d.com/asset-store/sell-assets/submission-guidelines))
 	* Create [Key Images](https://unity3d.com/asset-store/sell-assets/submission-guidelines) to AssetStore submission
-	* Change the window logo of the console (the one we're using reflection...)
 * Support Regex in the Search Box
 
 
