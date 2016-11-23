@@ -80,6 +80,12 @@ Known Issues
 EMPTY
 
 
+License
+----------------------------
+
+[License](LICENSE)
+
+
 Copying
 ----------------------------
 
