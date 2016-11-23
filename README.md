@@ -1,11 +1,11 @@
-BluConsole
+BluConsole <img src="images/console-brand.png" width=30 style="margin: 0px 0px -5px">
 ========================
 
+Are you looking for [images](#images)?
 
 Fell free to contribute! Any PR are welcome (just be consistent with the code guideline)
 
 Any doubts, you can post an issue, or send me an email: <gilberto.alexsantos@gmail.com>
-
 
 Features Implemented
 ----------------------------
@@ -88,3 +88,14 @@ Copying
 ----------------------------
 
 [Copying](COPYING)
+
+
+Images <a name="images"></a>
+----------------------------
+
+![](images/image01.png)
+<hr>
+![](images/image02.png)
+<hr>
+![](images/image03.png)
+<hr>
