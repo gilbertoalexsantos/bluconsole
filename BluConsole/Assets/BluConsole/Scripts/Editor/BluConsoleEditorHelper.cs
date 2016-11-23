@@ -156,27 +156,17 @@ public static class BluConsoleEditorHelper
 		}
 	}
 
-	// TODO: Use another icon other than the Unity Console
 	public static Texture2D ConsoleIcon
 	{
 		get
 		{
-			if (_consoleIcon == null && _hasConsoleIcon)
-			{
-				var methodInfo = typeof(EditorGUIUtility).GetMethod("LoadIcon",
-				                                                    BindingFlags.Static | BindingFlags.NonPublic);
-
-				var parameters = new object[] {
-					"UnityEditor.ConsoleWindow"
-				};
-
-				_consoleIcon = methodInfo.Invoke(null, parameters) as Texture2D;
-
-				if (_consoleIcon == null)
-				{
-					_hasConsoleIcon = false;
-				}
-			}
+            if (_consoleIcon == null && _hasConsoleIcon)
+            {
+                string path  ="Assets/BluConsole/Images/bluconsole-icon.png";
+                _consoleIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (_consoleIcon == null)
+                    _hasConsoleIcon = false;
+            }
 
 			return _consoleIcon;
 		}
