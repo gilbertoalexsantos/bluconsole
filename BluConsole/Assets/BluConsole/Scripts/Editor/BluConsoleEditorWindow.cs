@@ -68,6 +68,8 @@ public class BluConsoleEditorWindow : EditorWindow
 	private float _buttonWidth;
 	private float _buttonHeight;
 
+    private Color _guiColor;
+
 	// Toolbar Variables
 	private bool _isShowNormal = true;
 	private bool _isShowWarnings = true;
@@ -119,8 +121,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		_loggerAsset.OnNewLogOrTrimLogEvent -= OnNewLogOrTrimLog;
 		_loggerAsset.OnNewLogOrTrimLogEvent += OnNewLogOrTrimLog;
 
-		InitVariables();
-
 		if (EditorApplication.isCompiling && !_isCompiling)
 		{
 			_isCompiling = true;
@@ -141,6 +141,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			_isPlaying = false;
 		}
+
+		InitVariables();
 
 		_hasScrollWheelUp = Event.current.type == EventType.ScrollWheel && Event.current.delta.y < 0f;
 
@@ -165,6 +167,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void InitVariables()
 	{
+        _guiColor = GUI.backgroundColor;
+
 		_evenButtonStyle = new GUIStyle(EditorStyles.label);
 		_evenButtonStyle.richText = true;
 		_evenButtonStyle.fontSize = FontSize;
@@ -237,6 +241,17 @@ public class BluConsoleEditorWindow : EditorWindow
 		_drawYPos = 0f;
 	}
 
+    private void ClearVariables()
+    {
+        Texture2D.DestroyImmediate(_evenButtonTexture, true);
+        Texture2D.DestroyImmediate(_oddButtonTexture, true);
+        Texture2D.DestroyImmediate(_evenErrorButtonTexture, true);
+        Texture2D.DestroyImmediate(_oddErrorButtonTexture, true);
+        Texture2D.DestroyImmediate(_sizeLinerBorderTexture, true);
+        Texture2D.DestroyImmediate(_sizeLinerCenterTexture, true);
+        Texture2D.DestroyImmediate(_selectedButtonTexture, true);
+    }
+
 	private void OnBeforeCompile()
 	{
 		SetCountedLogsDirty();
@@ -247,6 +262,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void OnAfterCompile()
 	{
+        ClearVariables();
 		SetCountedLogsDirty();
 
 		var logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
@@ -1063,7 +1079,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return BluConsoleEditorHelper.ColorFromRGB(222, 222, 222);
+            return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.88f);
 		}
 	}
 
@@ -1071,7 +1087,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return BluConsoleEditorHelper.ColorFromRGB(216, 216, 216);
+            return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.85f);
 		}
 	}
 

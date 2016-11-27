@@ -246,6 +246,13 @@ public static class BluConsoleEditorHelper
 		return new Color((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f);
 	}
 
+    public static Color ColorPercent(
+        Color color,
+        float percent)
+    {
+        return new Color(color.r * percent, color.g * percent, color.b * percent);
+    }
+
 
 	#endregion
 
