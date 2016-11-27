@@ -45,13 +45,6 @@ you'll have the option to override the Global Configuration (e.g log only in iOS
 It'll be nice to have some colors options too. Maybe an extension of the String class to embed it with colors directives.
 
 
-#### Theme
-
-The current theme (I didn't test it yet) probably will not look nice in the UnityPro (I'm using hardcoded colors).
-
-Create a logic to use the colors of the theme of the editor.
-
-
 #### Default Configurations
 
 A scriptable object that will hold configurations, like:
