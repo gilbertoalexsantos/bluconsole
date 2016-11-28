@@ -1063,7 +1063,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return BluConsoleEditorHelper.ColorFromRGB(162, 162, 162);
+            return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.5f);
 		}
 	}
 
@@ -1071,7 +1071,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return BluConsoleEditorHelper.ColorFromRGB(130, 130, 130);
+            return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.55f);
 		}
 	}
 
