@@ -28,6 +28,8 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using BluConsole.Core;
+using System.Collections.Generic;
+using JetBrains.Annotations;
 
 
 namespace BluConsole.Editor
@@ -40,153 +42,13 @@ public static class BluConsoleEditorHelper
 	private static Texture2D _consoleIcon = null;
 	private static bool _hasConsoleIcon = true;
 
-
-	#region Buttons
-
-
-	public static bool ButtonClamped(
-		string text,
-		GUIStyle style)
-	{
-		return GUILayout.Button(text, style, GUILayout.MaxWidth(style.CalcSize(new GUIContent(text)).x));
-	}
-
-	public static bool ToggleClamped(
-		bool state,
-		string text,
-		GUIStyle style)
-	{
-		return GUILayout.Toggle(state, text, style, GUILayout.MaxWidth(style.CalcSize(new GUIContent(text)).x));
-	}
-
-	public static bool ToggleClamped(
-		bool state,
-		GUIContent content,
-		GUIStyle style)
-	{
-		return GUILayout.Toggle(state, content, style, GUILayout.MaxWidth(style.CalcSize(content).x));
-	}
-
-
-	#endregion
-
-
-	#region GUIContent
-
-
-	public static GUIContent InfoGUIContent(
-		string text)
-	{
-		return new GUIContent(text, InfoIconSmall);
-	}
-
-	public static GUIContent InfoGUIContent(
-		int value)
-	{
-		return new GUIContent(value.ToString(), InfoIconSmall);
-	}
-
-	public static GUIContent WarningGUIContent(
-		string text)
-	{
-		return new GUIContent(text, WarningIconSmall);
-	}
-
-	public static GUIContent WarningGUIContent(
-		int value)
-	{
-		return new GUIContent(value.ToString(), WarningIconSmall);
-	}
-
-	public static GUIContent ErrorGUIContent(
-		string text)
-	{
-		return new GUIContent(text, ErrorIconSmall);
-	}
-
-	public static GUIContent ErrorGUIContent(
-		int value)
-	{
-		return new GUIContent(value.ToString(), ErrorIconSmall);
-	}
-
-
-	#endregion
-
-
-	#region Textures
-
-
-	public static Texture2D InfoIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.infoicon");
-		}
-	}
-
-	public static Texture2D InfoIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.infoicon.sml");
-		}
-	}
-
-	public static Texture2D WarningIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.warnicon");
-		}
-	}
-
-	public static Texture2D WarningIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.warnicon.sml");
-		}
-	}
-
-	public static Texture2D ErrorIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.erroricon");
-		}
-	}
-
-	public static Texture2D ErrorIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.erroricon.sml");
-		}
-	}
-
-	public static Texture2D BlueTexture
-	{
-		get
-		{
-			foreach (var style in GUI.skin.customStyles)
-			{
-				if (style.name == "LODSliderRangeSelected")
-				{
-					return style.normal.background;
-				}
-			}
-			return EditorGUIUtility.whiteTexture;
-		}
-	}
-
 	public static Texture2D ConsoleIcon
 	{
 		get
 		{
             if (_consoleIcon == null && _hasConsoleIcon)
             {
-                string path  ="Assets/BluConsole/Images/bluconsole-icon.png";
+                string path = "Assets/BluConsole/Images/bluconsole-icon.png";
                 _consoleIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 if (_consoleIcon == null)
                     _hasConsoleIcon = false;
@@ -208,36 +70,6 @@ public static class BluConsoleEditorHelper
 		return result;
 	}
 
-
-	#endregion Textures
-
-
-	#region Styles
-
-
-	public static GUIStyle ToolbarSearchTextField
-	{
-		get
-		{
-			return GUI.skin.FindStyle("ToolbarSeachTextField");
-		}
-	}
-
-	public static GUIStyle ToolbarSearchCancelButtonStyle
-	{
-		get
-		{
-			return GUI.skin.FindStyle("ToolbarSeachCancelButton");
-		}
-	}
-
-
-	#endregion
-
-
-	#region ETC
-
-
 	public static Color ColorFromRGB(
 		int r,
 		int g,
@@ -252,9 +84,6 @@ public static class BluConsoleEditorHelper
     {
         return new Color(color.r * percent, color.g * percent, color.b * percent);
     }
-
-
-	#endregion
 
 }
 
