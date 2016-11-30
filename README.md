@@ -63,7 +63,8 @@ TODO
 	* Create a description file to the AssetStore (see [submission guideline](https://unity3d.com/asset-store/sell-assets/submission-guidelines))
 	* Create [Key Images](https://unity3d.com/asset-store/sell-assets/submission-guidelines) to AssetStore submission
 * Support Regex in the Search Box
-
+* Decrease complexity of LoggerServer Regex (the IsCompiler is taking too much time)
+* Implement a object cached system that works on editor (needs to create a serializable dictionary. [Reference](http://answers.unity3d.com/questions/460727/how-to-serialize-dictionary-with-unity-serializati.html))
 
 Known Issues
 ----------------------------

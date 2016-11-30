@@ -47,28 +47,20 @@ public class BluConsoleEditorWindow : EditorWindow
 	private float _drawYPos;
 
 	// Cache Variables
+	private Texture2D _consoleIcon;
+	private bool _hasConsoleIcon = true;
+
 	private List<CountedLog> _countedLogs = new List<CountedLog>();
 	private bool _isCountedLogsDirty = true;
 
-	private GUIStyle _evenButtonStyle;
-	private GUIStyle _oddButtonStyle;
-	private GUIStyle _evenErrorButtonStyle;
-	private GUIStyle _oddButtonErrorStyle;
-	private GUIStyle _selectedButtonStyle;
-	private GUIStyle _collapseStyle;
-
-	private Texture2D _selectedButtonTexture;
-	private Texture2D _oddErrorButtonTexture;
-	private Texture2D _evenErrorButtonTexture;
-	private Texture2D _oddButtonTexture;
-	private Texture2D _evenButtonTexture;
+	private Texture2D _selectedBackTexture;
+	private Texture2D _oddErrorBackTexture;
+	private Texture2D _evenErrorBackTexture;
 	private Texture2D _sizeLinerBorderTexture;
 	private Texture2D _sizeLinerCenterTexture;
 
 	private float _buttonWidth;
 	private float _buttonHeight;
-
-	private Color _guiColor;
 
 	// Toolbar Variables
 	private bool _isShowNormal = true;
@@ -107,7 +99,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		var window = EditorWindow.GetWindow<BluConsoleEditorWindow>("BluConsole");
 
-		var consoleIcon = BluConsoleEditorHelper.ConsoleIcon;
+		var consoleIcon = window.ConsoleIcon;
 		if (consoleIcon != null)
 			window.titleContent = new GUIContent("BluConsole", consoleIcon);
 		else
@@ -167,77 +159,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void InitVariables()
 	{
-		_guiColor = GUI.backgroundColor;
-
-		_evenButtonStyle = new GUIStyle(EditorStyles.label);
-		_evenButtonStyle.richText = true;
-		_evenButtonStyle.fontSize = FontSize;
-		_evenButtonStyle.alignment = TextAnchor.MiddleLeft;
-		_evenButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_evenButtonStyle.padding = new RectOffset(0, 0, 0, 0);
-		_evenButtonStyle.normal.background = EvenButtonTexture;
-		_evenButtonStyle.active = _evenButtonStyle.normal;
-		_evenButtonStyle.hover = _evenButtonStyle.normal;
-		_evenButtonStyle.focused = _evenButtonStyle.normal;
-
-		_oddButtonStyle = new GUIStyle(EditorStyles.label);
-		_oddButtonStyle.richText = true;
-		_oddButtonStyle.fontSize = FontSize;
-		_oddButtonStyle.alignment = TextAnchor.MiddleLeft;
-		_oddButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_oddButtonStyle.padding = new RectOffset(0, 0, 0, 0);
-		_oddButtonStyle.normal.background = OddButtonTexture;
-		_oddButtonStyle.active = _oddButtonStyle.normal;
-		_oddButtonStyle.hover = _oddButtonStyle.normal;
-		_oddButtonStyle.focused = _oddButtonStyle.normal;
-
-		_evenErrorButtonStyle = new GUIStyle(EditorStyles.label);
-		_evenErrorButtonStyle.richText = true;
-		_evenErrorButtonStyle.fontSize = FontSize;
-		_evenErrorButtonStyle.alignment = TextAnchor.MiddleLeft;
-		_evenErrorButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_evenErrorButtonStyle.padding = new RectOffset(0, 0, 0, 0);
-		_evenErrorButtonStyle.normal.background = EvenErrorButtonTexture;
-		_evenErrorButtonStyle.active = _evenErrorButtonStyle.normal;
-		_evenErrorButtonStyle.hover = _evenErrorButtonStyle.normal;
-		_evenErrorButtonStyle.focused = _evenErrorButtonStyle.normal;
-
-		_oddButtonErrorStyle = new GUIStyle(EditorStyles.label);
-		_oddButtonErrorStyle.richText = true;
-		_oddButtonErrorStyle.fontSize = FontSize;
-		_oddButtonErrorStyle.alignment = TextAnchor.MiddleLeft;
-		_oddButtonErrorStyle.margin = new RectOffset(0, 0, 0, 0);
-		_oddButtonErrorStyle.padding = new RectOffset(0, 0, 0, 0);
-		_oddButtonErrorStyle.normal.background = OddErrorButtonTexture;
-		_oddButtonErrorStyle.active = _oddButtonErrorStyle.normal;
-		_oddButtonErrorStyle.hover = _oddButtonErrorStyle.normal;
-		_oddButtonErrorStyle.focused = _oddButtonErrorStyle.normal;
-
-		_selectedButtonStyle = new GUIStyle(EditorStyles.whiteLabel);
-		_selectedButtonStyle.richText = true;
-		_selectedButtonStyle.fontSize = FontSize;
-		_selectedButtonStyle.alignment = TextAnchor.MiddleLeft;
-		_selectedButtonStyle.margin = new RectOffset(0, 0, 0, 0);
-		_selectedButtonStyle.padding = new RectOffset(0, 0, 0, 0);
-		_selectedButtonStyle.normal.background = SelectedButtonTexture;
-		_selectedButtonStyle.active = _selectedButtonStyle.normal;
-		_selectedButtonStyle.hover = _selectedButtonStyle.normal;
-		_selectedButtonStyle.focused = _selectedButtonStyle.normal;
-
-		foreach (var style in GUI.skin.customStyles)
-		{
-			if (style.name == "CN CountBadge")
-			{
-				_collapseStyle = style;
-				break;
-			}
-		}
-
-		if (_collapseStyle == null)
-			_collapseStyle = EvenButtonStyle;
-
 		_buttonWidth = position.width;
-		_buttonHeight = _evenButtonStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
+		_buttonHeight = BluConsoleSkin.MessageStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
 		_drawYPos = 0f;
 	}
 
@@ -283,6 +206,15 @@ public class BluConsoleEditorWindow : EditorWindow
 		SetCountedLogsDirty();
 	}
 
+	private void OnDisable()
+	{
+		Texture2D.DestroyImmediate(_selectedBackTexture);
+		Texture2D.DestroyImmediate(_oddErrorBackTexture);
+		Texture2D.DestroyImmediate(_evenErrorBackTexture);
+		Texture2D.DestroyImmediate(_sizeLinerBorderTexture);
+		Texture2D.DestroyImmediate(_sizeLinerCenterTexture);
+	}
+
 	private void OnNewLogOrTrimLog()
 	{
 		SetCountedLogsDirty();
@@ -290,11 +222,11 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private float DrawTopToolbar()
 	{
-		float height = EditorStyles.toolbarButton.CalcSize(new GUIContent("Clear")).y;
-		GUILayout.BeginHorizontal(EditorStyles.toolbar, GUILayout.Height(height));
+		float height = BluConsoleSkin.ToolbarButtonStyle.CalcSize(new GUIContent("Clear")).y;
+		GUILayout.BeginHorizontal(BluConsoleSkin.ToolbarStyle, GUILayout.Height(height));
 
 		// Clear/Collapse/ClearOnPlay/ErrorPause Area
-		if (ButtonClamped("Clear", EditorStyles.toolbarButton))
+		if (GetButtonClamped("Clear", BluConsoleSkin.ToolbarButtonStyle))
 		{
 			SetCountedLogsDirty();
 			_loggerAsset.ClearExceptCompileErrors();
@@ -305,19 +237,19 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUILayout.Space(6.0f);
 
 		bool oldCollapseValue = _isCollapse;
-		_isCollapse = ToggleClamped(_isCollapse,
-		                            "Collapse",
-		                            EditorStyles.toolbarButton);
+		_isCollapse = GetToggleClamped(_isCollapse,
+		                               "Collapse",
+		                               BluConsoleSkin.ToolbarButtonStyle);
 		if (oldCollapseValue != _isCollapse)
 			SetCountedLogsDirty();
 
-		_isClearOnPlay = ToggleClamped(_isClearOnPlay,
-		                               "Clear on Play",
-		                               EditorStyles.toolbarButton);
+		_isClearOnPlay = GetToggleClamped(_isClearOnPlay,
+		                                  "Clear on Play",
+		                                  BluConsoleSkin.ToolbarButtonStyle);
 
-		_loggerAsset.IsPauseOnError = ToggleClamped(_loggerAsset.IsPauseOnError,
-		                                            "Pause on Error",
-		                                            EditorStyles.toolbarButton);
+		_loggerAsset.IsPauseOnError = GetToggleClamped(_loggerAsset.IsPauseOnError,
+		                                               "Pause on Error",
+		                                               BluConsoleSkin.ToolbarButtonStyle);
 
 
 		GUILayout.FlexibleSpace();
@@ -326,12 +258,12 @@ public class BluConsoleEditorWindow : EditorWindow
 		// Search Area
 		string oldSearchString = _searchString;
 		_searchString = EditorGUILayout.TextArea(_searchString,
-		                                         ToolbarSearchTextField,
+		                                         BluConsoleSkin.ToolbarSearchTextFieldStyle,
 		                                         GUILayout.Width(200.0f));
 		if (oldSearchString != _searchString)
 			SetCountedLogsDirty();
 
-		if (GUILayout.Button("", ToolbarSearchCancelButtonStyle))
+		if (GUILayout.Button("", BluConsoleSkin.ToolbarSearchCancelButtonStyle))
 		{
 			_searchString = "";
 			GUI.FocusControl(null);
@@ -376,20 +308,26 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
 		bool oldIsShowNormal = _isShowNormal;
-		_isShowNormal = ToggleClamped(_isShowNormal, InfoGUIContent(qtNormalLogsStr), ToggleStyle);
+		_isShowNormal = GetToggleClamped(_isShowNormal, 
+		                                 GetInfoGUIContent(qtNormalLogsStr), 
+		                                 BluConsoleSkin.ToolbarButtonStyle);
 		if (oldIsShowNormal != _isShowNormal)
 			SetCountedLogsDirty();
 
 
 		bool oldIsShowWarnings = _isShowWarnings;
-		_isShowWarnings = ToggleClamped(_isShowWarnings, WarningGUIContent(qtWarningLogsStr), ToggleStyle);
+		_isShowWarnings = GetToggleClamped(_isShowWarnings, 
+		                                   GetWarningGUIContent(qtWarningLogsStr), 
+		                                   BluConsoleSkin.ToolbarButtonStyle);
 		if (oldIsShowWarnings != _isShowWarnings)
 			SetCountedLogsDirty();
 
 
 		bool oldIsShowErrors = _isShowErrors;
 		_isShowErrors =
-            ToggleClamped(_isShowErrors, ErrorGUIContent(qtErrorLogsStr), ToggleStyle);
+			GetToggleClamped(_isShowErrors, 
+		                  GetErrorGUIContent(qtErrorLogsStr), 
+		                  BluConsoleSkin.ToolbarButtonStyle);
 		if (oldIsShowErrors != _isShowErrors)
 			SetCountedLogsDirty();
 
@@ -398,10 +336,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		return height;
 	}
-
-
-	#region LogList
-
 
 	private void DrawLogList()
 	{
@@ -420,7 +354,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
 
-		GUI.DrawTexture(scrollViewPosition, EvenButtonTexture);
+		GUI.DrawTexture(scrollViewPosition, BluConsoleSkin.EvenBackTexture);
 
 		Vector2 oldScrollPosition = _logListScrollPosition;
 		_logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition,
@@ -439,43 +373,50 @@ public class BluConsoleEditorWindow : EditorWindow
 		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
 		{
 			LogInfo logInfo = logs[i].Log;
-			int quantity = logs[i].Quantity;
+			var styleBack = GetLogBackStyle(i, logInfo, i == _logListSelectedMessage ? true : false);
 
-			var style = GetLogListStyle(i, logInfo);
-			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
-			var content = new GUIContent(showMessage);
+
+			var styleImage = GetLogStyle(logInfo.LogType);
 			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
-			var contentImageWidth = style.CalcSize(contentImage).x;
-
-			var buttonRect = new Rect(x: contentImageWidth,
-			                          y: buttonY,
-			                          width: viewWidth - contentImageWidth,
-			                          height: ButtonHeight);
-			var imageRect = new Rect(x: 0,
+			var contentImageWidth = styleImage.CalcSize(contentImage).x;
+			var rectImage = new Rect(x: 0,
 			                         y: buttonY,
 			                         width: contentImageWidth,
 			                         height: ButtonHeight);
+			DrawBack(rectImage, styleBack);
+			bool imageClicked = GUI.Button(rectImage, contentImage, styleImage);
 
-			bool buttonClicked = GUI.Button(buttonRect, content, style);
-			bool imageClicked = GUI.Button(imageRect, contentImage, style);
-			bool hasClick = buttonClicked || imageClicked;
+
+			var styleMessage = BluConsoleSkin.MessageStyle;
+			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
+			var contentMessage = new GUIContent(showMessage);
+			var rectMessage = new Rect(x: contentImageWidth,
+			                           y: buttonY,
+			                           width: viewWidth - contentImageWidth,
+			                           height: ButtonHeight);
+			DrawBack(rectMessage, styleBack);
+			bool messageClicked = GUI.Button(rectMessage, contentMessage, styleMessage);
+
+
+			bool hasClick = messageClicked || imageClicked;
 			bool isLeftClick = hasClick ? Event.current.button == 0 : false;
 
 			if (_isCollapse)
 			{
+				int quantity = logs[i].Quantity;
 				var collapseCount = Mathf.Min(quantity, MAX_LENGTH_COLLAPSE);
 				var collapseText = collapseCount.ToString();
 				if (collapseCount >= MAX_LENGTH_COLLAPSE)
 					collapseText += "+";
 				var collapseContent = new GUIContent(collapseText);
-				var collapseSize = CollapseStyle.CalcSize(collapseContent);
+				var collapseSize = BluConsoleSkin.CollapseStyle.CalcSize(collapseContent);
 
 				var collapseRect = new Rect(x: viewWidth - collapseSize.x - 5f,
 				                            y: (buttonY + buttonY + ButtonHeight - collapseSize.y) * 0.5f,
 				                            width: collapseSize.x,
 				                            height: collapseSize.y);
 
-				GUI.Label(collapseRect, collapseContent, _collapseStyle);
+				GUI.Label(collapseRect, collapseContent, BluConsoleSkin.CollapseStyle);
 			}
 
 			if (hasClick)
@@ -491,9 +432,7 @@ public class BluConsoleEditorWindow : EditorWindow
 					{
 						_logListLastTimeClicked = 0.0f;
 						if (logInfo.CallStack.Count > 0)
-						{
 							JumpToSource(logInfo.CallStack[0]);
-						}
 					}
 					else
 					{
@@ -532,41 +471,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		float endY = viewHeight - windowHeight;
 		_logListScrollPosition.y = endY;
 	}
-
-	private string GetLogListMessage(
-		LogInfo log)
-	{
-		string showMessage = null;
-		if (log.IsCompileMessage)
-			showMessage = log.RawMessage;
-		else
-			showMessage = log.Message.Replace(System.Environment.NewLine, " ");
-		return showMessage;
-	}
-
-	private GUIStyle GetLogListStyle(
-		int index,
-		LogInfo log)
-	{
-		bool isEven = index % 2 == 0 ? true : false;
-
-		var logLineStyle = EvenButtonStyle;
-		if (log.IsCompileMessage && log.LogType == BluLogType.Error && index != _logListSelectedMessage)
-		{
-			logLineStyle = isEven ? EvenErrorButtonStyle : OddButtonErrorStyle;
-		}
-		else
-		{
-			logLineStyle = index == _logListSelectedMessage ?
-                SelectedButtonStyle : (isEven ? EvenButtonStyle : OddButtonStyle);
-		}
-
-		return logLineStyle;
-	}
-
-
-	#endregion LogList
-
 
 	private void DrawResizer()
 	{
@@ -607,13 +511,11 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		{
 			var rect = new Rect(x: 0, y: DrawYPos, width: WindowWidth, height: windowHeight);
-			GUI.DrawTexture(rect, EvenButtonTexture);
+			GUI.DrawTexture(rect, BluConsoleSkin.EvenBackTexture);
 		}
 
 		if (_logListSelectedMessage == -1 || logs.Count == 0 || _logListSelectedMessage >= logs.Count)
-		{
 			return;
-		}
 
 		var log = logs[_logListSelectedMessage].Log;
 		var size = log.CallStack.Count;
@@ -660,15 +562,17 @@ public class BluConsoleEditorWindow : EditorWindow
 		// Logging first message
 		if (firstRenderLogIndex == 0)
 		{
-			var style = _logDetailSelectedFrame == -2 ? SelectedButtonStyle : EvenButtonStyle;
-			var buttonRect = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+			var styleBack = GetLogBackStyle(0, log, _logDetailSelectedFrame == -2 ? true : false);
+			var styleMessage = BluConsoleSkin.MessageStyle;
+			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
 
 			var message = log.IsCompileMessage ? log.Message : log.RawMessage;
 			message = GetTruncatedMessage(message);
 			message = "  " + message;
-			var content = new GUIContent(message);
+			var messageContent = new GUIContent(message);
 
-			if (GUI.Button(buttonRect, content, style))
+			DrawBack(rectButton, styleBack);
+			if (GUI.Button(rectButton, messageContent, styleMessage))
 			{
 				bool isLeftClick = Event.current.button == 0;
 
@@ -703,12 +607,14 @@ public class BluConsoleEditorWindow : EditorWindow
 			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
 			message = GetTruncatedMessage(message);
 			message = "  " + message;
-			var content = new GUIContent(message);
+			var contentMessage = new GUIContent(message);
 
-			var style = i == _logDetailSelectedFrame ? SelectedButtonStyle : (i % 2 == 0 ? EvenButtonStyle : OddButtonStyle);
-			var buttonRect = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+			var styleBack = GetLogBackStyle(0, log, i == _logDetailSelectedFrame ? true : false);
+			var styleMessage = BluConsoleSkin.MessageStyle;
+			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
 
-			if (GUI.Button(buttonRect, content, style))
+			DrawBack(rectButton, styleBack);
+			if (GUI.Button(rectButton, contentMessage, styleMessage))
 			{
 				bool isLeftClick = Event.current.button == 0;
 
@@ -756,6 +662,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		_isCountedLogsDirty = true;
 	}
 
+	private void DrawBack(
+		Rect rect,
+		GUIStyle style)
+	{
+		GUI.Label(rect, GUIContent.none, style);
+	}
+
 
 	#region Gets
 
@@ -769,11 +682,74 @@ public class BluConsoleEditorWindow : EditorWindow
 		return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: MAX_LENGTH_MESSAGE));
 	}
 
+	private string GetLogListMessage(
+		LogInfo log)
+	{
+		string showMessage = null;
+		if (log.IsCompileMessage)
+			showMessage = log.RawMessage;
+		else
+			showMessage = log.Message.Replace(System.Environment.NewLine, " ");
+		return showMessage;
+	}
+
+	private GUIStyle GetLogBackStyle(
+		int index,
+		LogInfo log,
+		bool selected)
+	{
+		if (selected)
+			return SelectedBackStyle;
+
+		bool isEven = index % 2 == 0 ? true : false;
+		bool isCompileError = log.IsCompileMessage && log.LogType == BluLogType.Error;
+
+		if (isEven)
+		{
+			if (isCompileError)
+				return EvenErrorBackStyle;
+			else
+				return BluConsoleSkin.EvenBackStyle;
+		}
+		else
+		{
+			if (isCompileError)
+				return OddErrorBackStyle;
+			else
+				return BluConsoleSkin.OddBackStyle;
+		}
+	}
+
+	private GUIStyle GetLogStyle(
+		int index,
+		LogInfo log)
+	{
+		if (index == _logListSelectedMessage)
+			return SelectedBackStyle;
+
+		return GetLogStyle(log.LogType);
+	}
+
+	private GUIStyle GetLogStyle(
+		BluLogType logType)
+	{
+		switch (logType)
+		{
+		case BluLogType.Normal:
+			return BluConsoleSkin.LogImageInfoStyle;
+		case BluLogType.Warning:
+			return BluConsoleSkin.LogImageWarnStyle;
+		case BluLogType.Error:
+			return BluConsoleSkin.LogImageErrorStyle;
+		}
+		return BluConsoleSkin.LogImageInfoStyle;
+	}
+
 	private float GetButtonWidth(
 		string message,
 		BluLogType logType)
 	{
-		return EvenButtonStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
+		return BluConsoleSkin.MessageStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
 	}
 
 	private Texture2D GetIcon(
@@ -782,13 +758,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		switch (logType)
 		{
 		case BluLogType.Normal:
-			return InfoIcon;
+			return BluConsoleSkin.InfoIcon;
 		case BluLogType.Warning:
-			return WarningIcon;
+			return BluConsoleSkin.WarningIcon;
 		case BluLogType.Error:
-			return ErrorIcon;
+			return BluConsoleSkin.ErrorIcon;
 		default:
-			return InfoIcon;
+			return BluConsoleSkin.InfoIcon;
 		}
 	}
 
@@ -798,13 +774,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		switch (logType)
 		{
 		case BluLogType.Normal:
-			return InfoIconSmall;
+			return BluConsoleSkin.InfoIconSmall;
 		case BluLogType.Warning:
-			return WarningIconSmall;
+			return BluConsoleSkin.WarningIconSmall;
 		case BluLogType.Error:
-			return ErrorIconSmall;
+			return BluConsoleSkin.ErrorIconSmall;
 		default:
-			return InfoIconSmall;
+			return BluConsoleSkin.InfoIconSmall;
 		}
 	}
 
@@ -824,50 +800,50 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private GUIContent InfoGUIContent(
+	private GUIContent GetInfoGUIContent(
 		string text)
 	{
-		return new GUIContent(text, InfoIconSmall);
+		return new GUIContent(text, BluConsoleSkin.InfoIconSmall);
 	}
 
-	private GUIContent InfoGUIContent(
+	private GUIContent GetInfoGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), InfoIconSmall);
+		return new GUIContent(value.ToString(), BluConsoleSkin.InfoIconSmall);
 	}
 
-	private GUIContent WarningGUIContent(
+	private GUIContent GetWarningGUIContent(
 		string text)
 	{
-		return new GUIContent(text, WarningIconSmall);
+		return new GUIContent(text, BluConsoleSkin.WarningIconSmall);
 	}
 
-	private GUIContent WarningGUIContent(
+	private GUIContent GetWarningGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), WarningIconSmall);
+		return new GUIContent(value.ToString(), BluConsoleSkin.WarningIconSmall);
 	}
 
-	private GUIContent ErrorGUIContent(
+	private GUIContent GetErrorGUIContent(
 		string text)
 	{
-		return new GUIContent(text, ErrorIconSmall);
+		return new GUIContent(text, BluConsoleSkin.ErrorIconSmall);
 	}
 
-	private GUIContent ErrorGUIContent(
+	private GUIContent GetErrorGUIContent(
 		int value)
 	{
-		return new GUIContent(value.ToString(), ErrorIconSmall);
+		return new GUIContent(value.ToString(), BluConsoleSkin.ErrorIconSmall);
 	}
 
-	private bool ButtonClamped(
+	private bool GetButtonClamped(
 		string text,
 		GUIStyle style)
 	{
 		return GUILayout.Button(text, style, GUILayout.MaxWidth(style.CalcSize(new GUIContent(text)).x));
 	}
 
-	private bool ToggleClamped(
+	private bool GetToggleClamped(
 		bool state,
 		string text,
 		GUIStyle style)
@@ -875,7 +851,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		return GUILayout.Toggle(state, text, style, GUILayout.MaxWidth(style.CalcSize(new GUIContent(text)).x));
 	}
 
-	private bool ToggleClamped(
+	private bool GetToggleClamped(
 		bool state,
 		GUIContent content,
 		GUIStyle style)
@@ -952,6 +928,102 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	#region Properties
 
+
+	private Texture2D SizeLinerCenterTexture
+	{
+		get
+		{
+			if (_sizeLinerCenterTexture == null)
+				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineCenterColour);
+			return _sizeLinerCenterTexture;
+		}
+	}
+
+	private Texture2D SizeLinerBorderTexture
+	{
+		get
+		{
+			if (_sizeLinerBorderTexture == null)
+				_sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineBorderColour);
+			return _sizeLinerBorderTexture;
+		}
+	}
+
+	private Texture2D EvenErrorBackTexture
+	{
+		get
+		{
+			if (_evenErrorBackTexture == null)
+				_evenErrorBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.EvenErrorBackColor);
+			return _evenErrorBackTexture;
+		}
+	}
+
+	private Texture2D OddErrorBackTexture
+	{
+		get
+		{
+			if (_oddErrorBackTexture == null)
+				_oddErrorBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.OddErrorBackColor);
+			return _oddErrorBackTexture;
+		}
+	}
+
+	private Texture2D SelectedBackTexture
+	{
+		get
+		{
+			if (_selectedBackTexture == null)
+				_selectedBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SelectedBackColor);
+			return _selectedBackTexture;
+		}
+	}
+
+	private Texture2D ConsoleIcon
+	{
+		get
+		{
+			if (_consoleIcon == null && _hasConsoleIcon)
+			{
+				string path = "Assets/BluConsole/Images/bluconsole-icon.png";
+				_consoleIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+				if (_consoleIcon == null)
+					_hasConsoleIcon = false;
+			}
+
+			return _consoleIcon;
+		}
+	}
+
+	private GUIStyle EvenErrorBackStyle
+	{
+		get
+		{
+			var style = new GUIStyle(BluConsoleSkin.EvenBackStyle);
+			style.normal.background = EvenErrorBackTexture;
+			return style;
+		}
+	}
+
+	private GUIStyle OddErrorBackStyle
+	{
+		get
+		{
+			var style = new GUIStyle(BluConsoleSkin.OddBackStyle);
+			style.normal.background = OddErrorBackTexture;
+			return style;
+		}
+	}
+
+	public GUIStyle SelectedBackStyle
+	{
+		get
+		{
+			var style = new GUIStyle(BluConsoleSkin.EvenBackStyle);
+			style.normal.background = SelectedBackTexture;
+			return style;
+		}
+	}
 
 	private List<CountedLog> CountedLogsFilteredByFlags
 	{
@@ -1095,274 +1167,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		get
 		{
 			return 60.0f;
-		}
-	}
-
-	private Color SizerLineCenterColour
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.5f);
-		}
-	}
-
-	private Color SizerLineBorderColour
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.55f);
-		}
-	}
-
-	private Color EvenButtonColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.88f);
-		}
-	}
-
-	private Color OddButtonColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorPercent(_guiColor, 0.85f);
-		}
-	}
-
-	private Color EvenErrorButtonColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-		}
-	}
-
-	private Color OddErrorButtonColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-		}
-	}
-
-	private Color SelectedButtonColor
-	{
-		get
-		{
-			return new Color(0.5f, 0.5f, 1);
-		}
-	}
-
-	private Texture2D SizeLinerCenterTexture
-	{
-		get
-		{
-			if (_sizeLinerCenterTexture == null)
-				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(SizerLineCenterColour);
-			return _sizeLinerCenterTexture;
-		}
-	}
-
-	private Texture2D SizeLinerBorderTexture
-	{
-		get
-		{
-			if (_sizeLinerBorderTexture == null)
-				_sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(SizerLineBorderColour);
-			return _sizeLinerBorderTexture;
-		}
-	}
-
-	private Texture2D EvenButtonTexture
-	{
-		get
-		{
-			if (_evenButtonTexture == null)
-			{
-				var style = GUI.skin.FindStyle("CN EntryBackEven");
-				if (style == null)
-					_evenButtonTexture = BluConsoleEditorHelper.GetTexture(EvenButtonColor);
-				else
-					_evenButtonTexture = style.normal.background;
-			}
-			
-			return _evenButtonTexture;
-		}
-	}
-
-	private Texture2D OddButtonTexture
-	{
-		get
-		{
-			if (_oddButtonTexture == null)
-			{
-				var style = GUI.skin.FindStyle("CN EntryBackOdd");
-				if (style == null)
-					_oddButtonTexture = BluConsoleEditorHelper.GetTexture(OddButtonColor);
-				else
-					_oddButtonTexture = style.normal.background;
-			}
-
-			return _oddButtonTexture;
-		}
-	}
-
-	private Texture2D EvenErrorButtonTexture
-	{
-		get
-		{
-			if (_evenErrorButtonTexture == null)
-				_evenErrorButtonTexture = BluConsoleEditorHelper.GetTexture(EvenErrorButtonColor);
-			return _evenErrorButtonTexture;
-		}
-	}
-
-	private Texture2D OddErrorButtonTexture
-	{
-		get
-		{
-			if (_oddErrorButtonTexture == null)
-				_oddErrorButtonTexture = BluConsoleEditorHelper.GetTexture(OddErrorButtonColor);
-			return _oddErrorButtonTexture;
-		}
-	}
-
-	private Texture2D SelectedButtonTexture
-	{
-		get
-		{
-			if (_selectedButtonTexture == null)
-				_selectedButtonTexture = BluConsoleEditorHelper.GetTexture(SelectedButtonColor);
-			return _selectedButtonTexture;
-		}
-	}
-
-	private Texture2D InfoIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.infoicon");
-		}
-	}
-
-	private Texture2D InfoIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.infoicon.sml");
-		}
-	}
-
-	private Texture2D WarningIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.warnicon");
-		}
-	}
-
-	private Texture2D WarningIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.warnicon.sml");
-		}
-	}
-
-	private Texture2D ErrorIcon
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.erroricon");
-		}
-	}
-
-	private Texture2D ErrorIconSmall
-	{
-		get
-		{
-			return EditorGUIUtility.FindTexture("d_console.erroricon.sml");
-		}
-	}
-
-	private GUIStyle ButtonStyle
-	{
-		get
-		{
-			return GUI.skin.FindStyle("Button");
-		}
-	}
-
-	private GUIStyle ToggleStyle
-	{
-		get
-		{
-			return GUI.skin.FindStyle("ToolbarButton");
-		}
-	}
-
-	private GUIStyle EvenButtonStyle
-	{
-		get
-		{
-			return _evenButtonStyle;
-		}
-	}
-
-	private GUIStyle OddButtonStyle
-	{
-		get
-		{
-			return _oddButtonStyle;
-		}
-	}
-
-	private GUIStyle EvenErrorButtonStyle
-	{
-		get
-		{
-			return _evenErrorButtonStyle;
-		}
-	}
-
-	private GUIStyle OddButtonErrorStyle
-	{
-		get
-		{
-			return _oddButtonErrorStyle;
-		}
-	}
-
-	private GUIStyle SelectedButtonStyle
-	{
-		get
-		{
-			return _selectedButtonStyle;
-		}
-	}
-
-	private GUIStyle CollapseStyle
-	{
-		get
-		{
-			return _collapseStyle;
-		}
-	}
-
-	private GUIStyle ToolbarSearchTextField
-	{
-		get
-		{
-			return GUI.skin.FindStyle("ToolbarSeachTextField");
-		}
-	}
-
-	private GUIStyle ToolbarSearchCancelButtonStyle
-	{
-		get
-		{
-			return GUI.skin.FindStyle("ToolbarSeachCancelButton");
 		}
 	}
 

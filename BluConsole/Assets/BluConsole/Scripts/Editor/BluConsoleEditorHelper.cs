@@ -35,28 +35,8 @@ using JetBrains.Annotations;
 namespace BluConsole.Editor
 {
 
-public static class BluConsoleEditorHelper
+public class BluConsoleEditorHelper
 {
-
-	// Cached variables
-	private static Texture2D _consoleIcon = null;
-	private static bool _hasConsoleIcon = true;
-
-	public static Texture2D ConsoleIcon
-	{
-		get
-		{
-            if (_consoleIcon == null && _hasConsoleIcon)
-            {
-                string path = "Assets/BluConsole/Images/bluconsole-icon.png";
-                _consoleIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                if (_consoleIcon == null)
-                    _hasConsoleIcon = false;
-            }
-
-			return _consoleIcon;
-		}
-	}
 
 	public static Texture2D GetTexture(
 		Color color)
@@ -67,6 +47,7 @@ public static class BluConsoleEditorHelper
 		Texture2D result = new Texture2D(1, 1);
 		result.SetPixels(pix);
 		result.Apply();
+
 		return result;
 	}
 
