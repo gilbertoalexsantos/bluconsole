@@ -218,9 +218,7 @@ public class BluConsoleSkin
 	{
 		get
 		{
-			var style = new GUIStyle(GUI.skin.FindStyle("CN Message"));
-			style.alignment = TextAnchor.MiddleLeft;
-			return style;
+			return GUI.skin.FindStyle("CN Message");
 		}
 	}
 
