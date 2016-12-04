@@ -44,14 +44,9 @@ public static class LoggerServer
     // The KEY is REGEX like
     private static HashSet<KeyValuePair<string, string>> _logBlackList =
         new HashSet<KeyValuePair<string, string>>() {
-                new KeyValuePair<string, string>("CallLogCallback", "Application"),
-            new KeyValuePair<string, string>("Internal_Log", "Debug"),
-                new KeyValuePair<string, string>("Internal_Log", "DebugLogHandler"),
-            new KeyValuePair<string, string>("Log*", "Debug"),
-                new KeyValuePair<string, string>("Log*", "DebugLogHandler"),
-            new KeyValuePair<string, string>("Log*", "Logger"),
-			new KeyValuePair<string, string>("LogFormat", "Debug"),
-            new KeyValuePair<string, string>("LogFormat", "DebugLogHandler"),
+            new KeyValuePair<string, string>("CallLogCallback", "UnityEngine.Application"),
+            new KeyValuePair<string, string>(".*", "UnityEngine.Debug*"),
+            new KeyValuePair<string, string>("Log*", "UnityEngine.Logger"),
         };
 
     static LoggerServer()
@@ -70,22 +65,14 @@ public static class LoggerServer
     public static void Register(
         ILogger logger)
     {
-        lock (_loggers)
-        {
-            _loggers.Add(logger);
-        }
+        _loggers.Add(logger);
     }
 
     public static void Unregister(
         ILogger logger)
     {
-        lock (_loggers)
-        {
-            if (_loggers.Contains(logger))
-            {
-                _loggers.Remove(logger);
-            }
-        }
+        if (_loggers.Contains(logger))
+            _loggers.Remove(logger);
     }
 
     public static ILogger GetLoggerClient<T>()
@@ -102,42 +89,17 @@ public static class LoggerServer
         string stackTrace,
         LogType logType)
     {
-        lock (_loggers)
-        {
-            string extractedMessage = ExtractMessageFromUnityMessage(message);
+        bool isCompileError = string.IsNullOrEmpty(stackTrace);
 
-            List<LogStackFrame> callStack = GetCallStack();
-            if (callStack.Count == 0)
-                callStack = GetCallStack(stackTrace);
-            if (callStack.Count == 0)
-                callStack = GetCallStackFromUnityMessage(message);
+        List<LogStackFrame> callStack = GetCallStack();
+        if (callStack.Count == 0)
+            callStack = GetCallStack(stackTrace);
+        if (callStack.Count == 0)
+            callStack = GetCallStackFromUnityMessage(message);
 
-            BluLogType bluLogType = GetLogType(logType);
-            var logInfo = new LogInfo(message, extractedMessage, callStack, bluLogType, IsCompileMessage(message));
-            Call(logInfo);
-        }
-    }
-
-    private static string ExtractMessageFromUnityMessage(
-        string message)
-    {
-        MatchCollection match = Regex.Matches(message, @".*:.*:\s*(.*)");
-        if (match.Count > 0)
-        {
-            return match[0].Groups[1].Value;
-        }
-        else
-        {
-            return message;
-        }
-    }
-
-    private static bool IsCompileMessage(
-        string unityMessage)
-    {
-        bool warningMatch = Regex.Match(unityMessage, @".*:\s*warning.*:.*").Success;
-        bool errorMatch = Regex.Match(unityMessage, @".*:\s*error.*:.*").Success;
-        return warningMatch || errorMatch;
+        BluLogType bluLogType = GetLogType(logType);
+        var logInfo = new LogInfo(message, callStack, bluLogType, isCompileError);
+        Call(logInfo);
     }
 
     [StackTraceIgnore]
@@ -166,7 +128,7 @@ public static class LoggerServer
     {
         var callStack = new List<LogStackFrame>();
 
-        // I love that piece of code, really :D
+        // I love that piece of code :D
         Regex
             .Split(unityStackTrace, System.Environment.NewLine)
             .Where(line => !string.IsNullOrEmpty(line))
@@ -208,7 +170,7 @@ public static class LoggerServer
         foreach (var pair in _logBlackList)
         {
             if (Regex.Match(method.Name, pair.Key).Success &&
-                Regex.Match(method.DeclaringType.Name, pair.Value).Success)
+                Regex.Match(method.DeclaringType.ToString(), pair.Value).Success)
                 return true;
         }
 

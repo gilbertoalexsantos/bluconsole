@@ -523,14 +523,11 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		// Getting maximum width
 		float viewWidth = WindowWidth;
-		if (log.IsCompileMessage)
-			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.Message), log.LogType));
-		else
-			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.RawMessage), log.LogType));
+		viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.Message), log.LogType));
 		for (int i = 0; i < size; i++)
 		{
 			var frame = log.CallStack[i];
-			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
+			var message = frame.FormattedMethodName;
 			message = GetTruncatedMessage(message);
 			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(message, log.LogType));
 		}
@@ -566,13 +563,10 @@ public class BluConsoleEditorWindow : EditorWindow
 			var styleMessage = BluConsoleSkin.MessageStyle;
 			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
 
-			var message = log.IsCompileMessage ? log.Message : log.RawMessage;
-			message = GetTruncatedMessage(message);
-			message = "  " + message;
-			var messageContent = new GUIContent(message);
+			var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
 
 			DrawBack(rectButton, styleBack);
-			if (GUI.Button(rectButton, messageContent, styleMessage))
+			if (GUI.Button(rectButton, contentMessage, styleMessage))
 			{
 				bool isLeftClick = Event.current.button == 0;
 
@@ -604,10 +598,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i + 1 < lastRenderLogIndex; i++)
 		{
 			var frame = log.CallStack[i];
-			var message = log.IsCompileMessage ? log.RawMessage : frame.FormattedMethodName;
-			message = GetTruncatedMessage(message);
-			message = "  " + message;
-			var contentMessage = new GUIContent(message);
+			var contentMessage = new GUIContent(GetTruncatedMessage(frame.FormattedMethodName));
 
 			var styleBack = GetLogBackStyle(0, log, i == _logDetailSelectedFrame ? true : false);
 			var styleMessage = BluConsoleSkin.MessageStyle;
@@ -647,7 +638,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		LogInfo log)
 	{
 		GenericMenu.MenuFunction copyCallback = () => {
-			EditorGUIUtility.systemCopyBuffer = log.IsCompileMessage ? log.RawMessage : log.Message;
+			EditorGUIUtility.systemCopyBuffer = log.Message;
 		};
 
 		GenericMenu menu = new GenericMenu();
@@ -685,12 +676,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	private string GetLogListMessage(
 		LogInfo log)
 	{
-		string showMessage = null;
-		if (log.IsCompileMessage)
-			showMessage = log.RawMessage;
-		else
-			showMessage = log.Message.Replace(System.Environment.NewLine, " ");
-		return showMessage;
+		return log.Message.Replace(System.Environment.NewLine, " ");
 	}
 
 	private GUIStyle GetLogBackStyle(
@@ -793,10 +779,10 @@ public class BluConsoleEditorWindow : EditorWindow
 	private void JumpToSource(
 		LogStackFrame frame)
 	{
-		var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FileRelativePath);
+		var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FilePath);
 		if (System.IO.File.Exists(filename))
 		{
-			UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(frame.FileRelativePath, frame.Line);
+			UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(frame.FilePath, frame.Line);
 		}
 	}
 

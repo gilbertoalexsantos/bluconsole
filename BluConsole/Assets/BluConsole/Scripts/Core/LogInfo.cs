@@ -62,7 +62,6 @@ public class LogInfo
 {
 
     [SerializeField] private string _identifier;
-    [SerializeField] private string _rawMessage;
     [SerializeField] private string _message;
     [SerializeField] private List<LogStackFrame> _callStack;
     [SerializeField] private BluLogType _logType;
@@ -73,14 +72,6 @@ public class LogInfo
         get
         {
             return _identifier;
-        }
-    }
-
-    public string RawMessage
-    {
-        get
-        {
-            return _rawMessage;
         }
     }
 
@@ -117,20 +108,18 @@ public class LogInfo
     }
 
     public LogInfo(
-        string rawMessage,
         string message,
         List<LogStackFrame> callStack,
         BluLogType logType,
         bool isCompileMessage)
     {
-        _rawMessage = rawMessage;
         _message = message;
         _callStack = callStack;
         _logType = logType;
         _isCompilerMessage = isCompileMessage;
 
         StringBuilder identifier = new StringBuilder();
-        identifier.Append(_rawMessage.GetHashCode().ToString());
+        identifier.Append(_message.GetHashCode().ToString());
         identifier.Append("$");
         identifier.Append(_logType.ToString());
         identifier.Append("$");

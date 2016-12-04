@@ -46,7 +46,8 @@ public class LogStackFrame
 
     [SerializeField] private string _className;
     [SerializeField] private string _methodName;
-    [SerializeField] private string _fileRelativePath;
+    [SerializeField] private string _formattedMethodName;
+    [SerializeField] private string _filePath;
     [SerializeField] private int _line;
 
     public string ClassName
@@ -65,11 +66,11 @@ public class LogStackFrame
         }
     }
 
-    public string FileRelativePath
+    public string FilePath
     {
         get
         {
-            return _fileRelativePath;
+            return _filePath;
         }
     }
 
@@ -85,19 +86,7 @@ public class LogStackFrame
     {
         get
         {
-            var formattedFileRelativePath = _fileRelativePath;
-            if (!String.IsNullOrEmpty(_fileRelativePath))
-            {
-                var startSubName = _fileRelativePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
-
-                if (startSubName > 0)
-                    formattedFileRelativePath = _fileRelativePath.Substring(startSubName);
-            }
-            return String.Format("{0}.{1} (at {2}:{3})",
-                                 _className,
-                                 _methodName,
-                                 formattedFileRelativePath,
-                                 _line);
+            return _formattedMethodName;
         }
     }
 
@@ -109,8 +98,22 @@ public class LogStackFrame
     {
         _className = className;
         _methodName = methodName;
-        _fileRelativePath = fileRelativePath;
+        _filePath = fileRelativePath;
         _line = line;
+
+        var formattedPath = _filePath;
+        if (!String.IsNullOrEmpty(_filePath))
+        {
+            var startSubName = _filePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
+
+            if (startSubName > 0)
+                formattedPath = _filePath.Substring(startSubName);
+        }
+        _formattedMethodName = String.Format("{0}.{1} (at {2}:{3})",
+                                             _className,
+                                             _methodName,
+                                             formattedPath,
+                                             _line);
     }
 
     public static LogStackFrame Create(
@@ -118,7 +121,7 @@ public class LogStackFrame
     {
         MethodBase method = frame.GetMethod();
 
-        return new LogStackFrame(className: method.DeclaringType.Name,
+        return new LogStackFrame(className: method.DeclaringType.ToString(),
                                  methodName: method.Name,
                                  fileRelativePath: frame.GetFileName(),
                                  line: frame.GetFileLineNumber());
