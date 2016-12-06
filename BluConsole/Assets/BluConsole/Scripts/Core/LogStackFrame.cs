@@ -101,19 +101,20 @@ public class LogStackFrame
         _filePath = fileRelativePath;
         _line = line;
 
-        var formattedPath = _filePath;
         if (!String.IsNullOrEmpty(_filePath))
         {
             var startSubName = _filePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
-
-            if (startSubName > 0)
-                formattedPath = _filePath.Substring(startSubName);
+            var formattedPath = startSubName > 0 ? _filePath.Substring(startSubName) : _filePath;
+            _formattedMethodName = String.Format("{0}.{1} (at {2}:{3})",
+                                                 _className,
+                                                 _methodName,
+                                                 formattedPath,
+                                                 _line);
         }
-        _formattedMethodName = String.Format("{0}.{1} (at {2}:{3})",
-                                             _className,
-                                             _methodName,
-                                             formattedPath,
-                                             _line);
+        else
+        {
+            _formattedMethodName = String.Format("{0}.{1}", _className, _methodName);
+        }
     }
 
     public static LogStackFrame Create(
