@@ -53,10 +53,8 @@ public class BluConsoleEditorWindow : EditorWindow
 	private List<CountedLog> _countedLogs = new List<CountedLog>();
 	private bool _isCountedLogsDirty = true;
 
-	private Texture2D _selectedBackTexture;
 	private Texture2D _oddErrorBackTexture;
 	private Texture2D _evenErrorBackTexture;
-	private Texture2D _sizeLinerBorderTexture;
 	private Texture2D _sizeLinerCenterTexture;
 
 	private float _buttonWidth;
@@ -143,6 +141,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
 
 		_drawYPos += DrawTopToolbar();
+		_drawYPos -= 1f;
 		DrawLogList();
 
 		GUILayout.EndVertical();
@@ -208,10 +207,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void OnDisable()
 	{
-		Texture2D.DestroyImmediate(_selectedBackTexture);
 		Texture2D.DestroyImmediate(_oddErrorBackTexture);
 		Texture2D.DestroyImmediate(_evenErrorBackTexture);
-		Texture2D.DestroyImmediate(_sizeLinerBorderTexture);
 		Texture2D.DestroyImmediate(_sizeLinerCenterTexture);
 	}
 
@@ -358,33 +355,22 @@ public class BluConsoleEditorWindow : EditorWindow
 		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
 		{
 			LogInfo logInfo = logs[i].Log;
-			var styleBack = GetLogBackStyle(i, logInfo, i == _logListSelectedMessage ? true : false);
+			var styleBack = GetLogBackStyle(i, logInfo);
 
-
-			var styleImage = GetLogStyle(logInfo.LogType);
-			var contentImage = new GUIContent(GetIcon(logInfo.LogType));
-			var contentImageWidth = styleImage.CalcSize(contentImage).x;
-			var rectImage = new Rect(x: 0,
-			                         y: buttonY,
-			                         width: contentImageWidth,
-			                         height: ButtonHeight);
-			DrawBack(rectImage, styleBack);
-			bool imageClicked = GUI.Button(rectImage, contentImage, styleImage);
-
-
-			var styleMessage = BluConsoleSkin.MessageStyle;
+			var styleMessage = GetLogListStyle(i, logInfo);
 			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
 			var contentMessage = new GUIContent(showMessage);
-			var rectMessage = new Rect(x: contentImageWidth,
+			var rectMessage = new Rect(x: 0,
 			                           y: buttonY,
-			                           width: viewWidth - contentImageWidth,
+			                           width: viewWidth,
 			                           height: ButtonHeight);
-			DrawBack(rectMessage, styleBack);
-			bool messageClicked = GUI.Button(rectMessage, contentMessage, styleMessage);
-
-
-			bool hasClick = messageClicked || imageClicked;
-			bool isLeftClick = hasClick ? Event.current.button == 0 : false;
+			bool isSelected = i == _logListSelectedMessage ? true : false;
+			DrawBack(rectMessage, styleBack, isSelected);
+			if (Event.current.type == EventType.Repaint)
+				styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
+			
+			bool messageClicked = IsClicked(rectMessage);
+			bool isLeftClick = messageClicked ? Event.current.button == 0 : false;
 
 			if (_isCollapse)
 			{
@@ -404,7 +390,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				GUI.Label(collapseRect, collapseContent, BluConsoleSkin.CollapseStyle);
 			}
 
-			if (hasClick)
+			if (messageClicked)
 			{
 				hasSomeClick = true;
 
@@ -459,21 +445,15 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void DrawResizer()
 	{
-		// Don't ask me why... If we remove this 1.0f, there's one line with height one that isn't painted...
-		var resizerY = _topPanelHeight - 1.0f;
+		var resizerY = _topPanelHeight;
 
-		_cursorChangeRect = new Rect(0, resizerY, position.width, ResizerHeight);
+		_cursorChangeRect = new Rect(0, resizerY - 1f, position.width, ResizerHeight + 2f);
+		var cursorChangeCenterRect = new Rect(0, resizerY, position.width, 1.0f);
 
-		var cursorChangeBorderTopRect = new Rect(0, resizerY, position.width, 1.0f);
-		var cursorChangeCenterRect = new Rect(0, resizerY + 1.0f, position.width, 2.0f);
-		var cursorChangeBorderBottomRect = new Rect(0, resizerY + 3.0f, position.width, 1.0f);
-
-		GUI.DrawTexture(cursorChangeBorderTopRect, SizeLinerBorderTexture);
-		GUI.DrawTexture(cursorChangeCenterRect, SizeLinerCenterTexture);
-		GUI.DrawTexture(cursorChangeBorderBottomRect, SizeLinerBorderTexture);
+		GUI.DrawTexture(cursorChangeCenterRect, SizeLinerTexture);
 		EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
 
-		if (Event.current.type == EventType.MouseDown && _cursorChangeRect.Contains(Event.current.mousePosition))
+		if (IsClicked(_cursorChangeRect))
 			_isResizing = true;
 		else if (Event.current.rawType == EventType.MouseUp)
 			_isResizing = false;
@@ -506,18 +486,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		var size = log.CallStack.Count;
 		var sizePlus = size + 1;
 
-		// Getting maximum width
-		float viewWidth = WindowWidth;
-		viewWidth = Mathf.Max(viewWidth, GetButtonWidth(GetTruncatedMessage(log.Message), log.LogType));
-		for (int i = 0; i < size; i++)
-		{
-			var frame = log.CallStack[i];
-			var message = frame.FormattedMethodName;
-			message = GetTruncatedMessage(message);
-			viewWidth = Mathf.Max(viewWidth, GetButtonWidth(message, log.LogType));
-		}
+		float buttonHeight = GetDetailMessageHeight("A", BluConsoleSkin.MessageStyle);
+		float buttonWidth = ButtonWidth;
+		if (sizePlus * buttonHeight > windowHeight)
+			buttonWidth -= 15f;
 
-		float viewHeight = sizePlus * ButtonHeight;
+		float viewWidth = buttonWidth;
+		float viewHeight = sizePlus * buttonHeight;
 
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: WindowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
@@ -526,13 +501,13 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                               scrollPosition: _logDetailScrollPosition,
 		                                               viewRect: scrollViewViewRect);
 
-		int firstRenderLogIndex = (int)(_logDetailScrollPosition.y / ButtonHeight);
+		int firstRenderLogIndex = (int)(_logDetailScrollPosition.y / buttonHeight);
 		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, sizePlus);
 
-		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
+		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / buttonHeight) + 2;
 		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, sizePlus);
 
-		float buttonY = firstRenderLogIndex * ButtonHeight;
+		float buttonY = firstRenderLogIndex * buttonHeight;
 
 		// Return if doesn't has nothing to show
 		if (_logListSelectedMessage == -1 || logs.Count == 0 || _logListSelectedMessage >= logs.Count)
@@ -544,14 +519,21 @@ public class BluConsoleEditorWindow : EditorWindow
 		// Logging first message
 		if (firstRenderLogIndex == 0)
 		{
-			var styleBack = GetLogBackStyle(0, log, _logDetailSelectedFrame == -2 ? true : false);
+			var styleBack = GetLogBackStyle(0, log);
 			var styleMessage = BluConsoleSkin.MessageStyle;
-			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+			var rectButton = new Rect(x: 0, 
+			                          y: buttonY, 
+			                          width: viewWidth, 
+			                          height: buttonHeight);
 
+			var isSelected = _logDetailSelectedFrame == -2 ? true : false;
 			var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
+			DrawBack(rectButton, styleBack, isSelected);
+			if (Event.current.type == EventType.Repaint)
+				styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
-			DrawBack(rectButton, styleBack);
-			if (GUI.Button(rectButton, contentMessage, styleMessage))
+			bool messageClicked = IsClicked(rectButton);
+			if (messageClicked)
 			{
 				bool isLeftClick = Event.current.button == 0;
 
@@ -577,7 +559,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				}
 			}
 
-			buttonY += ButtonHeight;
+			buttonY += buttonHeight;
 		}
 
 		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i + 1 < lastRenderLogIndex; i++)
@@ -585,12 +567,17 @@ public class BluConsoleEditorWindow : EditorWindow
 			var frame = log.CallStack[i];
 			var contentMessage = new GUIContent(GetTruncatedMessage(frame.FormattedMethodName));
 
-			var styleBack = GetLogBackStyle(0, log, i == _logDetailSelectedFrame ? true : false);
+			var styleBack = GetLogBackStyle(0, log);
 			var styleMessage = BluConsoleSkin.MessageStyle;
-			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: ButtonHeight);
+			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 
-			DrawBack(rectButton, styleBack);
-			if (GUI.Button(rectButton, contentMessage, styleMessage))
+			var isSelected = i == _logDetailSelectedFrame ? true : false;
+			DrawBack(rectButton, styleBack, isSelected);
+			if (Event.current.type == EventType.Repaint)
+				styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
+
+			bool messageClicked = IsClicked(rectButton);
+			if (messageClicked)
 			{
 				bool isLeftClick = Event.current.button == 0;
 
@@ -612,7 +599,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				}
 			}
 
-			buttonY += ButtonHeight;
+			buttonY += buttonHeight;
 		}
 
 		GUI.EndScrollView();
@@ -640,14 +627,19 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void DrawBack(
 		Rect rect,
-		GUIStyle style)
+		GUIStyle style,
+		bool isSelected)
 	{
-		GUI.Label(rect, GUIContent.none, style);
+		if (Event.current.type == EventType.Repaint)
+			style.Draw(rect, false, false, isSelected, false);
 	}
 
+	private bool IsClicked(Rect rect)
+	{
+		return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
+	}
 
 	#region Gets
-
 
 	private string GetTruncatedMessage(
 		string message)
@@ -666,12 +658,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private GUIStyle GetLogBackStyle(
 		int index,
-		LogInfo log,
-		bool selected)
+		LogInfo log)
 	{
-		if (selected)
-			return SelectedBackStyle;
-
 		bool isEven = index % 2 == 0 ? true : false;
 		bool isCompileError = log.IsCompileMessage && log.LogType == BluLogType.Error;
 
@@ -691,36 +679,47 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private GUIStyle GetLogStyle(
+	private GUIStyle GetLogListStyle(
 		int index,
 		LogInfo log)
 	{
-		if (index == _logListSelectedMessage)
-			return SelectedBackStyle;
-
-		return GetLogStyle(log.LogType);
+		return GetLogListStyle(log.LogType);
 	}
 
-	private GUIStyle GetLogStyle(
+	private GUIStyle GetLogListStyle(
 		BluLogType logType)
 	{
 		switch (logType)
 		{
 		case BluLogType.Normal:
-			return BluConsoleSkin.LogImageInfoStyle;
+			return BluConsoleSkin.LogInfoStyle;
 		case BluLogType.Warning:
-			return BluConsoleSkin.LogImageWarnStyle;
+			return BluConsoleSkin.LogWarnStyle;
 		case BluLogType.Error:
-			return BluConsoleSkin.LogImageErrorStyle;
+			return BluConsoleSkin.LogErrorStyle;
 		}
-		return BluConsoleSkin.LogImageInfoStyle;
+		return BluConsoleSkin.LogInfoStyle;
 	}
 
-	private float GetButtonWidth(
+	private float GetListMessageWidth(
 		string message,
-		BluLogType logType)
+		GUIStyle style)
 	{
-		return BluConsoleSkin.MessageStyle.CalcSize(new GUIContent(message, GetIcon(logType))).x;
+		return style.CalcSize(new GUIContent(message)).x;
+	}
+
+	private float GetDetailMessageWidth(
+		string message,
+		GUIStyle style)
+	{
+		return style.CalcSize(new GUIContent(message)).x;
+	}
+
+	private float GetDetailMessageHeight(
+		string message,
+		GUIStyle style)
+	{
+		return style.CalcSize(new GUIContent(message)).y;
 	}
 
 	private Texture2D GetIcon(
@@ -903,23 +902,13 @@ public class BluConsoleEditorWindow : EditorWindow
 	#region Properties
 
 
-	private Texture2D SizeLinerCenterTexture
+	private Texture2D SizeLinerTexture
 	{
 		get
 		{
 			if (_sizeLinerCenterTexture == null)
-				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineCenterColour);
+				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineColor);
 			return _sizeLinerCenterTexture;
-		}
-	}
-
-	private Texture2D SizeLinerBorderTexture
-	{
-		get
-		{
-			if (_sizeLinerBorderTexture == null)
-				_sizeLinerBorderTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineBorderColour);
-			return _sizeLinerBorderTexture;
 		}
 	}
 
@@ -940,16 +929,6 @@ public class BluConsoleEditorWindow : EditorWindow
 			if (_oddErrorBackTexture == null)
 				_oddErrorBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.OddErrorBackColor);
 			return _oddErrorBackTexture;
-		}
-	}
-
-	private Texture2D SelectedBackTexture
-	{
-		get
-		{
-			if (_selectedBackTexture == null)
-				_selectedBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SelectedBackColor);
-			return _selectedBackTexture;
 		}
 	}
 
@@ -985,16 +964,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			var style = new GUIStyle(BluConsoleSkin.OddBackStyle);
 			style.normal.background = OddErrorBackTexture;
-			return style;
-		}
-	}
-
-	public GUIStyle SelectedBackStyle
-	{
-		get
-		{
-			var style = new GUIStyle(BluConsoleSkin.EvenBackStyle);
-			style.normal.background = SelectedBackTexture;
 			return style;
 		}
 	}
@@ -1132,7 +1101,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		get
 		{
-			return 4.0f;
+			return 1.0f;
 		}
 	}
 

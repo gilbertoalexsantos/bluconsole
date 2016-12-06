@@ -40,19 +40,11 @@ public class BluConsoleSkin
 	#region Color
 
 
-	public static Color SizerLineCenterColour
+	public static Color SizerLineColor
 	{
 		get
 		{
-			return BluConsoleEditorHelper.ColorPercent(Color.white, 0.5f);
-		}
-	}
-
-	public static Color SizerLineBorderColour
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorPercent(Color.white, 0.55f);
+			return BluConsoleEditorHelper.ColorFromRGB(85, 85, 85);
 		}
 	}
 
@@ -76,7 +68,7 @@ public class BluConsoleSkin
 	{
 		get
 		{
-			return new Color(0.5f, 0.5f, 1);
+			return GUI.skin.settings.selectionColor;
 		}
 	}
 
@@ -222,15 +214,7 @@ public class BluConsoleSkin
 		}
 	}
 
-	public static GUIStyle LogImageErrorStyle
-	{
-		get
-		{
-			return GUI.skin.FindStyle("CN EntryError");
-		}
-	}
-
-	public static GUIStyle LogImageInfoStyle
+	public static GUIStyle LogInfoStyle
 	{
 		get
 		{
@@ -238,11 +222,19 @@ public class BluConsoleSkin
 		}
 	}
 
-	public static GUIStyle LogImageWarnStyle
+	public static GUIStyle LogWarnStyle
 	{
 		get
 		{
 			return GUI.skin.FindStyle("CN EntryWarn");
+		}
+	}
+
+	public static GUIStyle LogErrorStyle
+	{
+		get
+		{
+			return GUI.skin.FindStyle("CN EntryError");
 		}
 	}
 
