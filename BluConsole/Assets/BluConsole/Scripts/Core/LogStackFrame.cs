@@ -104,7 +104,7 @@ public class LogStackFrame
         if (!String.IsNullOrEmpty(_filePath))
         {
             var startSubName = _filePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
-            var formattedPath = startSubName > 0 ? _filePath.Substring(startSubName) : _filePath;
+            var formattedPath = startSubName >= 0 ? _filePath.Substring(startSubName) : _filePath;
             _formattedMethodName = String.Format("{0}.{1} (at {2}:{3})",
                                                  _className,
                                                  _methodName,
