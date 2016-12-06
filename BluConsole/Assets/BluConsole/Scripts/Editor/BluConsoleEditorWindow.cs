@@ -275,23 +275,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
 		// Info/Warning/Error buttons Area
-		int qtNormalLogs = 0, qtWarningLogs = 0, qtErrorLogs = 0;
-		var logs = CountedLogsFilteredByFlags;
-		for (int i = 0; i < logs.Count; i++)
-		{
-			switch (logs[i].Log.LogType)
-			{
-			case BluLogType.Normal:
-				qtNormalLogs++;
-				break;
-			case BluLogType.Warning:
-				qtWarningLogs++;
-				break;
-			case BluLogType.Error:
-				qtErrorLogs++;
-				break;
-			}
-		}
+		int qtNormalLogs = _isCollapse ? _loggerAsset.QtNormalCountedLogs : _loggerAsset.QtNormalLogs;
+		int qtWarningLogs = _isCollapse ? _loggerAsset.QtWarningCountedLogs : _loggerAsset.QtWarningLogs;
+		int qtErrorLogs = _isCollapse ? _loggerAsset.QtErrorCountedLogs : _loggerAsset.QtErrorLogs;
 
 		int maxLogs = MAX_LOGS;
 		string qtNormalLogsStr = qtNormalLogs.ToString();
@@ -324,10 +310,9 @@ public class BluConsoleEditorWindow : EditorWindow
 
 
 		bool oldIsShowErrors = _isShowErrors;
-		_isShowErrors =
-			GetToggleClamped(_isShowErrors, 
-		                  GetErrorGUIContent(qtErrorLogsStr), 
-		                  BluConsoleSkin.ToolbarButtonStyle);
+		_isShowErrors = GetToggleClamped(_isShowErrors, 
+		                                 GetErrorGUIContent(qtErrorLogsStr), 
+		                                 BluConsoleSkin.ToolbarButtonStyle);
 		if (oldIsShowErrors != _isShowErrors)
 			SetCountedLogsDirty();
 

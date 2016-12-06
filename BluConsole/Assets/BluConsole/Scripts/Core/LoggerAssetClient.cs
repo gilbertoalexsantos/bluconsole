@@ -48,6 +48,9 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     [SerializeField] private int _qtNormalLogs = 0;
     [SerializeField] private int _qtWarningLogs = 0;
     [SerializeField] private int _qtErrorLogs = 0;
+    [SerializeField] private int _qtNormalCountedLogs = 0;
+    [SerializeField] private int _qtWarningCountedLogs = 0;
+    [SerializeField] private int _qtErrorCountedLogs = 0;
 
     public event Action OnNewLogOrTrimLogEvent;
 
@@ -99,7 +102,15 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
-    public int QtWarningsLogs
+    public int QtNormalCountedLogs
+    {
+        get
+        {
+            return _qtNormalCountedLogs;
+        }
+    }
+
+    public int QtWarningLogs
     {
         get
         {
@@ -107,7 +118,15 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
-    public int QtErrorsLogs
+    public int QtWarningCountedLogs
+    {
+        get
+        {
+            return _qtWarningCountedLogs;
+        }
+    }
+
+    public int QtErrorLogs
     {
         get
         {
@@ -115,11 +134,27 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
+    public int QtErrorCountedLogs
+    {
+        get
+        {
+            return _qtErrorCountedLogs;
+        }
+    }
+
     public int QtLogs
     {
         get
         {
-            return QtNormalLogs + QtWarningsLogs + QtErrorsLogs;
+            return QtNormalLogs + QtWarningLogs + QtErrorLogs;
+        }
+    }
+
+    public int QtCountedLogs
+    {
+        get
+        {
+            return QtNormalCountedLogs + QtWarningCountedLogs + QtErrorCountedLogs;
         }
     }
 
@@ -138,9 +173,8 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         _logsInfo.Clear();
         _countedLogs.Clear();
         _collapsedLogs.Clear();
-        _qtNormalLogs = 0;
-        _qtWarningLogs = 0;
-        _qtErrorLogs = 0;
+        _qtNormalLogs = _qtWarningLogs = _qtErrorLogs = 0;
+        _qtNormalCountedLogs = _qtWarningCountedLogs = _qtErrorCountedLogs = 0;
     }
 
     public void Clear(
@@ -148,9 +182,8 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     {
         _countedLogs.Clear();
         _collapsedLogs.Clear();
-        _qtNormalLogs = 0;
-        _qtWarningLogs = 0;
-        _qtErrorLogs = 0;
+        _qtNormalLogs = _qtWarningLogs = _qtErrorLogs = 0;
+        _qtNormalCountedLogs = _qtWarningCountedLogs = _qtErrorCountedLogs = 0;
 
         List<LogInfo> newLogs = new List<LogInfo>(_logsInfo.Count);
         for (int i = 0; i < _logsInfo.Count; i++)
@@ -172,6 +205,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
                 countedLog = new CountedLog(log, 1);
                 _countedLogs.Add(countedLog);
                 _collapsedLogs.Add(log, countedLog);
+                IncreaseCountedLogCount(log.LogType);
             }
         }
 
@@ -197,11 +231,11 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     private void TrimLogs()
     {
-        bool entered = false;
+        bool trimmedLog = false;
 
         while (QtLogs > MAX_LOGS)
         {
-            entered = true;
+            trimmedLog = true;
 
             LogInfo log = _logsInfo[0];
 
@@ -224,6 +258,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
                         if (_countedLogs[i].Log.Identifier == countedLog.Log.Identifier)
                         {
                             _countedLogs.RemoveAt(i);
+                            DecreaseCountedLogCount(countedLog.Log.LogType);
                             break;
                         }
                     }
@@ -232,7 +267,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             }
         }
 
-        if (entered)
+        if (trimmedLog)
             CalOnNewLogOrTrimLogEvent();
     }
 
@@ -253,6 +288,23 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
     }
 
+    private void IncreaseCountedLogCount(
+        BluLogType logType)
+    {
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            _qtNormalCountedLogs++;
+            break;
+        case BluLogType.Warning:
+            _qtWarningCountedLogs++;
+            break;
+        case BluLogType.Error:
+            _qtErrorCountedLogs++;
+            break;
+        }
+    }
+
     private void DecreaseLogCount(
         BluLogType logType)
     {
@@ -266,6 +318,23 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             break;
         case BluLogType.Error:
             _qtErrorLogs--;
+            break;
+        }
+    }
+
+    private void DecreaseCountedLogCount(
+        BluLogType logType)
+    {
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            _qtNormalCountedLogs--;
+            break;
+        case BluLogType.Warning:
+            _qtWarningCountedLogs--;
+            break;
+        case BluLogType.Error:
+            _qtErrorCountedLogs--;
             break;
         }
     }
@@ -312,6 +381,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             countedLog = new CountedLog(logInfo, 1);
             _countedLogs.Add(countedLog);
             _collapsedLogs.Add(logInfo, countedLog);
+            IncreaseCountedLogCount(logInfo.LogType);  
         }
 
         CalOnNewLogOrTrimLogEvent();
