@@ -779,6 +779,9 @@ public class BluConsoleEditorWindow : EditorWindow
 	private void JumpToSource(
 		LogStackFrame frame)
 	{
+		if (String.IsNullOrEmpty(frame.FilePath))
+			return;
+		
 		var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FilePath);
 		if (System.IO.File.Exists(filename))
 		{
