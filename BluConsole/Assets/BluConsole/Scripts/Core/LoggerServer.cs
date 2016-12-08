@@ -23,6 +23,8 @@
 */
 
 
+#if UNITY_EDITOR
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -209,3 +211,5 @@ public static class LoggerServer
 }
 
 }
+
+#endif
