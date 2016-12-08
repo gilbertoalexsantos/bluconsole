@@ -22,13 +22,9 @@
   SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using UnityEditor;
 using UnityEngine;
-using BluConsole.Core;
-using System.Runtime.InteropServices;
 
 
 namespace BluConsole.Editor
