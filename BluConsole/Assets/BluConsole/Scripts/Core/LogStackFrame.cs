@@ -101,7 +101,7 @@ public class LogStackFrame
         _filePath = fileRelativePath;
         _line = line;
 
-        if (!String.IsNullOrEmpty(_filePath))
+        if (!String.IsNullOrEmpty(_filePath) && !String.IsNullOrEmpty(_methodName))
         {
             var startSubName = _filePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
             var formattedPath = startSubName >= 0 ? _filePath.Substring(startSubName) : _filePath;
@@ -111,9 +111,13 @@ public class LogStackFrame
                                                  formattedPath,
                                                  _line);
         }
+        else if (!String.IsNullOrEmpty(_methodName))
+        {
+            _formattedMethodName = String.Format("{0}.{1} (at {2})", _className, _methodName, _line);
+        }
         else
         {
-            _formattedMethodName = String.Format("{0}.{1}", _className, _methodName);
+            _formattedMethodName = String.Format("{0} at {1}", _className, _line);
         }
     }
 
