@@ -55,7 +55,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private Texture2D _oddErrorBackTexture;
 	private Texture2D _evenErrorBackTexture;
-	private Texture2D _sizeLinerCenterTexture;
 
 	private float _buttonWidth;
 	private float _buttonHeight;
@@ -209,7 +208,6 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		Texture2D.DestroyImmediate(_oddErrorBackTexture);
 		Texture2D.DestroyImmediate(_evenErrorBackTexture);
-		Texture2D.DestroyImmediate(_sizeLinerCenterTexture);
 	}
 
 	private void OnNewLogOrTrimLog()
@@ -365,7 +363,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			                           height: ButtonHeight);
 			bool isSelected = i == _logListSelectedMessage ? true : false;
 			DrawBack(rectMessage, styleBack, isSelected);
-			if (Event.current.type == EventType.Repaint)
+			if (IsRepaintEvent)
 				styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
 			
 			bool messageClicked = IsClicked(rectMessage);
@@ -449,7 +447,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		_cursorChangeRect = new Rect(0, resizerY - 1f, position.width, ResizerHeight + 2f);
 		var cursorChangeCenterRect = new Rect(0, resizerY, position.width, 1.0f);
 
-		GUI.DrawTexture(cursorChangeCenterRect, SizeLinerTexture);
+		if (IsRepaintEvent)
+			BluConsoleSkin.BoxStyle.Draw(cursorChangeCenterRect, false, false, false, false);
 		EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
 
 		if (IsClicked(_cursorChangeRect))
@@ -467,7 +466,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		                              MinHeightOfTopAndBottom,
 		                              position.height - MinHeightOfTopAndBottom);
 	}
-
+		
 	private void DrawLogDetail()
 	{
 		List<CountedLog> logs = CountedLogsFilteredByFlags;
@@ -557,7 +556,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
 
 			DrawBack(rectButton, styleBack, isSelected);
-			if (Event.current.type == EventType.Repaint)
+			if (IsRepaintEvent)
 				styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
 			bool messageClicked = IsClicked(rectButton);
@@ -601,7 +600,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			var isSelected = i == _logDetailSelectedFrame ? true : false;
 			DrawBack(rectButton, styleBack, isSelected);
-			if (Event.current.type == EventType.Repaint)
+			if (IsRepaintEvent)
 				styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
 			bool messageClicked = IsClicked(rectButton);
@@ -658,7 +657,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUIStyle style,
 		bool isSelected)
 	{
-		if (Event.current.type == EventType.Repaint)
+		if (IsRepaintEvent)
 			style.Draw(rect, false, false, isSelected, false);
 	}
 
@@ -935,17 +934,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	#region Properties
 
-
-	private Texture2D SizeLinerTexture
-	{
-		get
-		{
-			if (_sizeLinerCenterTexture == null)
-				_sizeLinerCenterTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.SizerLineColor);
-			return _sizeLinerCenterTexture;
-		}
-	}
-
 	private Texture2D EvenErrorBackTexture
 	{
 		get
@@ -1062,6 +1050,14 @@ public class BluConsoleEditorWindow : EditorWindow
 			_isCountedLogsDirty = false;
 
 			return logsFiltered;
+		}
+	}
+
+	private bool IsRepaintEvent
+	{
+		get
+		{
+			return Event.current.type == EventType.Repaint;
 		}
 	}
 

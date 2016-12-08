@@ -39,15 +39,6 @@ public class BluConsoleSkin
 
 	#region Color
 
-
-	public static Color SizerLineColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorFromRGB(85, 85, 85);
-		}
-	}
-
 	public static Color EvenErrorBackColor
 	{
 		get
@@ -63,15 +54,6 @@ public class BluConsoleSkin
 			return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
 		}
 	}
-
-	public static Color SelectedBackColor
-	{
-		get
-		{
-			return GUI.skin.settings.selectionColor;
-		}
-	}
-
 
 	#endregion
 
@@ -149,6 +131,13 @@ public class BluConsoleSkin
 
 	#region Style
 
+	public static GUIStyle BoxStyle
+	{
+		get
+		{
+			return GUI.skin.FindStyle("CN Box");
+		}
+	}
 
 	public static GUIStyle CollapseStyle
 	{
