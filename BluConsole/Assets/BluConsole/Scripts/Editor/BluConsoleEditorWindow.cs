@@ -25,7 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using BluConsole.Core;
@@ -82,11 +81,6 @@ public class BluConsoleEditorWindow : EditorWindow
 	private int _logDetailSelectedFrame = -1;
 	private double _logDetailLastTimeClicked = 0.0;
 
-	// Compiling
-	private bool _isCompiling = false;
-	private bool _isPlaying = false;
-	private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
-
 	// Scroll Logic
 	private bool _isFollowScroll = false;
 	private bool _hasScrollWheelUp = false;
@@ -105,37 +99,30 @@ public class BluConsoleEditorWindow : EditorWindow
 		window._topPanelHeight = window.position.height / 2.0f;
 	}
 
-	private void OnGUI()
+	private void OnBecameVisible()
+	{
+		SetCountedLogsDirty();
+	}
+
+	private void Update()
 	{
 		_loggerAsset.OnNewLogOrTrimLogEvent -= OnNewLogOrTrimLog;
 		_loggerAsset.OnNewLogOrTrimLogEvent += OnNewLogOrTrimLog;
+		_loggerAsset.OnBeforeCompileEvent -= OnBeforeCompile;
+		_loggerAsset.OnBeforeCompileEvent += OnBeforeCompile;
+		_loggerAsset.OnAfterCompileEvent -= OnAfterCompile;
+		_loggerAsset.OnAfterCompileEvent += OnAfterCompile;
+		_loggerAsset.OnBeginPlayEvent -= OnBeginPlay;
+		_loggerAsset.OnBeginPlayEvent += OnBeginPlay;
+	}
 
-		if (EditorApplication.isCompiling && !_isCompiling)
-		{
-			_isCompiling = true;
-			OnBeforeCompile();
-		}
-		else if (!EditorApplication.isCompiling && _isCompiling)
-		{
-			_isCompiling = false;
-			OnAfterCompile();
-		}
-
-		if (EditorApplication.isPlaying && !_isPlaying)
-		{
-			_isPlaying = true;
-			OnBeginPlay();
-		}
-		else if (!EditorApplication.isPlaying && _isPlaying)
-		{
-			_isPlaying = false;
-		}
-
+	private void OnGUI()
+	{
 		InitVariables();
 
-		_hasScrollWheelUp = Event.current.type == EventType.ScrollWheel && Event.current.delta.y < 0f;
-
 		DrawResizer();
+
+		_hasScrollWheelUp = Event.current.type == EventType.ScrollWheel && Event.current.delta.y < 0f;
 
 		GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
 
@@ -150,6 +137,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
 		_drawYPos = _topPanelHeight + ResizerHeight;
 		DrawLogDetail();
+
 		GUILayout.EndVertical();
 
 		Repaint();
@@ -162,24 +150,17 @@ public class BluConsoleEditorWindow : EditorWindow
 		_drawYPos = 0f;
 	}
 
-	private void OnBeforeCompile()
+	public void OnBeforeCompile()
 	{
 		SetCountedLogsDirty();
-
-		_dirtyLogsBeforeCompile = new List<LogInfo>(_loggerAsset.LogsInfo.Where(
-				log => log.IsCompileMessage));
 	}
 
-	private void OnAfterCompile()
+	public void OnAfterCompile()
 	{
 		SetCountedLogsDirty();
-
-		var logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
-		_loggerAsset.Clear(
-				log => logsBlackList.Contains(log));
 	}
 
-	private void OnBeginPlay()
+	public void OnBeginPlay()
 	{
 		if (_isClearOnPlay)
 		{
@@ -444,7 +425,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	{
 		var resizerY = _topPanelHeight;
 
-		_cursorChangeRect = new Rect(0, resizerY - 1f, position.width, ResizerHeight + 2f);
+		_cursorChangeRect = new Rect(0, resizerY - 2f, position.width, ResizerHeight + 3f);
 		var cursorChangeCenterRect = new Rect(0, resizerY, position.width, 1.0f);
 
 		if (IsRepaintEvent)

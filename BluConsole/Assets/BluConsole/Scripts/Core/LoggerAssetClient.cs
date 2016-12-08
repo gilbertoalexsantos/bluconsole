@@ -26,6 +26,7 @@
 #if UNITY_EDITOR
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -41,6 +42,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     public static readonly int MAX_LOGS = 3000;
 
     [SerializeField] private List<LogInfo> _logsInfo = new List<LogInfo>();
+    [SerializeField] private List<LogInfo> _dirtyLogsBeforeCompile = new List<LogInfo>();
     [SerializeField] private List<CountedLog> _countedLogs = new List<CountedLog>();
     private Dictionary<LogInfo, CountedLog> _collapsedLogs = new Dictionary<LogInfo, CountedLog>(new LogInfoComparer());
     [SerializeField] private bool _isClearOnPlay = true;
@@ -51,8 +53,13 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     [SerializeField] private int _qtNormalCountedLogs = 0;
     [SerializeField] private int _qtWarningCountedLogs = 0;
     [SerializeField] private int _qtErrorCountedLogs = 0;
+    [SerializeField] private bool _isCompiling = false;
+    [SerializeField] private bool _isPlaying = false;
 
     public event Action OnNewLogOrTrimLogEvent;
+    public event Action OnBeforeCompileEvent;
+    public event Action OnAfterCompileEvent;
+    public event Action OnBeginPlayEvent;
 
     public List<LogInfo> LogsInfo
     {
@@ -219,8 +226,56 @@ public class LoggerAssetClient : ScriptableObject, ILogger
 
     private void OnEnable()
     {
+        EditorApplication.playmodeStateChanged -= OnPlaymodeStateChanged;
         EditorApplication.playmodeStateChanged += OnPlaymodeStateChanged;
+        EditorApplication.update -= Update;
+        EditorApplication.update += Update;
         hideFlags = HideFlags.HideAndDontSave;
+    }
+
+    private void Update()
+    {
+        if (EditorApplication.isCompiling && !_isCompiling)
+        {
+            _isCompiling = true;
+            OnBeforeCompile();
+        }
+        else if (!EditorApplication.isCompiling && _isCompiling)
+        {
+            _isCompiling = false;
+            OnAfterCompile();
+        }
+
+        if (EditorApplication.isPlaying && !_isPlaying)
+        {
+            _isPlaying = true;
+            OnBeginPlay();
+        }
+        else if (!EditorApplication.isPlaying && _isPlaying)
+        {
+            _isPlaying = false;
+        }
+    }
+
+    private void OnBeforeCompile()
+    {
+        OnBeforeCompileEvent.SafeInvoke();
+
+        _dirtyLogsBeforeCompile = new List<LogInfo>(LogsInfo.Where(log => log.IsCompileMessage));
+    }
+
+    private void OnAfterCompile()
+    {
+        OnAfterCompileEvent.SafeInvoke();
+
+        var logsBlackList = new HashSet<LogInfo>(_dirtyLogsBeforeCompile, new LogInfoComparer());
+        Clear(log => logsBlackList.Contains(log));
+        _dirtyLogsBeforeCompile.Clear();
+    }
+
+    private void OnBeginPlay()
+    {
+        OnBeginPlayEvent.SafeInvoke();
     }
 
     private void OnPlaymodeStateChanged()
@@ -268,7 +323,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
         }
 
         if (trimmedLog)
-            CalOnNewLogOrTrimLogEvent();
+            OnNewLogOrTrimLogEvent.SafeInvoke();
     }
 
     private void IncreaseLogCount(
@@ -351,13 +406,6 @@ public class LoggerAssetClient : ScriptableObject, ILogger
     }
 
 
-    private void CalOnNewLogOrTrimLogEvent()
-    {
-        if (OnNewLogOrTrimLogEvent != null)
-            OnNewLogOrTrimLogEvent();
-    }
-
-
     #region IBluLogger implementation
 
 
@@ -384,7 +432,7 @@ public class LoggerAssetClient : ScriptableObject, ILogger
             IncreaseCountedLogCount(logInfo.LogType);  
         }
 
-        CalOnNewLogOrTrimLogEvent();
+        OnNewLogOrTrimLogEvent.SafeInvoke();
 
         TrimLogs();
 
