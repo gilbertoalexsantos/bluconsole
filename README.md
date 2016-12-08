@@ -25,6 +25,10 @@ You can open any line of the call stack with a double click.
 
 Right click on the Log, and copy the text to the Clipboard. Simple like that!
 
+#### StackTraceIgnore
+
+If you want to ignore a function in the StackTrace, just put the [StackTraceIgnore] annotation on it.
+
 <br>
 
 For now, that's it! New features are coming, stay tuned.
