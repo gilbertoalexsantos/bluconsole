@@ -23,13 +23,7 @@
 */
 
 
-using System;
-using System.Reflection;
-using UnityEditor;
 using UnityEngine;
-using BluConsole.Core;
-using System.Collections.Generic;
-using JetBrains.Annotations;
 
 
 namespace BluConsole.Editor
