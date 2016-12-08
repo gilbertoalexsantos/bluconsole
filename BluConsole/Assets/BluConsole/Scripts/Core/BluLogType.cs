@@ -22,6 +22,7 @@
   SOFTWARE.
 */
 
+
 namespace BluConsole.Core
 {
 
