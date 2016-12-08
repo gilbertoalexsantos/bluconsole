@@ -251,7 +251,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		GUILayout.FlexibleSpace();
 
-
 		// Search Area
 		string oldSearchString = _searchString;
 		_searchString = EditorGUILayout.TextArea(_searchString,
@@ -486,13 +485,24 @@ public class BluConsoleEditorWindow : EditorWindow
 		var size = log.CallStack.Count;
 		var sizePlus = size + 1;
 
-		float buttonHeight = GetDetailMessageHeight("A", BluConsoleSkin.MessageStyle);
+		float buttonHeight = GetDetailMessageHeight("A", MessageDetailCallstackStyle);
 		float buttonWidth = ButtonWidth;
-		if (sizePlus * buttonHeight > windowHeight)
+		float firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message), 
+		                                                                      MessageDetailFirstLogStyle, 
+		                                                                      buttonWidth));
+
+		float viewHeight = size * buttonHeight + firstLogHeight;
+
+		if (viewHeight > windowHeight)
 			buttonWidth -= 15f;
 
+		// Recalculate it because we decreased the buttonWdith
+		firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message), 
+		                                                                MessageDetailFirstLogStyle, 
+		                                                                buttonWidth));
+		viewHeight = size * buttonHeight + firstLogHeight;
+
 		float viewWidth = buttonWidth;
-		float viewHeight = sizePlus * buttonHeight;
 
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: WindowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
@@ -501,33 +511,51 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                               scrollPosition: _logDetailScrollPosition,
 		                                               viewRect: scrollViewViewRect);
 
-		int firstRenderLogIndex = (int)(_logDetailScrollPosition.y / buttonHeight);
-		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, sizePlus);
-
-		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / buttonHeight) + 2;
-		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, sizePlus);
-
-		float buttonY = firstRenderLogIndex * buttonHeight;
-
-		// Return if doesn't has nothing to show
+		// Return if has nothing to show
 		if (_logListSelectedMessage == -1 || logs.Count == 0 || _logListSelectedMessage >= logs.Count)
 		{
 			GUI.EndScrollView();
 			return;
 		}
 
+		float scrollY = _logDetailScrollPosition.y;
+
+		int firstRenderLogIndex = 0;
+		if (scrollY <= firstLogHeight)
+			firstRenderLogIndex = 0;
+		else
+			firstRenderLogIndex = (int)((scrollY - firstLogHeight) / buttonHeight) + 1;
+		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, sizePlus);
+
+		int lastRenderLogIndex = 0;
+		if (firstRenderLogIndex == 0)
+		{
+			float offsetOfFirstLog = firstLogHeight - scrollY;
+			if (windowHeight > offsetOfFirstLog)
+				lastRenderLogIndex = firstRenderLogIndex + (int)((windowHeight - offsetOfFirstLog) / buttonHeight) + 2;
+			else
+				lastRenderLogIndex = 2;
+		}
+		else
+		{
+			lastRenderLogIndex = firstRenderLogIndex + (int)((windowHeight / buttonHeight)) + 2;
+		}
+		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, sizePlus);
+
+		float buttonY = 0f;
+		if (firstRenderLogIndex > 0)
+			buttonY = firstLogHeight + (firstRenderLogIndex - 1) * buttonHeight;
+			
 		// Logging first message
 		if (firstRenderLogIndex == 0)
 		{
 			var styleBack = GetLogBackStyle(0, log);
-			var styleMessage = BluConsoleSkin.MessageStyle;
-			var rectButton = new Rect(x: 0, 
-			                          y: buttonY, 
-			                          width: viewWidth, 
-			                          height: buttonHeight);
+			var styleMessage = MessageDetailFirstLogStyle;
+			var rectButton = new Rect(x: 0,  y: buttonY, width: viewWidth, height: firstLogHeight);
 
 			var isSelected = _logDetailSelectedFrame == -2 ? true : false;
 			var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
+
 			DrawBack(rectButton, styleBack, isSelected);
 			if (Event.current.type == EventType.Repaint)
 				styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
@@ -559,7 +587,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				}
 			}
 
-			buttonY += buttonHeight;
+			buttonY += firstLogHeight;
 		}
 
 		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i + 1 < lastRenderLogIndex; i++)
@@ -568,7 +596,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			var contentMessage = new GUIContent(GetTruncatedMessage(frame.FormattedMethodName));
 
 			var styleBack = GetLogBackStyle(0, log);
-			var styleMessage = BluConsoleSkin.MessageStyle;
+			var styleMessage = MessageDetailCallstackStyle;
 			var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 
 			var isSelected = i == _logDetailSelectedFrame ? true : false;
@@ -640,6 +668,11 @@ public class BluConsoleEditorWindow : EditorWindow
 	}
 
 	#region Gets
+
+	private float GetMaxDetailMessageHeight(float normalHeight)
+	{
+		return normalHeight * 5f;
+	}
 
 	private string GetTruncatedMessage(
 		string message)
@@ -717,9 +750,10 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private float GetDetailMessageHeight(
 		string message,
-		GUIStyle style)
+		GUIStyle style,
+		float width = 0f)
 	{
-		return style.CalcSize(new GUIContent(message)).y;
+		return style.CalcHeight(new GUIContent(message), width);
 	}
 
 	private Texture2D GetIcon(
@@ -964,6 +998,27 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			var style = new GUIStyle(BluConsoleSkin.OddBackStyle);
 			style.normal.background = OddErrorBackTexture;
+			return style;
+		}
+	}
+
+	private GUIStyle MessageDetailFirstLogStyle
+	{
+		get
+		{
+			var style = new GUIStyle(BluConsoleSkin.MessageStyle);
+			style.stretchWidth = true;
+			style.wordWrap = true;
+			return style;
+		}
+	}
+
+	private GUIStyle MessageDetailCallstackStyle
+	{
+		get
+		{
+			var style = new GUIStyle(MessageDetailFirstLogStyle);
+			style.wordWrap = false;
 			return style;
 		}
 	}
