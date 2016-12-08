@@ -28,6 +28,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using System.Text;
+using System.Collections.Generic;
 
 
 namespace BluConsole.Core
@@ -101,24 +103,46 @@ public class LogStackFrame
         _filePath = fileRelativePath;
         _line = line;
 
-        if (!String.IsNullOrEmpty(_filePath) && !String.IsNullOrEmpty(_methodName))
+
+        // Getting formattedMethodName (it's a bit gore...)
+        bool hasMethodName = !String.IsNullOrEmpty(_methodName);
+        bool hasFilePath = !String.IsNullOrEmpty(_filePath);
+        bool hasLine = _line > 0;
+
+        StringBuilder formatBuilder = new StringBuilder("{0}");
+        List<string> keys = new List<string>() {
+                _className
+        };
+
+        if (hasMethodName)
+        {
+            formatBuilder.Append(".{1}");
+            keys.Add(_methodName);
+        }
+
+        if (hasFilePath)
         {
             var startSubName = _filePath.IndexOf("Assets", StringComparison.OrdinalIgnoreCase);
             var formattedPath = startSubName >= 0 ? _filePath.Substring(startSubName) : _filePath;
-            _formattedMethodName = String.Format("{0}.{1} (at {2}:{3})",
-                                                 _className,
-                                                 _methodName,
-                                                 formattedPath,
-                                                 _line);
+
+            formatBuilder.Append(" (at {" + keys.Count + "}");
+            keys.Add(formattedPath);
+
+            if (hasLine)
+            {
+                formatBuilder.Append(":{" + keys.Count + "}");
+                keys.Add(_line.ToString());
+            }
+
+            formatBuilder.Append(")");
         }
-        else if (!String.IsNullOrEmpty(_methodName))
+        else if (hasLine)
         {
-            _formattedMethodName = String.Format("{0}.{1} (at {2})", _className, _methodName, _line);
+            formatBuilder.Append(" at line {" + keys.Count + "}");
+            keys.Add(_line.ToString());
         }
-        else
-        {
-            _formattedMethodName = String.Format("{0} at {1}", _className, _line);
-        }
+
+        _formattedMethodName = String.Format(formatBuilder.ToString(), keys.ToArray());
     }
 
     public static LogStackFrame Create(
