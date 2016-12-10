@@ -29,7 +29,8 @@ using System;
 namespace BluConsole.Core
 {
 
-public static class Extensions {
+public static class Extensions 
+{
 
     public static void SafeInvoke(this Action action)
     {
