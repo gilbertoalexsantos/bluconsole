@@ -33,27 +33,6 @@ namespace BluConsole.Editor
 public class BluConsoleSkin
 {
 
-	#region Color
-
-	public static Color EvenErrorBackColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorFromRGB(230, 173, 165);
-		}
-	}
-
-	public static Color OddErrorBackColor
-	{
-		get
-		{
-			return BluConsoleEditorHelper.ColorFromRGB(229, 180, 174);
-		}
-	}
-
-	#endregion
-
-
 	#region Texture
 
 

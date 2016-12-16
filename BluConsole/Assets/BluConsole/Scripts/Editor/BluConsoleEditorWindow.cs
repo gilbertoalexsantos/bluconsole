@@ -52,9 +52,6 @@ public class BluConsoleEditorWindow : EditorWindow
 	private List<CountedLog> _countedLogs = new List<CountedLog>();
 	private bool _isCountedLogsDirty = true;
 
-	private Texture2D _oddErrorBackTexture;
-	private Texture2D _evenErrorBackTexture;
-
 	private float _buttonWidth;
 	private float _buttonHeight;
 
@@ -185,12 +182,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		SetCountedLogsDirty();
 	}
 
-	private void OnDisable()
-	{
-		Texture2D.DestroyImmediate(_oddErrorBackTexture);
-		Texture2D.DestroyImmediate(_evenErrorBackTexture);
-	}
-
 	private void OnNewLogOrTrimLog()
 	{
 		SetCountedLogsDirty();
@@ -266,7 +257,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		string qtErrorLogsStr = qtErrorLogs.ToString();
 		if (qtErrorLogs >= maxLogs)
 			qtErrorLogsStr = maxLogs.ToString() + "+";
-
 
 		bool oldIsShowNormal = _isShowNormal;
 		_isShowNormal = GetToggleClamped(_isShowNormal, 
@@ -673,23 +663,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		int index,
 		LogInfo log)
 	{
-		bool isEven = index % 2 == 0 ? true : false;
-		bool isCompileError = log.IsCompileMessage && log.LogType == BluLogType.Error;
-
-		if (isEven)
-		{
-			if (isCompileError)
-				return EvenErrorBackStyle;
-			else
-				return BluConsoleSkin.EvenBackStyle;
-		}
-		else
-		{
-			if (isCompileError)
-				return OddErrorBackStyle;
-			else
-				return BluConsoleSkin.OddBackStyle;
-		}
+        return index % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
 	}
 
 	private GUIStyle GetLogListStyle(
@@ -915,26 +889,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	#region Properties
 
-	private Texture2D EvenErrorBackTexture
-	{
-		get
-		{
-			if (_evenErrorBackTexture == null)
-				_evenErrorBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.EvenErrorBackColor);
-			return _evenErrorBackTexture;
-		}
-	}
-
-	private Texture2D OddErrorBackTexture
-	{
-		get
-		{
-			if (_oddErrorBackTexture == null)
-				_oddErrorBackTexture = BluConsoleEditorHelper.GetTexture(BluConsoleSkin.OddErrorBackColor);
-			return _oddErrorBackTexture;
-		}
-	}
-
 	private Texture2D ConsoleIcon
 	{
 		get
@@ -948,26 +902,6 @@ public class BluConsoleEditorWindow : EditorWindow
 			}
 
 			return _consoleIcon;
-		}
-	}
-
-	private GUIStyle EvenErrorBackStyle
-	{
-		get
-		{
-			var style = new GUIStyle(BluConsoleSkin.EvenBackStyle);
-			style.normal.background = EvenErrorBackTexture;
-			return style;
-		}
-	}
-
-	private GUIStyle OddErrorBackStyle
-	{
-		get
-		{
-			var style = new GUIStyle(BluConsoleSkin.OddBackStyle);
-			style.normal.background = OddErrorBackTexture;
-			return style;
 		}
 	}
 
