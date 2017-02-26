@@ -24,10 +24,16 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using BluConsole.Core;
+using BluConsole.Core.UnityLoggerApi;
+using NUnit.Framework;
+using System.Text;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 
 namespace BluConsole.Editor
@@ -39,34 +45,30 @@ public class BluConsoleEditorWindow : EditorWindow
 	private readonly int MAX_LENGTH_MESSAGE = 999;
 	private readonly int MAX_LENGTH_COLLAPSE = 999;
 
-	// LoggerClient
-	private LoggerAssetClient _loggerAsset;
-
 	// Layout variables
 	private float _drawYPos;
 
 	// Cache Variables
 	private Texture2D _consoleIcon;
 	private bool _hasConsoleIcon = true;
-
-	private List<CountedLog> _countedLogs = new List<CountedLog>();
-	private bool _isCountedLogsDirty = true;
-
 	private float _buttonWidth;
 	private float _buttonHeight;
+    private UnityApiEvents _unityApiEvents;
+    private List<BluLog> _cacheLog = new List<BluLog>();
+    private int _cacheLogCount = 0;
 
 	// Toolbar Variables
-	private bool _isShowNormal = true;
-	private bool _isShowWarnings = true;
-	private bool _isShowErrors = true;
-	private bool _isClearOnPlay = false;
-	private bool _isCollapse = false;
 	private string _searchString = "";
+    private string _searchStringLower;
 
 	// LogList Variables
 	private Vector2 _logListScrollPosition;
 	private int _logListSelectedMessage = -1;
 	private double _logListLastTimeClicked = 0.0;
+    private int _qtLogs = 0;
+
+    // Repaint logic
+    private bool _needRepaint;
 
 	// Resizer
 	private float _topPanelHeight;
@@ -77,6 +79,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	private Vector2 _logDetailScrollPosition;
 	private int _logDetailSelectedFrame = -1;
 	private double _logDetailLastTimeClicked = 0.0;
+    private BluLog _selectedLog = null;
 
 	// Scroll Logic
 	private bool _isFollowScroll = false;
@@ -96,22 +99,34 @@ public class BluConsoleEditorWindow : EditorWindow
 		window._topPanelHeight = window.position.height / 2.0f;
 	}
 
-	private void OnBecameVisible()
-	{
-		SetCountedLogsDirty();
-	}
+    private void OnEnable()
+    {
+        if (_unityApiEvents == null)
+            _unityApiEvents = UnityApiEvents.GetOrCreate();
+        SetDirtyLogs();
+    }
 
-	private void Update()
-	{
-		_loggerAsset.OnNewLogOrTrimLogEvent -= OnNewLogOrTrimLog;
-		_loggerAsset.OnNewLogOrTrimLogEvent += OnNewLogOrTrimLog;
-		_loggerAsset.OnBeforeCompileEvent -= OnBeforeCompile;
-		_loggerAsset.OnBeforeCompileEvent += OnBeforeCompile;
-		_loggerAsset.OnAfterCompileEvent -= OnAfterCompile;
-		_loggerAsset.OnAfterCompileEvent += OnAfterCompile;
-		_loggerAsset.OnBeginPlayEvent -= OnBeginPlay;
-		_loggerAsset.OnBeginPlayEvent += OnBeginPlay;
-	}
+    private void Update()
+    {
+        int qt = UnityLoggerServer.GetCount();
+        if (qt != _qtLogs)
+            _needRepaint = true;
+
+        _unityApiEvents.OnBeforeCompileEvent -= SetDirtyLogs;
+        _unityApiEvents.OnBeforeCompileEvent += SetDirtyLogs;
+        _unityApiEvents.OnAfterCompileEvent -= SetDirtyLogs;
+        _unityApiEvents.OnAfterCompileEvent += SetDirtyLogs;
+        _unityApiEvents.OnBeginPlayEvent -= SetDirtyLogs;
+        _unityApiEvents.OnBeginPlayEvent += SetDirtyLogs;
+        _unityApiEvents.OnStopPlayEvent -= SetDirtyLogs;
+        _unityApiEvents.OnStopPlayEvent += SetDirtyLogs;
+
+        if (_needRepaint)
+        {
+            Repaint();
+            _needRepaint = false;
+        }
+    }
 
 	private void OnGUI()
 	{
@@ -136,8 +151,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		DrawLogDetail();
 
 		GUILayout.EndVertical();
-
-		Repaint();
 	}
 
 	private void InitVariables()
@@ -147,103 +160,58 @@ public class BluConsoleEditorWindow : EditorWindow
 		_drawYPos = 0f;
 	}
 
-	public void OnBeforeCompile()
-	{
-		SetCountedLogsDirty();
-	}
-
-	public void OnAfterCompile()
-	{
-		SetCountedLogsDirty();
-	}
-
-	public void OnBeginPlay()
-	{
-		if (_isClearOnPlay)
-		{
-			SetCountedLogsDirty();
-			_loggerAsset.Clear();
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (_loggerAsset == null)
-		{
-			_loggerAsset = LoggerServer.GetLoggerClient<LoggerAssetClient>() as LoggerAssetClient;
-			if (_loggerAsset == null)
-				_loggerAsset = LoggerAssetClient.GetOrCreate();
-		}
-
-		_logListSelectedMessage = -1;
-		_logDetailSelectedFrame = -1;
-
-		LoggerServer.Register(_loggerAsset);
-		SetCountedLogsDirty();
-	}
-
-	private void OnNewLogOrTrimLog()
-	{
-		SetCountedLogsDirty();
-	}
-
 	private float DrawTopToolbar()
 	{
 		float height = BluConsoleSkin.ToolbarButtonStyle.CalcSize(new GUIContent("Clear")).y;
 		GUILayout.BeginHorizontal(BluConsoleSkin.ToolbarStyle, GUILayout.Height(height));
 
-		// Clear/Collapse/ClearOnPlay/ErrorPause Area
 		if (GetButtonClamped("Clear", BluConsoleSkin.ToolbarButtonStyle))
 		{
-			SetCountedLogsDirty();
-			_loggerAsset.ClearExceptCompileErrors();
+            UnityLoggerServer.Clear();
+            SetDirtyLogs();
 			_logListSelectedMessage = -1;
 			_logDetailSelectedFrame = -1;
 		}
 
 		GUILayout.Space(6.0f);
 
-		bool oldCollapseValue = _isCollapse;
-		_isCollapse = GetToggleClamped(_isCollapse,
-		                               "Collapse",
-		                               BluConsoleSkin.ToolbarButtonStyle);
-		if (oldCollapseValue != _isCollapse)
-			SetCountedLogsDirty();
+        bool oldCollapse = UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse);
+        bool newCollapse = GetToggleClamped(oldCollapse, "Collapse", BluConsoleSkin.ToolbarButtonStyle);
+        if (oldCollapse != newCollapse)
+            SetDirtyLogs();
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.Collapse, newCollapse);
 
-		_isClearOnPlay = GetToggleClamped(_isClearOnPlay,
-		                                  "Clear on Play",
-		                                  BluConsoleSkin.ToolbarButtonStyle);
 
-		_loggerAsset.IsPauseOnError = GetToggleClamped(_loggerAsset.IsPauseOnError,
-		                                               "Pause on Error",
-		                                               BluConsoleSkin.ToolbarButtonStyle);
+        bool oldClearOnPlay = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ClearOnPlay);
+        bool newClearOnPlay = GetToggleClamped(oldClearOnPlay, "Clear on Play", BluConsoleSkin.ToolbarButtonStyle);
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.ClearOnPlay, newClearOnPlay);
 
+
+        bool oldPauseOnError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ErrorPause);
+        bool newPauseOnError = GetToggleClamped(oldPauseOnError, "Pause on Error", BluConsoleSkin.ToolbarButtonStyle);
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.ErrorPause, newPauseOnError);
 
 		GUILayout.FlexibleSpace();
 
 		// Search Area
-		string oldSearchString = _searchString;
 		_searchString = EditorGUILayout.TextArea(_searchString,
 		                                         BluConsoleSkin.ToolbarSearchTextFieldStyle,
 		                                         GUILayout.Width(200.0f));
-		if (oldSearchString != _searchString)
-			SetCountedLogsDirty();
+        _searchStringLower = _searchString.Trim().ToLower();
 
 		if (GUILayout.Button("", BluConsoleSkin.ToolbarSearchCancelButtonStyle))
 		{
 			_searchString = "";
+            _searchStringLower = "";
 			GUI.FocusControl(null);
-			SetCountedLogsDirty();
 		}
-
 
 		GUILayout.Space(10.0f);
 
 
 		// Info/Warning/Error buttons Area
-		int qtNormalLogs = _isCollapse ? _loggerAsset.QtNormalCountedLogs : _loggerAsset.QtNormalLogs;
-		int qtWarningLogs = _isCollapse ? _loggerAsset.QtWarningCountedLogs : _loggerAsset.QtWarningLogs;
-		int qtErrorLogs = _isCollapse ? _loggerAsset.QtErrorCountedLogs : _loggerAsset.QtErrorLogs;
+        int qtNormalLogs = 0, qtWarningLogs = 0, qtErrorLogs = 0;
+        UnityLoggerServer.GetCount(ref qtNormalLogs, ref qtWarningLogs, ref qtErrorLogs);
 
 		int maxLogs = MAX_LOGS;
 		string qtNormalLogsStr = qtNormalLogs.ToString();
@@ -258,48 +226,75 @@ public class BluConsoleEditorWindow : EditorWindow
 		if (qtErrorLogs >= maxLogs)
 			qtErrorLogsStr = maxLogs.ToString() + "+";
 
-		bool oldIsShowNormal = _isShowNormal;
-		_isShowNormal = GetToggleClamped(_isShowNormal, 
-		                                 GetInfoGUIContent(qtNormalLogsStr), 
-		                                 BluConsoleSkin.ToolbarButtonStyle);
-		if (oldIsShowNormal != _isShowNormal)
-			SetCountedLogsDirty();
+
+        bool oldIsShowNormal = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelLog);
+        bool newIsShowNormal = GetToggleClamped(oldIsShowNormal, 
+                                                GetInfoGUIContent(qtNormalLogsStr), 
+                                                BluConsoleSkin.ToolbarButtonStyle);
+        if (oldIsShowNormal != newIsShowNormal)
+            SetDirtyLogs();
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);
 
 
-		bool oldIsShowWarnings = _isShowWarnings;
-		_isShowWarnings = GetToggleClamped(_isShowWarnings, 
-		                                   GetWarningGUIContent(qtWarningLogsStr), 
-		                                   BluConsoleSkin.ToolbarButtonStyle);
-		if (oldIsShowWarnings != _isShowWarnings)
-			SetCountedLogsDirty();
+        bool oldIsShowWarning = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelWarning);
+        bool newIsShowWarning = GetToggleClamped(oldIsShowWarning, 
+                                                 GetWarningGUIContent(qtWarningLogsStr), 
+                                                 BluConsoleSkin.ToolbarButtonStyle);
+        if (oldIsShowWarning != newIsShowWarning)
+            SetDirtyLogs();
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelWarning, newIsShowWarning);
 
 
-		bool oldIsShowErrors = _isShowErrors;
-		_isShowErrors = GetToggleClamped(_isShowErrors, 
-		                                 GetErrorGUIContent(qtErrorLogsStr), 
-		                                 BluConsoleSkin.ToolbarButtonStyle);
-		if (oldIsShowErrors != _isShowErrors)
-			SetCountedLogsDirty();
-
+        bool oldIsShowError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelError);
+        bool newIsShowError = GetToggleClamped(oldIsShowError, 
+                                               GetErrorGUIContent(qtErrorLogsStr), 
+                                               BluConsoleSkin.ToolbarButtonStyle);
+        if (oldIsShowError != newIsShowError)
+            SetDirtyLogs();
+        UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelError, newIsShowError);
 
 		GUILayout.EndHorizontal();
 
 		return height;
 	}
 
+    private void SetDirtyLogs()
+    {
+        _cacheLog.Clear();
+        _cacheLogCount = 0;
+        _needRepaint = true;
+    }
+
 	private void DrawLogList()
 	{
-		List<CountedLog> logs = CountedLogsFilteredByFlags;
+        _qtLogs = UnityLoggerServer.StartGettingLogs();
+        _cacheLogCount = _qtLogs;
+
+        int cntLogs = 0;
+        List<int> rows = new List<int>(_qtLogs);
+        List<BluLog> logs = new List<BluLog>(_qtLogs);
+        for (int i = 0; i < _qtLogs; i++)
+        {
+            var log = GetSimpleLog(i);
+            if (HasPattern(log))
+            {
+                cntLogs++;
+                rows.Add(i);
+                logs.Add(log);
+            }
+        }
+
+        _qtLogs = cntLogs;
 
 		float windowWidth = WindowWidth;
 		float windowHeight = _topPanelHeight - DrawYPos;
 
 		float buttonWidth = ButtonWidth;
-		if (logs.Count * ButtonHeight > windowHeight)
+        if (_qtLogs * ButtonHeight > windowHeight)
 			buttonWidth -= 15f;
 
 		float viewWidth = buttonWidth;
-		float viewHeight = logs.Count * ButtonHeight;
+        float viewHeight = _qtLogs * ButtonHeight;
 
 		Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
 		Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
@@ -312,27 +307,28 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                             viewRect: scrollViewViewRect);
 
 		int firstRenderLogIndex = (int)(_logListScrollPosition.y / ButtonHeight);
-		firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, logs.Count);
+        firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, _qtLogs);
 
 		int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
-		lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, logs.Count);
+        lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
 		float buttonY = firstRenderLogIndex * ButtonHeight;
 		bool hasSomeClick = false;
 
-		for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
-		{
-			LogInfo logInfo = logs[i].Log;
-			var styleBack = GetLogBackStyle(i, logInfo);
+        for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
+        {
+            var row = rows[i];
+            var log = logs[i];
+            var styleBack = GetLogBackStyle(row, log);
 
-			var styleMessage = GetLogListStyle(i, logInfo);
-			string showMessage = GetTruncatedMessage(GetLogListMessage(logInfo));
+            var styleMessage = GetLogListStyle(log);
+            string showMessage = GetTruncatedMessage(GetLogListMessage(log));
 			var contentMessage = new GUIContent(showMessage);
 			var rectMessage = new Rect(x: 0,
 			                           y: buttonY,
 			                           width: viewWidth,
 			                           height: ButtonHeight);
-			bool isSelected = i == _logListSelectedMessage ? true : false;
+            bool isSelected = i == _logListSelectedMessage ? true : false;
 			DrawBack(rectMessage, styleBack, isSelected);
 			if (IsRepaintEvent)
 				styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
@@ -340,9 +336,9 @@ public class BluConsoleEditorWindow : EditorWindow
 			bool messageClicked = IsClicked(rectMessage);
 			bool isLeftClick = messageClicked ? Event.current.button == 0 : false;
 
-			if (_isCollapse)
+            if (UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse))
 			{
-				int quantity = logs[i].Quantity;
+                int quantity = UnityLoggerServer.GetLogCount(row);
 				var collapseCount = Mathf.Min(quantity, MAX_LENGTH_COLLAPSE);
 				var collapseText = collapseCount.ToString();
 				if (collapseCount >= MAX_LENGTH_COLLAPSE)
@@ -360,18 +356,24 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			if (messageClicked)
 			{
+                _needRepaint = true;
+                _selectedLog = UnityLoggerServer.GetCompleteLog(row);
+
+                if (_selectedLog.InstanceID != 0)
+                    EditorGUIUtility.PingObject(_selectedLog.InstanceID);
+
 				hasSomeClick = true;
 
-				if (!isLeftClick && i == _logListSelectedMessage)
-					DrawPopup(Event.current, logInfo);
+                if (!isLeftClick && i == _logListSelectedMessage)
+					DrawPopup(Event.current, log);
 
-				if (isLeftClick && i == _logListSelectedMessage)
+                if (isLeftClick && i == _logListSelectedMessage)
 				{
 					if (IsDoubleClickLogListButton)
 					{
 						_logListLastTimeClicked = 0.0f;
-						if (logInfo.CallStack.Count > 0)
-							JumpToSource(logInfo.CallStack[0]);
+                        var completeLog = UnityLoggerServer.GetCompleteLog(i);
+                        JumpToSource(completeLog, 0);
 					}
 					else
 					{
@@ -380,7 +382,7 @@ public class BluConsoleEditorWindow : EditorWindow
 				}
 				else
 				{
-					_logListSelectedMessage = i;
+                    _logListSelectedMessage = i;
 				}
 
 				_logDetailSelectedFrame = -1;
@@ -388,6 +390,8 @@ public class BluConsoleEditorWindow : EditorWindow
 
 			buttonY += ButtonHeight;
 		}
+
+        UnityLoggerServer.StopGettingsLogs();
 
 		GUI.EndScrollView();
 
@@ -429,6 +433,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		if (_isResizing)
 		{
+            _needRepaint = true;
 			_topPanelHeight = Event.current.mousePosition.y;
 			_cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
 		}
@@ -440,7 +445,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		
 	private void DrawLogDetail()
 	{
-		List<CountedLog> logs = CountedLogsFilteredByFlags;
 		var windowHeight = WindowHeight - DrawYPos;
 
 		{
@@ -448,11 +452,18 @@ public class BluConsoleEditorWindow : EditorWindow
 			GUI.DrawTexture(rect, BluConsoleSkin.EvenBackTexture);
 		}
 
-		if (_logListSelectedMessage == -1 || logs.Count == 0 || _logListSelectedMessage >= logs.Count)
+        if (_logListSelectedMessage == -1 || 
+            _qtLogs == 0 || 
+            _logListSelectedMessage >= _qtLogs || 
+            _selectedLog == null ||
+            _selectedLog.StackTrace == null)
+        {
 			return;
+        }
 
-		var log = logs[_logListSelectedMessage].Log;
-		var size = log.CallStack.Count;
+        var log = _selectedLog;
+
+        var size = log.StackTrace.Count;
 		var sizePlus = size + 1;
 
 		float buttonHeight = GetDetailMessageHeight("A", MessageDetailCallstackStyle);
@@ -482,7 +493,7 @@ public class BluConsoleEditorWindow : EditorWindow
 		                                               viewRect: scrollViewViewRect);
 
 		// Return if has nothing to show
-		if (_logListSelectedMessage == -1 || logs.Count == 0 || _logListSelectedMessage >= logs.Count)
+        if (_logListSelectedMessage == -1 || _qtLogs == 0 || _logListSelectedMessage >= _qtLogs)
 		{
 			GUI.EndScrollView();
 			return;
@@ -533,6 +544,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			bool messageClicked = IsClicked(rectButton);
 			if (messageClicked)
 			{
+                _needRepaint = true;
 				bool isLeftClick = Event.current.button == 0;
 
 				if (!isLeftClick && _logDetailSelectedFrame == -2)
@@ -543,8 +555,7 @@ public class BluConsoleEditorWindow : EditorWindow
 					if (IsDoubleClickLogDetailButton)
 					{
 						_logDetailLastTimeClicked = 0.0f;
-						if (log.CallStack.Count > 0)
-							JumpToSource(log.CallStack[0]);
+					    JumpToSource(log, 0);
 					}
 					else
 					{
@@ -562,8 +573,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 		for (int i = firstRenderLogIndex == 0 ? 0 : firstRenderLogIndex - 1; i + 1 < lastRenderLogIndex; i++)
 		{
-			var frame = log.CallStack[i];
-			var contentMessage = new GUIContent(GetTruncatedMessage(frame.FormattedMethodName));
+            var contentMessage = new GUIContent(GetTruncatedMessage(log.StackTrace[i].FrameInformation));
 
 			var styleBack = GetLogBackStyle(0, log);
 			var styleMessage = MessageDetailCallstackStyle;
@@ -577,6 +587,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			bool messageClicked = IsClicked(rectButton);
 			if (messageClicked)
 			{
+                _needRepaint = true;
 				bool isLeftClick = Event.current.button == 0;
 
 				if (isLeftClick && i == _logDetailSelectedFrame)
@@ -584,7 +595,7 @@ public class BluConsoleEditorWindow : EditorWindow
 					if (IsDoubleClickLogDetailButton)
 					{
 						_logDetailLastTimeClicked = 0.0f;
-						JumpToSource(frame);
+                        JumpToSource(log, i);
 					}
 					else
 					{
@@ -605,7 +616,7 @@ public class BluConsoleEditorWindow : EditorWindow
 
 	private void DrawPopup(
 		Event clickEvent,
-		LogInfo log)
+        BluLog log)
 	{
 		GenericMenu.MenuFunction copyCallback = () => {
 			EditorGUIUtility.systemCopyBuffer = log.Message;
@@ -616,11 +627,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		menu.ShowAsContext();
 
 		clickEvent.Use();
-	}
-
-	private void SetCountedLogsDirty()
-	{
-		_isCountedLogsDirty = true;
 	}
 
 	private void DrawBack(
@@ -637,9 +643,29 @@ public class BluConsoleEditorWindow : EditorWindow
 		return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
 	}
 
+    private BluLog GetSimpleLog(int row)
+    {
+        int realCount = _cacheLog.Count;
+
+        if (row < _cacheLogCount && row < realCount)
+            return _cacheLog[row];
+
+        _needRepaint = true;
+
+        var log = UnityLoggerServer.GetSimpleLog(row);
+
+        if (realCount > row)
+            _cacheLog[row] = log;
+        else
+            _cacheLog.Add(log);
+        
+        return _cacheLog[row];
+    }
+
 	#region Gets
 
-	private float GetMaxDetailMessageHeight(float normalHeight)
+	private float GetMaxDetailMessageHeight(
+        float normalHeight)
 	{
 		return normalHeight * 5f;
 	}
@@ -654,38 +680,32 @@ public class BluConsoleEditorWindow : EditorWindow
 	}
 
 	private string GetLogListMessage(
-		LogInfo log)
+        BluLog log)
 	{
 		return log.Message.Replace(System.Environment.NewLine, " ");
 	}
 
 	private GUIStyle GetLogBackStyle(
-		int index,
-		LogInfo log)
+        int row,
+        BluLog log)
 	{
-        return index % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
+        return row % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
 	}
 
 	private GUIStyle GetLogListStyle(
-		int index,
-		LogInfo log)
+        BluLog log)
 	{
-		return GetLogListStyle(log.LogType);
-	}
-
-	private GUIStyle GetLogListStyle(
-		BluLogType logType)
-	{
-		switch (logType)
-		{
-		case BluLogType.Normal:
-			return BluConsoleSkin.LogInfoStyle;
-		case BluLogType.Warning:
-			return BluConsoleSkin.LogWarnStyle;
-		case BluLogType.Error:
-			return BluConsoleSkin.LogErrorStyle;
-		}
-		return BluConsoleSkin.LogInfoStyle;
+        BluLogType logType = GetLogType(log);
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            return BluConsoleSkin.LogInfoStyle;
+        case BluLogType.Warning:
+            return BluConsoleSkin.LogWarnStyle;
+        case BluLogType.Error:
+            return BluConsoleSkin.LogErrorStyle;
+        }
+        return BluConsoleSkin.LogInfoStyle;
 	}
 
 	private float GetListMessageWidth(
@@ -742,22 +762,59 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private bool CanLog(
-		LogInfo log)
-	{
-		return (((int)log.LogType) & LogTypeMask) != 0;
-	}
+    private BluLogType GetLogType(
+        BluLog log)
+    {
+        int mode = log.Mode;
+        if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)GetLogMask(BluLogType.Normal)))
+            return BluLogType.Normal;
+        else if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)GetLogMask(BluLogType.Warning)))
+            return BluLogType.Warning;
+        else
+            return BluLogType.Error;
+    }
+
+    private int GetLogMask(
+        BluLogType type)
+    {
+        switch (type)
+        {
+        case BluLogType.Normal:
+            return 1032;
+        case BluLogType.Warning:
+            return 4738;
+        default:
+            return 3148116;
+        }
+    }
 
 	private void JumpToSource(
-		LogStackFrame frame)
+        BluLog log,
+        int row)
 	{
-		if (String.IsNullOrEmpty(frame.FilePath))
-			return;
+        var frames = log.StackTrace;
+        if (frames.Count+1 <= row)
+            return;
+
+        var file = "";
+        if (row == 0)
+            file = log.File;
+        else if (frames.Count > 0)
+            file = frames[row].File;
+
+        var line = -1;
+        if (row == 0)
+            line = log.Line;
+        else if (frames.Count > 0)
+            line = frames[row].Line;
+
+        if (string.IsNullOrEmpty(file) || line == -1)
+            return;
 		
-		var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), frame.FilePath);
+        var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), file);
 		if (System.IO.File.Exists(filename))
 		{
-			UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(frame.FilePath, frame.Line);
+            UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(file, line);
 		}
 	}
 
@@ -820,69 +877,25 @@ public class BluConsoleEditorWindow : EditorWindow
 		return GUILayout.Toggle(state, content, style, GUILayout.MaxWidth(style.CalcSize(content).x));
 	}
 
-	// TODO: The two below functions are equal... Refactor that. DRY!
-	private List<CountedLog> FilterByPatternHelmLike(
-		string pattern,
-		List<CountedLog> logs)
-	{
-		if (string.IsNullOrEmpty(pattern))
-			return logs;
+    private bool HasPattern(
+        BluLog log)
+    {
+        string pattern = _searchStringLower;
 
-		string[] patterns = pattern.ToLower().Split(' ');
+        if (pattern == "")
+            return true;
 
-		List<CountedLog> logsFiltered = new List<CountedLog>(logs.Count);
-		for (int i = 0; i < logs.Count; i++)
-		{
-			CountedLog log = logs[i];
-			var messageLower = log.Log.Message.ToLower();
+        string messageLower = log.MessageLower;
 
-			bool hasPattern = true;
-			for (int j = 0; j < patterns.Length; j++)
-			{
-				if (!messageLower.Contains(patterns[j]))
-				{
-					hasPattern = false;
-					break;
-				}
-			}
-			if (hasPattern)
-				logsFiltered.Add(log);
-		}
+        string[] patterns = pattern.Split(' ');
+        for (int i = 0; i < patterns.Length; i++)
+        {
+            if (!messageLower.Contains(patterns[i]))
+                return false;
+        }
 
-		return logsFiltered;
-	}
-
-	private List<LogInfo> FilterByPatternHelmLike(
-		string pattern,
-		List<LogInfo> logs)
-	{
-		if (string.IsNullOrEmpty(pattern))
-			return logs;
-
-		string[] patterns = pattern.ToLower().Split(' ');
-
-		List<LogInfo> logsFiltered = new List<LogInfo>(logs.Count);
-		for (int i = 0; i < logs.Count; i++)
-		{
-			LogInfo log = logs[i];
-			var messageLower = log.Message.ToLower();
-
-			bool hasPattern = true;
-			for (int j = 0; j < patterns.Length; j++)
-			{
-				if (!messageLower.Contains(patterns[j]))
-				{
-					hasPattern = false;
-					break;
-				}
-			}
-			if (hasPattern)
-				logsFiltered.Add(log);
-		}
-
-		return logsFiltered;
-	}
-
+        return true;
+    }
 
 	#endregion Gets
 
@@ -926,48 +939,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		}
 	}
 
-	private List<CountedLog> CountedLogsFilteredByFlags
-	{
-		get
-		{
-			if (!_isCountedLogsDirty)
-				return _countedLogs;
-
-			List<CountedLog> logsFiltered;
-
-			if (_isCollapse)
-			{
-				List<CountedLog> logs = FilterByPatternHelmLike(_searchString, _loggerAsset.CountedLogs);
-				logsFiltered = new List<CountedLog>(logs.Count);
-				for (int i = 0; i < logs.Count; i++)
-				{
-					CountedLog countedLog = logs[i];
-					if (CanLog(countedLog.Log))
-						logsFiltered.Add(countedLog);
-				}
-
-				_countedLogs = logsFiltered;
-			}
-			else
-			{
-				List<LogInfo> logs = FilterByPatternHelmLike(_searchString, _loggerAsset.LogsInfo);
-				logsFiltered = new List<CountedLog>(logs.Count);
-				for (int i = 0; i < logs.Count; i++)
-				{
-					LogInfo log = logs[i];
-					if (CanLog(log))
-						logsFiltered.Add(new CountedLog(log, 1));
-				}
-
-				_countedLogs = logsFiltered;
-			}
-
-			_isCountedLogsDirty = false;
-
-			return logsFiltered;
-		}
-	}
-
 	private bool IsRepaintEvent
 	{
 		get
@@ -997,21 +968,6 @@ public class BluConsoleEditorWindow : EditorWindow
 		get
 		{
 			return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f;
-		}
-	}
-
-	private int LogTypeMask
-	{
-		get
-		{
-			int mask = 0;
-			if (_isShowNormal)
-				mask |= (int)BluLogType.Normal;
-			if (_isShowWarnings)
-				mask |= (int)BluLogType.Warning;
-			if (_isShowErrors)
-				mask |= (int)BluLogType.Error;
-			return mask;
 		}
 	}
 
