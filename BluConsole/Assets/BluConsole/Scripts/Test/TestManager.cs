@@ -41,7 +41,7 @@ public class TestManager : MonoBehaviour
 
     private void Update()
     {
-        int h = 5;
+//        int h = 5;
         if (Input.GetKeyDown(KeyCode.A))
         {
             Test1.LogLevelOne(RandomMessage(), RandomLogType());
@@ -76,11 +76,6 @@ public class TestManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.L))
         {
-            Debug.LogError("Log count: " + UnityLoggerServer.GetCount());
-//            Debug.LogError("Normal count: " + loggerServer.GetCount(BluLogType.Normal));
-//            Debug.LogError("Warning count: " + loggerServer.GetCount(BluLogType.Warning));
-//            Debug.LogError("Error count: " + loggerServer.GetCount(BluLogType.Error));
-//            Debug.LogError("Has Flag " + enn.ToString() + ": " + loggerServer.HasFlag(enn).ToString());
         }
         else if (Input.GetKeyDown(KeyCode.M))
         {
@@ -158,6 +153,7 @@ public class TestManager : MonoBehaviour
         }
     }         
 
+    [StackTraceIgnore]
     public static void Log(
         string message,
         BluLogType type)

@@ -18,7 +18,8 @@ public class BluLogFrame
 
     public int Line { get; private set; }
 
-    public BluLogFrame(string frameInformation)
+    public BluLogFrame(
+        string frameInformation)
     {
         FrameInformation = frameInformation;
 

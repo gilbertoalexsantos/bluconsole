@@ -24,16 +24,14 @@
 
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using BluConsole.Core;
 using BluConsole.Core.UnityLoggerApi;
-using NUnit.Framework;
 using System.Text;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 
 namespace BluConsole.Editor
@@ -55,6 +53,7 @@ public class BluConsoleEditorWindow : EditorWindow
 	private float _buttonHeight;
     private UnityApiEvents _unityApiEvents;
     private List<BluLog> _cacheLog = new List<BluLog>();
+    private List<string> _stackTraceIgnorePrefixs = new List<string>();
     private int _cacheLogCount = 0;
 
 	// Toolbar Variables
@@ -101,8 +100,12 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void OnEnable()
     {
+        _stackTraceIgnorePrefixs = GetStackTraceIgnorePrefixs();
+        _stackTraceIgnorePrefixs.AddRange(GetDefaultIgnorePrefixs());
+
         if (_unityApiEvents == null)
             _unityApiEvents = UnityApiEvents.GetOrCreate();
+        
         SetDirtyLogs();
     }
 
@@ -357,10 +360,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			if (messageClicked)
 			{
                 _needRepaint = true;
-                _selectedLog = UnityLoggerServer.GetCompleteLog(row);
-
-                if (_selectedLog.InstanceID != 0)
-                    EditorGUIUtility.PingObject(_selectedLog.InstanceID);
+                _selectedLog = GetCompleteLog(row);
 
 				hasSomeClick = true;
 
@@ -372,16 +372,18 @@ public class BluConsoleEditorWindow : EditorWindow
 					if (IsDoubleClickLogListButton)
 					{
 						_logListLastTimeClicked = 0.0f;
-                        var completeLog = UnityLoggerServer.GetCompleteLog(i);
+                        var completeLog = GetCompleteLog(i);
                         JumpToSource(completeLog, 0);
 					}
 					else
 					{
+                        PingLog(_selectedLog);
 						_logListLastTimeClicked = EditorApplication.timeSinceStartup;
 					}
 				}
 				else
 				{
+                    PingLog(_selectedLog);
                     _logListSelectedMessage = i;
 				}
 
@@ -662,6 +664,19 @@ public class BluConsoleEditorWindow : EditorWindow
         return _cacheLog[row];
     }
 
+    private BluLog GetCompleteLog(int row)
+    {
+        var log = UnityLoggerServer.GetCompleteLog(row);
+        log.FilterStackTrace(_stackTraceIgnorePrefixs);
+        return log;
+    }
+
+    private void PingLog(BluLog log)
+    {
+        if (log.InstanceID != 0)
+            EditorGUIUtility.PingObject(log.InstanceID);
+    }
+
 	#region Gets
 
 	private float GetMaxDetailMessageHeight(
@@ -792,30 +807,27 @@ public class BluConsoleEditorWindow : EditorWindow
         BluLog log,
         int row)
 	{
-        var frames = log.StackTrace;
-        if (frames.Count+1 <= row)
-            return;
-
         var file = "";
-        if (row == 0)
-            file = log.File;
-        else if (frames.Count > 0)
-            file = frames[row].File;
-
         var line = -1;
-        if (row == 0)
+        var frames = log.StackTrace;
+
+        if (frames.Count == 0)
+        {
+            file = log.File;
             line = log.Line;
-        else if (frames.Count > 0)
+        }
+        else if (row < frames.Count)
+        {
+            file = frames[row].File;
             line = frames[row].Line;
+        }
 
         if (string.IsNullOrEmpty(file) || line == -1)
             return;
 		
         var filename = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), file);
 		if (System.IO.File.Exists(filename))
-		{
             UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(file, line);
-		}
 	}
 
 	private GUIContent GetInfoGUIContent(
@@ -896,6 +908,55 @@ public class BluConsoleEditorWindow : EditorWindow
 
         return true;
     }
+
+    private List<BluLogFrame> FilterLogFrames(List<BluLogFrame> frames)
+    {
+        var filteredFrames = new List<BluLogFrame>(frames.Count);
+        foreach (var frame in frames)
+        {
+            bool starts = false;
+            foreach (var stackTrace in _stackTraceIgnorePrefixs)
+            {
+                if (frame.FrameInformation.StartsWith(stackTrace))
+                {
+                    starts = true;
+                    break;
+                }
+            }
+            if (!starts)
+                filteredFrames.Add(frame);
+        }
+        return filteredFrames;
+    }
+
+    private List<string> GetDefaultIgnorePrefixs()
+    {
+        return new List<string>() {
+            "UnityEngine.Debug"
+        };
+    }
+
+    private List<string> GetStackTraceIgnorePrefixs()
+    {
+        var ret = new List<string>();
+        var assembly = Assembly.GetAssembly(typeof(StackTraceIgnore));
+        foreach (var type in assembly.GetTypes())
+        {
+            foreach (var method in type.GetMethods(BindingFlags.Public | 
+                                                   BindingFlags.NonPublic |
+                                                   BindingFlags.Static |
+                                                   BindingFlags.Instance))
+            {
+                if (method.GetCustomAttributes(typeof(StackTraceIgnore), true).Length > 0)
+                {
+                    var key = string.Format("{0}:{1}", method.DeclaringType.FullName, method.Name);
+                    ret.Add(key);
+                }
+            }
+        }
+        return ret;
+    }
+
 
 	#endregion Gets
 

@@ -71,6 +71,26 @@ public class BluLog
         InstanceID = instanceID;
     }
 
+    public void FilterStackTrace(List<string> prefixs)
+    {
+        var newStackTrace = new List<BluLogFrame>(StackTrace.Count);
+        foreach (var frame in StackTrace)
+        {
+            bool hasPrefix = false;
+            foreach (var prefix in prefixs)
+            {
+                if (frame.FrameInformation.StartsWith(prefix))
+                {
+                    hasPrefix = true;
+                    break;
+                }
+            }
+            if (!hasPrefix)
+                newStackTrace.Add(frame);
+        }
+        StackTrace = newStackTrace;
+    }
+
     public override string ToString()
     {
         return string.Format("[BluLog: Message={0}, File={1}, Line={2}, Mode={3}, StackTrace={4}]", 
