@@ -42,7 +42,7 @@ public class TestManager : MonoBehaviour
 
     private void Update()
     {
-        int h = 5;
+//        int h = 5;
         if (Input.GetKeyDown(KeyCode.A))
         {
             Test1.LogLevelOne(RandomMessage(), RandomLogType());
