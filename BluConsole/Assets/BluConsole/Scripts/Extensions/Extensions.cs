@@ -26,7 +26,7 @@
 using System;
 
 
-namespace BluConsole.Core
+namespace BluConsole.Extensions
 {
 
 public static class Extensions 

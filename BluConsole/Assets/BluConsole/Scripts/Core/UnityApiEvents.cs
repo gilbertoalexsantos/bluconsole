@@ -30,6 +30,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using BluConsole.Extensions;
 
 
 namespace BluConsole.Core
@@ -84,7 +85,7 @@ public class UnityApiEvents : ScriptableObject
         else if (!EditorApplication.isPlaying && _isPlaying)
         {
             _isPlaying = false;
-            OnStopPlayEvent();
+            OnStopPlay();
         }
     }
 
@@ -101,6 +102,11 @@ public class UnityApiEvents : ScriptableObject
     private void OnBeginPlay()
     {
         OnBeginPlayEvent.SafeInvoke();
+    }
+
+    private void OnStopPlay()
+    {
+        OnStopPlayEvent.SafeInvoke();
     }
 
 }

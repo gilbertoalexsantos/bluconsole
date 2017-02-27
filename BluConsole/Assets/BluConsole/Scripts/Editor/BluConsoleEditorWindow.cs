@@ -53,12 +53,14 @@ public class BluConsoleEditorWindow : EditorWindow
 	private float _buttonHeight;
     private UnityApiEvents _unityApiEvents;
     private List<BluLog> _cacheLog = new List<BluLog>();
+    private List<bool> _cacheLogComparer = new List<bool>();
     private List<string> _stackTraceIgnorePrefixs = new List<string>();
+    private BluLogSettings _settings;
     private int _cacheLogCount = 0;
 
 	// Toolbar Variables
+    private string[] _searchStringPatterns;
 	private string _searchString = "";
-    private string _searchStringLower;
 
 	// LogList Variables
 	private Vector2 _logListScrollPosition;
@@ -102,6 +104,9 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         _stackTraceIgnorePrefixs = GetStackTraceIgnorePrefixs();
         _stackTraceIgnorePrefixs.AddRange(GetDefaultIgnorePrefixs());
+
+        _settings = BluLogSettings.GetOrCreateSettings();
+        _settings.CacheFilterLower();
 
         if (_unityApiEvents == null)
             _unityApiEvents = UnityApiEvents.GetOrCreate();
@@ -197,17 +202,21 @@ public class BluConsoleEditorWindow : EditorWindow
 		GUILayout.FlexibleSpace();
 
 		// Search Area
+        var oldString = _searchString;
 		_searchString = EditorGUILayout.TextArea(_searchString,
 		                                         BluConsoleSkin.ToolbarSearchTextFieldStyle,
 		                                         GUILayout.Width(200.0f));
-        _searchStringLower = _searchString.Trim().ToLower();
+        if (_searchString != oldString)
+            SetDirtyComparer();
 
 		if (GUILayout.Button("", BluConsoleSkin.ToolbarSearchCancelButtonStyle))
 		{
 			_searchString = "";
-            _searchStringLower = "";
+            SetDirtyComparer();
 			GUI.FocusControl(null);
 		}
+
+        _searchStringPatterns = _searchString.Trim().ToLower().Split(' ');
 
 		GUILayout.Space(10.0f);
 
@@ -266,6 +275,12 @@ public class BluConsoleEditorWindow : EditorWindow
         _cacheLog.Clear();
         _cacheLogCount = 0;
         _needRepaint = true;
+        SetDirtyComparer();
+    }
+
+    private void SetDirtyComparer()
+    {
+        _cacheLogComparer.Clear();
     }
 
 	private void DrawLogList()
@@ -279,7 +294,7 @@ public class BluConsoleEditorWindow : EditorWindow
         for (int i = 0; i < _qtLogs; i++)
         {
             var log = GetSimpleLog(i);
-            if (HasPattern(log))
+            if (HasPattern(log, i))
             {
                 cntLogs++;
                 rows.Add(i);
@@ -318,11 +333,12 @@ public class BluConsoleEditorWindow : EditorWindow
 		float buttonY = firstRenderLogIndex * ButtonHeight;
 		bool hasSomeClick = false;
 
+        int cnt = 0;
         for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
         {
             var row = rows[i];
             var log = logs[i];
-            var styleBack = GetLogBackStyle(row, log);
+            var styleBack = GetLogBackStyle(cnt, log);
 
             var styleMessage = GetLogListStyle(log);
             string showMessage = GetTruncatedMessage(GetLogListMessage(log));
@@ -391,6 +407,7 @@ public class BluConsoleEditorWindow : EditorWindow
 			}
 
 			buttonY += ButtonHeight;
+            cnt++;
 		}
 
         UnityLoggerServer.StopGettingsLogs();
@@ -890,23 +907,50 @@ public class BluConsoleEditorWindow : EditorWindow
 	}
 
     private bool HasPattern(
-        BluLog log)
+        BluLog log,
+        int row)
     {
-        string pattern = _searchStringLower;
-
-        if (pattern == "")
-            return true;
-
+        if (row < _cacheLogComparer.Count)
+            return _cacheLogComparer[row];
+        
         string messageLower = log.MessageLower;
 
-        string[] patterns = pattern.Split(' ');
-        for (int i = 0; i < patterns.Length; i++)
+        int size = _searchStringPatterns.Length;
+        for (int i = 0; i < size; i++)
         {
-            if (!messageLower.Contains(patterns[i]))
+            string pattern = _searchStringPatterns[i];
+            if (pattern == "")
+                continue;
+            
+            if (!messageLower.Contains(pattern))
+            {
+                SetLogComparer(row, false);
                 return false;
+            }
         }
 
+        var filters = _settings.FilterLower;
+        size = _settings.FilterLower.Count;
+        for (int i = 0; i < size; i++)
+        {
+            var filter = filters[i];
+            
+            if (!messageLower.Contains(filter))
+            {
+                SetLogComparer(row, false);
+                return false;
+            }
+        }
+
+        SetLogComparer(row, true);
         return true;
+    }
+
+    private void SetLogComparer(int row, bool value)
+    {
+        if (row < _cacheLogComparer.Count)
+            _cacheLogComparer[row] = value;
+        _cacheLogComparer.Add(value);
     }
 
     private List<BluLogFrame> FilterLogFrames(List<BluLogFrame> frames)
