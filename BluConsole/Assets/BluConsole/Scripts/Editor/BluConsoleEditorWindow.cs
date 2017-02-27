@@ -913,12 +913,6 @@ public class BluConsoleEditorWindow : EditorWindow
         if (row < _cacheLogComparer.Count)
             return _cacheLogComparer[row];
 
-        if (UnityLoggerServer.IsDebugError(log.Mode))
-        {
-            SetLogComparer(row, true);
-            return true;
-        }
-        
         string messageLower = log.MessageLower;
 
         int size = _searchStringPatterns.Length;
@@ -927,12 +921,18 @@ public class BluConsoleEditorWindow : EditorWindow
             string pattern = _searchStringPatterns[i];
             if (pattern == "")
                 continue;
-            
+
             if (!messageLower.Contains(pattern))
             {
                 SetLogComparer(row, false);
                 return false;
             }
+        }
+
+        if (UnityLoggerServer.IsDebugError(log.Mode))
+        {
+            SetLogComparer(row, true);
+            return true;
         }
 
         var filters = _settings.FilterLower;
