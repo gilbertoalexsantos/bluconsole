@@ -912,6 +912,12 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         if (row < _cacheLogComparer.Count)
             return _cacheLogComparer[row];
+
+        if (UnityLoggerServer.IsDebugError(log.Mode))
+        {
+            SetLogComparer(row, true);
+            return true;
+        }
         
         string messageLower = log.MessageLower;
 

@@ -58,6 +58,12 @@ public static class UnityLoggerServer
         LogEntries.GetCountsByType(ref error, ref warning, ref normal);
     }
 
+    public static bool IsDebugError(
+        int mode)
+    {
+        return ConsoleWindow.IsDebugError(mode);
+    }
+
     public static bool HasFlag(
         ConsoleWindowFlag flag)
     {

@@ -51,6 +51,29 @@ public enum ConsoleWindowMode
 public static class ConsoleWindow
 {
 
+    public static bool IsDebugError(
+        int mode)
+    {
+        var options = new ConsoleWindowMode[] {
+            ConsoleWindowMode.Error,
+            ConsoleWindowMode.Assert,
+            ConsoleWindowMode.Fatal,
+            ConsoleWindowMode.AssetImportError,
+            ConsoleWindowMode.AssetImportWarning,
+            ConsoleWindowMode.ScriptingError,
+            ConsoleWindowMode.ScriptCompileError,
+            ConsoleWindowMode.ScriptCompileWarning,
+            ConsoleWindowMode.StickyError,
+            ConsoleWindowMode.ScriptingException,
+            ConsoleWindowMode.GraphCompileError,
+            ConsoleWindowMode.ScriptingAssertion
+        };
+        int mask = 0;
+        for (int i = 0; i < options.Length; i++)
+            mask |= (int)options[i];
+        return (mode & mask) != 0;
+    }
+
     public static bool HasFlag(
         ConsoleWindowFlag flag)
     {

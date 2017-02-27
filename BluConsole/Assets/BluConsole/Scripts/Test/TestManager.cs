@@ -41,7 +41,7 @@ public class TestManager : MonoBehaviour
 
     private void Update()
     {
-//        int h = 5;
+        int h = 5;
         if (Input.GetKeyDown(KeyCode.A))
         {
             Test1.LogLevelOne(RandomMessage(), RandomLogType());
@@ -68,7 +68,8 @@ public class TestManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.J))
         {
-            Debug.Log(":abc:abc:<color>123");
+            int? t = null;
+            Debug.LogError(t);
         }
         else if (Input.GetKeyDown(KeyCode.K))
         {
@@ -76,12 +77,18 @@ public class TestManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.L))
         {
+//            bool t = 1 & 0;
         }
         else if (Input.GetKeyDown(KeyCode.M))
         {
-            int qt = UnityLoggerServer.StartGettingLogs();
-            Debug.LogError("Qt of logs: " + qt);
-            UnityLoggerServer.StopGettingsLogs();
+            foreach (var en in Enum.GetValues(typeof(ConsoleWindowMode)))
+            {
+                var enn = (ConsoleWindowMode)en;
+                if (((int)enn & 16640) != 0)
+                {
+                    Debug.LogError("Has this mode: " + enn.ToString());
+                }
+            }
         }
 
         _time += Time.deltaTime;
