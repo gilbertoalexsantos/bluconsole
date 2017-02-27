@@ -23,6 +23,7 @@
 */
 
 
+using BluConsole;
 using BluConsole.Core;
 using BluConsole.Core.UnityLoggerApi;
 using UnityEngine;

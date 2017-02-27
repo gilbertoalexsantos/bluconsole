@@ -23,12 +23,6 @@
 */
 
 
-using System;
-using System.Reflection;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Runtime.Remoting.Messaging;
 
 
 namespace BluConsole.Core.UnityLoggerApi

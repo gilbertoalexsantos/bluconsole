@@ -23,17 +23,15 @@
 */
 
 
-using System;
-using System.Reflection;
-using System.Collections;
-using System.Collections.Generic;
 using BluConsole.Core;
-using UnityEngine;
 using UnityEditor;
 
 
+namespace BluConsole.Editor
+{
+
 [CustomEditor(typeof(BluLogSettings))]
-public class BluLogSettingsEditor : Editor
+public class BluLogSettingsEditor : UnityEditor.Editor
 {
 
     private SerializedProperty _filterProperty;
@@ -51,5 +49,7 @@ public class BluLogSettingsEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
     }
+
+}
 
 }

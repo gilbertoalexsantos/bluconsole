@@ -25,13 +25,12 @@
 
 using System;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using BluConsole;
 using BluConsole.Core;
 using BluConsole.Core.UnityLoggerApi;
-using System.Text;
 
 
 namespace BluConsole.Editor
@@ -105,13 +104,19 @@ public class BluConsoleEditorWindow : EditorWindow
         _stackTraceIgnorePrefixs = GetStackTraceIgnorePrefixs();
         _stackTraceIgnorePrefixs.AddRange(GetDefaultIgnorePrefixs());
 
-        _settings = BluLogSettings.GetOrCreateSettings();
+        _settings = GetOrCreateSettings();
         _settings.CacheFilterLower();
 
         if (_unityApiEvents == null)
             _unityApiEvents = UnityApiEvents.GetOrCreate();
         
         SetDirtyLogs();
+    }
+
+    private BluLogSettings GetOrCreateSettings()
+    {
+        var settings = AssetDatabase.LoadAssetAtPath<BluLogSettings>("Assets/BluConsole/Assets/BluLogSettings.asset");
+        return settings ?? CreateInstance<BluLogSettings>();
     }
 
     private void Update()
@@ -798,12 +803,12 @@ public class BluConsoleEditorWindow : EditorWindow
         BluLog log)
     {
         int mode = log.Mode;
-        if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)GetLogMask(BluLogType.Normal)))
-            return BluLogType.Normal;
+        if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)GetLogMask(BluLogType.Error)))
+            return BluLogType.Error;
         else if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)GetLogMask(BluLogType.Warning)))
             return BluLogType.Warning;
         else
-            return BluLogType.Error;
+            return BluLogType.Normal;
     }
 
     private int GetLogMask(
@@ -812,11 +817,11 @@ public class BluConsoleEditorWindow : EditorWindow
         switch (type)
         {
         case BluLogType.Normal:
-            return 1032;
+            return 1028;
         case BluLogType.Warning:
-            return 4738;
+            return 4736;
         default:
-            return 3148116;
+            return 3148115;
         }
     }
 

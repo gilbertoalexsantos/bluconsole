@@ -23,17 +23,13 @@
 */
 
 
-#if UNITY_EDITOR
-
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using BluConsole.Extensions;
 
 
-namespace BluConsole.Core
+namespace BluConsole.Editor
 {
 
 public class UnityApiEvents : ScriptableObject
@@ -112,5 +108,3 @@ public class UnityApiEvents : ScriptableObject
 }
 
 }
-
-#endif
