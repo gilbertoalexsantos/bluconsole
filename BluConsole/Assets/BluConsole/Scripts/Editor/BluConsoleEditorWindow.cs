@@ -113,6 +113,15 @@ public class BluConsoleEditorWindow : EditorWindow
         SetDirtyLogs();
     }
 
+    private void OnDestroy()
+    {
+        if (_consoleIcon != null) {
+            _hasConsoleIcon = true;
+            _consoleIcon = null;
+            EditorUtility.UnloadUnusedAssetsImmediate(true);
+        }
+    }
+
     private BluLogSettings GetOrCreateSettings()
     {
         var settings = AssetDatabase.LoadAssetAtPath<BluLogSettings>("Assets/BluConsole/Assets/BluLogSettings.asset");
@@ -1024,8 +1033,8 @@ public class BluConsoleEditorWindow : EditorWindow
 		{
 			if (_consoleIcon == null && _hasConsoleIcon)
 			{
-				string path = "Assets/BluConsole/Images/bluconsole-icon.png";
-				_consoleIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+				string path = "BluConsole/Images/bluconsole-icon.png";
+                _consoleIcon = EditorGUIUtility.Load(path) as Texture2D;
 				if (_consoleIcon == null)
 					_hasConsoleIcon = false;
 			}
