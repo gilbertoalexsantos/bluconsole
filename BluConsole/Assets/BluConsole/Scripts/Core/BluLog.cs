@@ -51,8 +51,11 @@ public class BluLog
     public void SetMessage(
         string condition)
     {
+        if (string.IsNullOrEmpty(condition))
+            return;
+        
         int index = 0;
-        while (condition[index++] != '\n');
+        while (index < condition.Length && condition[index++] != '\n');
         Message = condition.Substring(0, index-1);
         MessageLower = Message.ToLower();
     }
@@ -78,6 +81,9 @@ public class BluLog
     public void SetStackTrace(string condition)
     {
         StackTrace = new List<BluLogFrame>();
+
+        if (string.IsNullOrEmpty(condition))
+            return;
 
         var splits = condition.Split('\n');
         for (int i = 1; i < splits.Length; i++)
