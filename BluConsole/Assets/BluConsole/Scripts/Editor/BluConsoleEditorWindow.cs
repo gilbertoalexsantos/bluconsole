@@ -393,7 +393,7 @@ public class BluConsoleEditorWindow : EditorWindow
 					if (IsDoubleClickLogListButton)
 					{
 						_logListLastTimeClicked = 0.0f;
-                        var completeLog = GetCompleteLog(i);
+                        var completeLog = GetCompleteLog(row);
                         JumpToSource(completeLog, 0);
 					}
 					else
