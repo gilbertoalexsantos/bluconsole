@@ -118,13 +118,15 @@ public class BluConsoleEditorWindow : EditorWindow
         if (_consoleIcon != null) {
             _hasConsoleIcon = true;
             _consoleIcon = null;
+            _settings = null;
             EditorUtility.UnloadUnusedAssetsImmediate(true);
         }
     }
 
     private BluLogSettings GetOrCreateSettings()
     {
-        var settings = AssetDatabase.LoadAssetAtPath<BluLogSettings>("Assets/BluConsole/Assets/BluLogSettings.asset");
+        var path = "BluConsole/BluLogSettings.asset";
+        var settings = EditorGUIUtility.Load(path) as BluLogSettings;
         return settings ?? CreateInstance<BluLogSettings>();
     }
 
