@@ -1,0 +1,7 @@
+BluConsole is an extension of the Unity Default Console. It has a few features that are extremely helpful when debugging:
+
+Key Features:
+. Filter your logs
+. Callstack Navitagion
+. Copy log message to clipboard
+. Hide a function callstack by putting the annotation StackTraceIgnore on it
