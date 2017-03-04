@@ -51,6 +51,8 @@ Known Issues
 ----------------------------
 
 * When filtering logs, the toggles with the number of logs are displayed incorrectly
+* Sometimes when you double click the log to open the file on your Editor, if your unity is configured to open VS, it opens Mono instead. I saw a workaround here:
+[A workaround exists: Manually open Visual Studio and open the Unity project. Now double clicking a file will open it in Visual Studio but the whole project has to be migrated each time... it appears Unity is not accepting the Visual Studio Migration changes.](http://answers.unity3d.com/questions/236390/monodevelop-opens-instead-of-visual-studio.html)
 
 
 License
