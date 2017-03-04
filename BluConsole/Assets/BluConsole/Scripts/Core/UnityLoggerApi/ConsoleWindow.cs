@@ -160,7 +160,7 @@ public static class ConsoleWindow
             return BindingFlags.Static | BindingFlags.NonPublic;
         }
     }
-	
+    
 }
 
 }

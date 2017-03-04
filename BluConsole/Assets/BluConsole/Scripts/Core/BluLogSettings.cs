@@ -51,7 +51,7 @@ public class BluLogSettings : ScriptableObject
                 _filterLower.Add(fLower);
         }
     }
-	
+    
 }
 
 }
