@@ -7,6 +7,8 @@ Fell free to contribute! Any PR are welcome (just be consistent with the code gu
 
 Any doubts, you can post an issue, or send me an email: <gilberto.alexsantos@gmail.com>
 
+To install, just download the **bluconsole.unitypackage**, install it, and open the window on: Window/BluConsole. Simple like that.
+
 Features Implemented
 ----------------------------
 
@@ -27,11 +29,11 @@ Right click on the Log, and copy the text to the Clipboard. Simple like that!
 
 ### Default filter
 
-If you catch yourself filtering always by the same query, just put that in the FilterSettings.
+If you catch yourself filtering always by the same query, just put that in the FilterSettings (Editor Default Resources/BluConsole/BluLogSettings).
 
 #### StackTraceIgnore
 
-If you want to ignore a function in the StackTrace, just put the [StackTraceIgnore] annotation on it.
+If you want to ignore a function in the StackTrace, just put the [BluConsole.StackTraceIgnore] annotation on it.
 
 <br>
 
