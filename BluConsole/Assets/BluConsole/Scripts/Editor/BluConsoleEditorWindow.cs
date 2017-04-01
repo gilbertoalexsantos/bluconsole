@@ -67,9 +67,6 @@ public class BluConsoleEditorWindow : EditorWindow
     private double _logListLastTimeClicked = 0.0;
     private int _qtLogs = 0;
 
-    // Repaint logic
-    private bool _needRepaint;
-
     // Resizer
     private float _topPanelHeight;
     private Rect _cursorChangeRect;
@@ -134,10 +131,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
     private void Update()
     {
-        int qt = UnityLoggerServer.GetCount();
-        if (qt != _qtLogs)
-            _needRepaint = true;
-
         _unityApiEvents.OnBeforeCompileEvent -= SetDirtyLogs;
         _unityApiEvents.OnBeforeCompileEvent += SetDirtyLogs;
         _unityApiEvents.OnAfterCompileEvent -= SetDirtyLogs;
@@ -146,12 +139,6 @@ public class BluConsoleEditorWindow : EditorWindow
         _unityApiEvents.OnBeginPlayEvent += SetDirtyLogs;
         _unityApiEvents.OnStopPlayEvent -= SetDirtyLogs;
         _unityApiEvents.OnStopPlayEvent += SetDirtyLogs;
-
-        if (_needRepaint)
-        {
-            Repaint();
-            _needRepaint = false;
-        }
     }
 
     private void OnGUI()
@@ -177,6 +164,8 @@ public class BluConsoleEditorWindow : EditorWindow
         DrawLogDetail();
 
         GUILayout.EndVertical();
+
+        Repaint();
     }
 
     private void InitVariables()
@@ -292,7 +281,6 @@ public class BluConsoleEditorWindow : EditorWindow
     {
         _cacheLog.Clear();
         _cacheLogCount = 0;
-        _needRepaint = true;
         SetDirtyComparer();
     }
 
@@ -393,7 +381,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
             if (messageClicked)
             {
-                _needRepaint = true;
                 _selectedLog = GetCompleteLog(row);
 
                 hasSomeClick = true;
@@ -432,13 +419,11 @@ public class BluConsoleEditorWindow : EditorWindow
 
         GUI.EndScrollView();
 
-
         if (_hasScrollWheelUp || hasSomeClick)
         {
             _isFollowScroll = false;
         }
-        else
-        if (_logListScrollPosition != oldScrollPosition)
+        else if (_logListScrollPosition != oldScrollPosition)
         {
             _isFollowScroll = false;
             float topOffset = viewHeight - windowHeight;
@@ -466,13 +451,11 @@ public class BluConsoleEditorWindow : EditorWindow
 
         if (IsClicked(_cursorChangeRect))
             _isResizing = true;
-        else
-        if (Event.current.rawType == EventType.MouseUp)
+        else if (Event.current.rawType == EventType.MouseUp)
             _isResizing = false;
 
         if (_isResizing)
         {
-            _needRepaint = true;
             _topPanelHeight = Event.current.mousePosition.y;
             _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
         }
@@ -583,7 +566,6 @@ public class BluConsoleEditorWindow : EditorWindow
             bool messageClicked = IsClicked(rectButton);
             if (messageClicked)
             {
-                _needRepaint = true;
                 bool isLeftClick = Event.current.button == 0;
 
                 if (!isLeftClick && _logDetailSelectedFrame == -2)
@@ -626,7 +608,6 @@ public class BluConsoleEditorWindow : EditorWindow
             bool messageClicked = IsClicked(rectButton);
             if (messageClicked)
             {
-                _needRepaint = true;
                 bool isLeftClick = Event.current.button == 0;
 
                 if (isLeftClick && i == _logDetailSelectedFrame)
@@ -690,8 +671,6 @@ public class BluConsoleEditorWindow : EditorWindow
 
         if (row < _cacheLogCount && row < realCount)
             return _cacheLog[row];
-
-        _needRepaint = true;
 
         var log = UnityLoggerServer.GetSimpleLog(row);
 
