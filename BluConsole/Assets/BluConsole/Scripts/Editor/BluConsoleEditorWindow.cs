@@ -356,7 +356,7 @@ public class BluConsoleEditorWindow : EditorWindow
         {
             var row = rows[i];
             var log = logs[i];
-            var styleBack = GetLogBackStyle(cnt, log);
+            var styleBack = GetLogBackStyle(i);
 
             var styleMessage = GetLogListStyle(log);
             string showMessage = GetTruncatedMessage(GetLogListMessage(log));
@@ -569,7 +569,7 @@ public class BluConsoleEditorWindow : EditorWindow
         // Logging first message
         if (firstRenderLogIndex == 0)
         {
-            var styleBack = GetLogBackStyle(0, log);
+            var styleBack = GetLogBackStyle(0);
             var styleMessage = MessageDetailFirstLogStyle;
             var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: firstLogHeight);
 
@@ -614,7 +614,7 @@ public class BluConsoleEditorWindow : EditorWindow
         {
             var contentMessage = new GUIContent(GetTruncatedMessage(log.StackTrace[i].FrameInformation));
 
-            var styleBack = GetLogBackStyle(0, log);
+            var styleBack = GetLogBackStyle(0);
             var styleMessage = MessageDetailCallstackStyle;
             var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 
@@ -742,8 +742,7 @@ public class BluConsoleEditorWindow : EditorWindow
     }
 
     private GUIStyle GetLogBackStyle(
-        int row,
-        BluLog log)
+        int row)
     {
         return row % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
     }
