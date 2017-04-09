@@ -10,7 +10,6 @@ public class BluConsoleSkin
 
     #region Texture
 
-
     public static Texture2D EvenBackTexture
     {
         get
@@ -184,7 +183,6 @@ public class BluConsoleSkin
             return GUI.skin.FindStyle("Toolbar");
         }
     }
-
 
     #endregion Style
 

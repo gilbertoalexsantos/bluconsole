@@ -39,7 +39,7 @@ public class BluLogFrame
 
         int line;
         if (index+1 != frameInformation.Length || 
-                !int.TryParse(frameInformation.Substring(begLine, endLine - begLine + 1), out line))
+            !int.TryParse(frameInformation.Substring(begLine, endLine - begLine + 1), out line))
         {
             File = "";
             Line = 0;

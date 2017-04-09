@@ -7,8 +7,7 @@ namespace BluConsole.Core.UnityLoggerApi
 public static class CachedReflection 
 {
 
-    private static Dictionary<string, object> _cache =
-        new Dictionary<string, object>();
+    private static Dictionary<string, object> _cache = new Dictionary<string, object>();
 
     public static T Get<T>(
         string key)

@@ -28,7 +28,6 @@ public static class LogEntries
         int mode = 0;
         string message = "";
         GetFirstTwoLinesEntryTextAndModeInternal(row, ref mode, ref message);
-
         BluLog log = new BluLog();
         log.SetMessage(message);
         log.SetMode(mode);
@@ -55,12 +54,7 @@ public static class LogEntries
     {
         var method = GetMethod("GetCountsByType");
 
-        int _error = 0, _warning = 0, _normal = 0;
-        var parameters = new object[] {
-            _error,
-            _warning,
-            _normal
-        };
+        var parameters = new object[3] { 0, 0, 0 };
         method.Invoke(null, parameters);
 
         error = (int)parameters[0];
@@ -85,10 +79,7 @@ public static class LogEntries
         object output)
     {
         var method = GetMethod("GetEntryInternal");
-        return (bool)method.Invoke(null, new object[] {
-                row,
-                output
-            });
+        return (bool)method.Invoke(null, new object[] { row, output });
     }
 
     private static void GetFirstTwoLinesEntryTextAndModeInternal(
@@ -98,13 +89,7 @@ public static class LogEntries
     {
         var method = GetMethod("GetFirstTwoLinesEntryTextAndModeInternal");
 
-        int _mode = 0;
-        string _text = "";
-        var parameters = new object[] {
-            row,
-            _mode,
-            _text
-        };
+        var parameters = new object[] { row, 0, "" };
         method.Invoke(null, parameters);
 
         mode = (int)parameters[1];
@@ -144,7 +129,6 @@ public static class LogEntries
             return BindingFlags.Static | BindingFlags.Public;
         }
     }
-
 
 }
 
