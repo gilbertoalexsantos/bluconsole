@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -9,7 +11,7 @@ using BluConsole.Core.UnityLoggerApi;
 namespace BluConsole.Editor
 {
 
-public class BluConsoleEditorWindow : EditorWindow
+public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
 {
     private readonly int MAX_LOGS = 999;
     private readonly int MAX_LENGTH_MESSAGE = 999;
@@ -55,6 +57,10 @@ public class BluConsoleEditorWindow : EditorWindow
     private bool _isFollowScroll = false;
     private bool _hasScrollWheelUp = false;
 
+    // Additional Filters
+    private List<bool> _additionalFilters = new List<bool>();
+
+
     [MenuItem("Window/BluConsole")]
     public static void ShowWindow()
     {
@@ -75,7 +81,6 @@ public class BluConsoleEditorWindow : EditorWindow
         _stackTraceIgnorePrefixs.AddRange(GetDefaultIgnorePrefixs());
 
         _settings = GetOrCreateSettings();
-        _settings.CacheFilterLower();
 
         if (_unityApiEvents == null)
             _unityApiEvents = UnityApiEvents.GetOrCreate();
@@ -89,18 +94,18 @@ public class BluConsoleEditorWindow : EditorWindow
         {
             _hasConsoleIcon = true;
             Resources.UnloadAsset(_consoleIcon);
-            Resources.UnloadAsset(_settings);
             _consoleIcon = null;
-            _settings = null;
         }
+
+        _settings = null;
+
+        Resources.UnloadUnusedAssets();
     }
 
-    private BluLogSettings GetOrCreateSettings()
-    {
-        var path = "BluConsole/BluLogSettings";
-        var settings = Resources.Load<BluLogSettings>(path);
-        return settings ?? CreateInstance<BluLogSettings>();
-    }
+    public void AddItemsToMenu(GenericMenu menu)
+	{
+        menu.AddItem(new GUIContent("Add Filter"), false, OnAddFilterTabClicked);
+	}
 
     private void Update()
     {
@@ -141,8 +146,46 @@ public class BluConsoleEditorWindow : EditorWindow
         Repaint();
     }
 
+    private BluLogSettings GetOrCreateSettings()
+    {
+        var path = "BluConsole/BluLogSettings";
+        var settings = Resources.Load<BluLogSettings>(path);
+        if (settings == null)
+        {
+            settings = CreateInstance<BluLogSettings>();
+            var paths = AssetDatabase.GetAllAssetPaths();
+            var settingsPath = "";
+            foreach (var p in paths)
+            {
+                if (p.EndsWith("BluConsole/Resources/BluConsole"))
+                {
+                    settingsPath = p;
+                    break;
+                }
+            }
+            if (!string.IsNullOrEmpty(settingsPath))
+            {
+                AssetDatabase.CreateAsset(settings, settingsPath + "/BluLogSettings.asset");
+                AssetDatabase.SaveAssets ();
+        	    AssetDatabase.Refresh();
+            }
+        }
+
+        return settings ?? CreateInstance<BluLogSettings>();
+    }
+
+    private void OnAddFilterTabClicked()
+    {
+        if (_settings == null)
+            return;
+        Selection.activeObject = _settings;
+    }
+
     private void InitVariables()
     {
+        while (_additionalFilters.Count < _settings.Filters.Count)
+            _additionalFilters.Add(false);
+
         _buttonWidth = position.width;
         _buttonHeight = BluConsoleSkin.MessageStyle.CalcSize(new GUIContent("Test")).y + 15.0f;
         _drawYPos = 0f;
@@ -244,6 +287,19 @@ public class BluConsoleEditorWindow : EditorWindow
         if (oldIsShowError != newIsShowError)
             SetDirtyLogs();
         UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelError, newIsShowError);
+
+        for (int i = 0; i < _settings.Filters.Count; i++)
+        {
+            var name = _settings.Filters[i].Name;
+            var style = BluConsoleSkin.ToolbarButtonStyle;
+            bool oldAdditionalFilter = _additionalFilters[i];
+            _additionalFilters[i] = GUILayout.Toggle(_additionalFilters[i], 
+                                                     name, 
+                                                     style,
+                                                     GUILayout.MaxWidth(style.CalcSize(new GUIContent(name)).x));
+            if (oldAdditionalFilter != _additionalFilters[i])
+                SetDirtyLogs();
+        }
 
         GUILayout.EndHorizontal();
 
@@ -901,35 +957,31 @@ public class BluConsoleEditorWindow : EditorWindow
 
             if (!messageLower.Contains(pattern))
             {
-                SetLogComparer(row, false);
+                CacheLogComparer(row, false);
                 return false;
             }
         }
 
-        if (UnityLoggerServer.IsDebugError(log.Mode))
+        for (int i = 0; i < _settings.Filters.Count; i++)
         {
-            SetLogComparer(row, true);
-            return true;
-        }
+            if (!_additionalFilters[i])
+                continue;
 
-        var filters = _settings.FilterLower;
-        size = _settings.FilterLower.Count;
-        for (int i = 0; i < size; i++)
-        {
-            var filter = filters[i];
-            
-            if (!messageLower.Contains(filter))
+            foreach (var pattern in _settings.Filters[i].Patterns)
             {
-                SetLogComparer(row, false);
-                return false;
+                if (!messageLower.Contains(pattern))
+                {
+                    CacheLogComparer(row, false);
+                    return false;
+                }
             }
         }
 
-        SetLogComparer(row, true);
+        CacheLogComparer(row, true);
         return true;
     }
 
-    private void SetLogComparer(
+    private void CacheLogComparer(
         int row,
         bool value)
     {
