@@ -43,6 +43,7 @@ For now, that's it! New features are coming, stay tuned.
 TODO
 ----------------------------
 
+* Improve the editor to create additional filters
 * Support Regex in the Search Box
 * Support for themes (Font size, Colors, etc)
 
