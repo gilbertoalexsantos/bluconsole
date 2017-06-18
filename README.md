@@ -27,9 +27,9 @@ You can open any line of the call stack with a double click.
 
 Right click on the Log, and copy the text to the Clipboard. Simple like that!
 
-### Default filter
+#### Custom filters
 
-If you catch yourself filtering always by the same query, just put that in the FilterSettings (Editor Default Resources/BluConsole/BluLogSettings).
+If you catch yourself filtering always by the same query, just put that in the FilterSettings (BluConsole/Resources/BluConsole/BluLogSettings). Or you can right click on the console header tab and click on: Add Filter
 
 #### StackTraceIgnore
 
@@ -43,9 +43,6 @@ For now, that's it! New features are coming, stay tuned.
 TODO
 ----------------------------
 
-* Publish in AssetStore
-	* Create a description file to the AssetStore (see [submission guideline](https://unity3d.com/asset-store/sell-assets/submission-guidelines))
-	* Create [Key Images](https://unity3d.com/asset-store/sell-assets/submission-guidelines) to AssetStore submission
 * Support Regex in the Search Box
 * Support for themes (Font size, Colors, etc)
 
@@ -81,5 +78,13 @@ Images <a name="images"></a>
 <hr>
 
 ![](images/image03.png)
+
+<hr>
+
+![](images/image04.png)
+
+<hr>
+
+![](images/image05.png)
 
 <hr>
