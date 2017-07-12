@@ -111,8 +111,8 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
         _unityApiEvents.OnBeforeCompileEvent -= SetDirtyLogs;
         _unityApiEvents.OnBeforeCompileEvent += SetDirtyLogs;
-        _unityApiEvents.OnAfterCompileEvent -= SetDirtyLogs;
-        _unityApiEvents.OnAfterCompileEvent += SetDirtyLogs;
+        _unityApiEvents.OnAfterCompileEvent -= OnAfterCompile;
+        _unityApiEvents.OnAfterCompileEvent += OnAfterCompile;
         _unityApiEvents.OnBeginPlayEvent -= SetDirtyLogs;
         _unityApiEvents.OnBeginPlayEvent += SetDirtyLogs;
         _unityApiEvents.OnStopPlayEvent -= SetDirtyLogs;
@@ -311,6 +311,12 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
         _cacheLog.Clear();
         _cacheLogCount = 0;
         SetDirtyComparer();
+    }
+
+    private void OnAfterCompile()
+    {
+        SetDirtyLogs();
+        _logListSelectedMessage = -1;
     }
 
     private void SetDirtyComparer()
