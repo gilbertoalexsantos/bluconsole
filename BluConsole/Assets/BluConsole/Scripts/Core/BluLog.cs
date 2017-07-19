@@ -23,6 +23,8 @@ public class BluLog
 
     public List<BluLogFrame> StackTrace { get; private set; }
 
+    public BluLogType LogType { get; set; }
+
     public void SetMessage(string condition)
     {
         if (string.IsNullOrEmpty(condition))

@@ -16,6 +16,20 @@ public enum UnityClassType
 public static class ReflectionCache
 {
 
+    static Dictionary<UnityClassType, string> cacheStrUnityClassType = new Dictionary<UnityClassType, string>()
+    {
+        { UnityClassType.ConsoleWindow, "0" },
+        { UnityClassType.LogEntries,    "1" },
+        { UnityClassType.LogEntry,      "2" },
+    };
+
+    static Dictionary<Type, string> cacheStrType = new Dictionary<Type, string>()
+    {
+        { typeof(MethodInfo),   "0" },
+        { typeof(PropertyInfo), "1" },
+        { typeof(FieldInfo),    "2" },
+    };
+
     static Dictionary<string, object> cache = new Dictionary<string, object>();
 
     public static MethodInfo GetMethod(string key, UnityClassType type)
@@ -52,7 +66,7 @@ public static class ReflectionCache
 
     static string GetKey<T>(string key, UnityClassType type)
     {
-        return String.Format("{0}:{1}:{2}", type.ToString(), typeof(T).ToString(), key);
+        return String.Format("{0}:{1}:{2}", cacheStrUnityClassType[type], cacheStrType[typeof(T)], key);
     }
 
     static bool Has(string key)

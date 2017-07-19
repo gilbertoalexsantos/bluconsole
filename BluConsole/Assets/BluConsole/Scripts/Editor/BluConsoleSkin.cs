@@ -1,5 +1,6 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using BluConsole.Core;
 
 
 namespace BluConsole.Editor
@@ -9,6 +10,15 @@ public class BluConsoleSkin
 {
 
     #region Texture
+
+    public static Texture2D ConsoleIcon
+    {
+        get
+        {
+            string path = "BluConsole/Images/bluconsole-icon";
+            return Resources.Load<Texture2D>(path);
+        }
+    }
 
     public static Texture2D EvenBackTexture
     {
@@ -74,11 +84,45 @@ public class BluConsoleSkin
         }
     }
 
+    public static GUIStyle GetLogListStyle(BluLogType logType)
+    {
+        switch (logType)
+        {
+        case BluLogType.Normal:
+            return BluConsoleSkin.LogInfoStyle;
+        case BluLogType.Warning:
+            return BluConsoleSkin.LogWarnStyle;
+        case BluLogType.Error:
+            return BluConsoleSkin.LogErrorStyle;
+        }
+        return BluConsoleSkin.LogInfoStyle;
+    }
 
     #endregion Texture
 
 
     #region Style
+
+    public static GUIStyle MessageDetailCallstackStyle
+    {
+        get
+        {
+            var style = new GUIStyle(MessageDetailFirstLogStyle);
+            style.wordWrap = false;
+            return style;
+        }
+    }
+
+    public static GUIStyle MessageDetailFirstLogStyle
+    {
+        get
+        {
+            var style = new GUIStyle(BluConsoleSkin.MessageStyle);
+            style.stretchWidth = true;
+            style.wordWrap = true;
+            return style;
+        }
+    }
 
     public static GUIStyle BoxStyle
     {

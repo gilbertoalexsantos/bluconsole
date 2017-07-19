@@ -10,72 +10,73 @@ namespace BluConsole.Editor
 public class UnityApiEvents : ScriptableObject
 {
 
-    private bool _isCompiling;
-    private bool _isPlaying;
+    bool isCompiling;
+    bool isPlaying;
     
     public event Action OnBeforeCompileEvent;
     public event Action OnAfterCompileEvent;
     public event Action OnBeginPlayEvent;
     public event Action OnStopPlayEvent;
 
-    public static UnityApiEvents GetOrCreate()
+    public static UnityApiEvents Instance
     {
-        var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
-
-        if (loggerAsset == null)
-            loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
-
-        return loggerAsset;
+        get
+        {
+            var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
+            if (loggerAsset == null)
+                loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
+            return loggerAsset;
+        }
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
         EditorApplication.update -= Update;
         EditorApplication.update += Update;
         hideFlags = HideFlags.HideAndDontSave;
     }
 
-    private void Update()
+    void Update()
     {
-        if (EditorApplication.isCompiling && !_isCompiling)
+        if (EditorApplication.isCompiling && !isCompiling)
         {
-            _isCompiling = true;
+            isCompiling = true;
             OnBeforeCompile();
         }
-        else if (!EditorApplication.isCompiling && _isCompiling)
+        else if (!EditorApplication.isCompiling && isCompiling)
         {
-            _isCompiling = false;
+            isCompiling = false;
             OnAfterCompile();
         }
 
-        if (EditorApplication.isPlaying && !_isPlaying)
+        if (EditorApplication.isPlaying && !isPlaying)
         {
-            _isPlaying = true;
+            isPlaying = true;
             OnBeginPlay();
         }
-        else if (!EditorApplication.isPlaying && _isPlaying)
+        else if (!EditorApplication.isPlaying && isPlaying)
         {
-            _isPlaying = false;
+            isPlaying = false;
             OnStopPlay();
         }
     }
 
-    private void OnBeforeCompile()
+    void OnBeforeCompile()
     {
         OnBeforeCompileEvent.SafeInvoke();
     }
 
-    private void OnAfterCompile()
+    void OnAfterCompile()
     {
         OnAfterCompileEvent.SafeInvoke();
     }
 
-    private void OnBeginPlay()
+    void OnBeginPlay()
     {
         OnBeginPlayEvent.SafeInvoke();
     }
 
-    private void OnStopPlay()
+    void OnStopPlay()
     {
         OnStopPlayEvent.SafeInvoke();
     }
