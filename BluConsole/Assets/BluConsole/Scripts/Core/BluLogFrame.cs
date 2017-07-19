@@ -14,8 +14,7 @@ public class BluLogFrame
 
     public int Line { get; private set; }
 
-    public BluLogFrame(
-        string frameInformation)
+    public BluLogFrame(string frameInformation)
     {
         FrameInformation = frameInformation;
 
@@ -50,11 +49,6 @@ public class BluLogFrame
         Line = line;
     }
 
-    public override string ToString()
-    {
-        return string.Format("[BluLogFrame: FrameInformation={0}, File={1}, Line={2}]", 
-                                 FrameInformation, File, Line);
-    }
 }
 
 }

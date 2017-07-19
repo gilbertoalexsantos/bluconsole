@@ -23,8 +23,7 @@ public class BluLog
 
     public List<BluLogFrame> StackTrace { get; private set; }
 
-    public void SetMessage(
-        string condition)
+    public void SetMessage(string condition)
     {
         if (string.IsNullOrEmpty(condition))
             return;
@@ -35,20 +34,17 @@ public class BluLog
         MessageLower = Message.ToLower();
     }
 
-    public void SetFile(
-        string file)
+    public void SetFile(string file)
     {
         File = file;
     }
 
-    public void SetLine(
-        int line)
+    public void SetLine(int line)
     {
         Line = line;
     }
 
-    public void SetMode(
-        int mode)
+    public void SetMode(int mode)
     {
         Mode = mode;
     }
@@ -92,12 +88,6 @@ public class BluLog
                 newStackTrace.Add(frame);
         }
         StackTrace = newStackTrace;
-    }
-
-    public override string ToString()
-    {
-        return string.Format("[BluLog: Message={0}, File={1}, Line={2}, Mode={3}, StackTrace={4}]", 
-                             Message, File, Line, Mode, StackTrace);
     }
 
 }

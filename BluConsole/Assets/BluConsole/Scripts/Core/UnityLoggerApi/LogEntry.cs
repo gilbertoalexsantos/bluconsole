@@ -19,83 +19,44 @@ namespace BluConsole.Core.UnityLoggerApi
 public static class LogEntry
 {
 
-    private static object _cacheLogEntryInstance = null;
+    static object cachedLogEntry = null;
 
-    public static object GetNewEmptyObject 
+    public static object CachedLogEntry 
     { 
         get 
-        { 
-            return _cacheLogEntryInstance ?? (_cacheLogEntryInstance = Activator.CreateInstance(LogEntryType)); 
-        } 
+        {
+            if (cachedLogEntry == null)
+                cachedLogEntry = Activator.CreateInstance(ReflectionCache.GetType(UnityClassType.LogEntry));
+            return cachedLogEntry;
+        }
     }
 
-    public static BluLog GetBluLog(
-        object obj)
+    public static BluLog GetBluLog(object obj)
     {
         var log = new BluLog();
 
-        var logEntryType = LogEntryType;
-
-        var condition = (string)GetField("condition", logEntryType).GetValue(obj);
+        var condition = (string)GetField("condition").GetValue(obj);
         log.SetMessage(condition);
         log.SetStackTrace(condition);
 
-        var file = (string)GetField("file", logEntryType).GetValue(obj);
+        var file = (string)GetField("file").GetValue(obj);
         log.SetFile(file);
 
-        var line = (int)GetField("line", logEntryType).GetValue(obj);
+        var line = (int)GetField("line").GetValue(obj);
         log.SetLine(line);
 
-        var mode = (int)GetField("mode", logEntryType).GetValue(obj);
+        var mode = (int)GetField("mode").GetValue(obj);
         log.SetMode(mode);
 
-        var instanceID = (int)GetField("instanceID", logEntryType).GetValue(obj);
+        var instanceID = (int)GetField("instanceID").GetValue(obj);
         log.SetInstanceID(instanceID);
 
         return log;
     }
 
-    private static FieldInfo GetField(
-        string key,
-        Type type)
+    static FieldInfo GetField(string key)
     {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, type.GetField(key));
-        return CachedReflection.Get<FieldInfo>(key);
-    }
-
-    private static MethodInfo GetMethod(
-        string key)
-    {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, LogEntryType.GetMethod(key, DefaultFlags));
-        return CachedReflection.Get<MethodInfo>(key);
-    }
-
-    private static PropertyInfo GetProperty(
-        string key)
-    {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, LogEntryType.GetProperty(key, DefaultFlags));
-        return CachedReflection.Get<PropertyInfo>(key);
-    }
-
-    private static Type LogEntryType
-    {
-        get
-        {
-            if (!CachedReflection.Has("LogEntry"))
-                CachedReflection.Cache("LogEntry", Type.GetType("UnityEditorInternal.LogEntry,UnityEditor.dll"));
-            return CachedReflection.Get<Type>("LogEntry");
-        }
-    }
-
-    private static BindingFlags DefaultFlags
-    {
-        get
-        {
-            return BindingFlags.Public;
-        }
+        return ReflectionCache.GetField(key, UnityClassType.LogEntry);
     }
 
 }

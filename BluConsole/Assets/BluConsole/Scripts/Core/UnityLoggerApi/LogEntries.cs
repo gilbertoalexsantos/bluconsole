@@ -14,16 +14,14 @@ public static class LogEntries
         method.Invoke(null, null);
     }
 
-    public static BluLog GetCompleteLog(
-        int row)
+    public static BluLog GetCompleteLog(int row)
     {
-        var emptyLog = LogEntry.GetNewEmptyObject;
+        var emptyLog = LogEntry.CachedLogEntry;
         GetEntryInternal(row, emptyLog);
         return LogEntry.GetBluLog(emptyLog);
     }
 
-    public static BluLog GetSimpleLog(
-        int row)
+    public static BluLog GetSimpleLog(int row)
     {
         int mode = 0;
         string message = "";
@@ -34,8 +32,7 @@ public static class LogEntries
         return log;
     }
 
-    public static int GetEntryCount(
-        int row)
+    public static int GetEntryCount(int row)
     {
         var method = GetMethod("GetEntryCount");
         return (int)method.Invoke(null, new object[] { row });
@@ -47,10 +44,7 @@ public static class LogEntries
         return (int)method.Invoke(null, null);
     }
 
-    public static void GetCountsByType(
-        ref int error,
-        ref int warning,
-        ref int normal)
+    public static void GetCountsByType(ref int error, ref int warning, ref int normal)
     {
         var method = GetMethod("GetCountsByType");
 
@@ -74,18 +68,13 @@ public static class LogEntries
         method.Invoke(null, null);
     }
 
-    private static bool GetEntryInternal(
-        int row,
-        object output)
+    static bool GetEntryInternal(int row, object output)
     {
         var method = GetMethod("GetEntryInternal");
         return (bool)method.Invoke(null, new object[] { row, output });
     }
 
-    private static void GetFirstTwoLinesEntryTextAndModeInternal(
-        int row,
-        ref int mode,
-        ref string text)
+    static void GetFirstTwoLinesEntryTextAndModeInternal(int row, ref int mode, ref string text)
     {
         var method = GetMethod("GetFirstTwoLinesEntryTextAndModeInternal");
 
@@ -96,38 +85,9 @@ public static class LogEntries
         text = (string)parameters[2];
     }
 
-    private static MethodInfo GetMethod(
-        string key)
+    static MethodInfo GetMethod(string key)
     {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, LogEntriesType.GetMethod(key, DefaultFlags));
-        return CachedReflection.Get<MethodInfo>(key);
-    }
-
-    private static PropertyInfo GetProperty(
-        string key)
-    {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, LogEntriesType.GetProperty(key, DefaultFlags));
-        return CachedReflection.Get<PropertyInfo>(key);
-    }
-
-    private static Type LogEntriesType
-    {
-        get
-        {
-            if (!CachedReflection.Has("LogEntries"))
-                CachedReflection.Cache("LogEntries", Type.GetType("UnityEditorInternal.LogEntries,UnityEditor.dll"));
-            return CachedReflection.Get<Type>("LogEntries");
-        }
-    }
-
-    private static BindingFlags DefaultFlags
-    {
-        get
-        {
-            return BindingFlags.Static | BindingFlags.Public;
-        }
+        return ReflectionCache.GetMethod(key, UnityClassType.LogEntries);
     }
 
 }

@@ -17,7 +17,7 @@ public enum ConsoleWindowFlag
     Autoscroll      = 64,
     LogLevelLog     = 128,
     LogLevelWarning = 256,
-    LogLevelError   = 512
+    LogLevelError   = 512,
 }
 
 
@@ -43,14 +43,14 @@ public enum ConsoleWindowMode
     DontExtractStacktrace           = 262144,
     ShouldClearOnPlay               = 524288,
     GraphCompileError               = 1048576,
-    ScriptingAssertion              = 2097152
+    ScriptingAssertion              = 2097152,
 }
 
 
 public static class ConsoleWindow
 {
 
-    private static int _debugErrorMask = 
+     static int debugErrorMask = 
             (int)ConsoleWindowMode.Error |
             (int)ConsoleWindowMode.Assert |
             (int)ConsoleWindowMode.Fatal |
@@ -64,69 +64,34 @@ public static class ConsoleWindow
             (int)ConsoleWindowMode.GraphCompileError |
             (int)ConsoleWindowMode.ScriptingAssertion;
 
-    public static bool IsDebugError(
-        int mode)
+    public static bool IsDebugError(int mode)
     {
-        return (mode & _debugErrorMask) != 0;
+        return (mode & debugErrorMask) != 0;
     }
 
-    public static bool HasFlag(
-        ConsoleWindowFlag flag)
+    public static bool HasFlag(ConsoleWindowFlag flag)
     {
         var method = GetMethod("HasFlag");
         return (bool)method.Invoke(null, new object[] { (int)flag });
     }
 
-    public static void SetFlag(
-        ConsoleWindowFlag flag,
-        bool active)
+    public static void SetFlag(ConsoleWindowFlag flag, bool active)
     {
         var method = GetMethod("SetFlag");
         method.Invoke(null, new object[] { (int)flag, active });
     }
 
-    public static bool HasMode(
-        int mode,
-        ConsoleWindowMode modeToCheck)
+    public static bool HasMode(int mode, ConsoleWindowMode modeToCheck)
     {
         var method = GetMethod("HasMode");
         return (bool)method.Invoke(null, new object[] { mode, (int)modeToCheck });
     }
 
-    private static MethodInfo GetMethod(
-        string key)
+    static MethodInfo GetMethod(string key)
     {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, ConsoleWindowType.GetMethod(key, DefaultFlags));
-        return CachedReflection.Get<MethodInfo>(key);
+        return ReflectionCache.GetMethod(key, UnityClassType.ConsoleWindow);
     }
 
-    private static PropertyInfo GetProperty(
-        string key)
-    {
-        if (!CachedReflection.Has(key))
-            CachedReflection.Cache(key, ConsoleWindowType.GetProperty(key, DefaultFlags));
-        return CachedReflection.Get<PropertyInfo>(key);
-    }
-
-    private static Type ConsoleWindowType
-    {
-        get
-        {
-            if (!CachedReflection.Has("ConsoleWindow"))
-                CachedReflection.Cache("ConsoleWindow", Type.GetType("UnityEditor.ConsoleWindow,UnityEditor.dll"));
-            return CachedReflection.Get<Type>("ConsoleWindow");   
-        }
-    }
-
-    private static BindingFlags DefaultFlags
-    {
-        get
-        {
-            return BindingFlags.Static | BindingFlags.NonPublic;
-        }
-    }
-    
 }
 
 }
