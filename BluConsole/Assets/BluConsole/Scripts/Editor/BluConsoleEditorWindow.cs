@@ -785,23 +785,27 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
             }
         }
 
+        bool hasFilter = false;
+        bool hasPattern = false;
         for (int i = 0; i < settings.Filters.Count; i++)
         {
             if (!toggledFilters[i])
                 continue;
 
+            hasFilter = true;
             foreach (var pattern in settings.Filters[i].Patterns)
             {
-                if (!messageLower.Contains(pattern))
+                if (messageLower.Contains(pattern))
                 {
-                    CacheLogComparer(row, false);
-                    return false;
+                    hasPattern = true;
+                    break;
                 }
             }
         }
 
-        CacheLogComparer(row, true);
-        return true;
+        hasPattern |= !hasFilter;
+        CacheLogComparer(row, hasPattern);
+        return hasPattern;
     }
 
     #endregion Gets
