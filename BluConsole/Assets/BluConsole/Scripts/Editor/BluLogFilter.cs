@@ -41,6 +41,8 @@ public class BluLogFilter : ISerializationCallbackReceiver
 
     public void OnAfterDeserialize()
     {
+        Patterns.Clear();
+
         foreach (var pattern in Pattern.ToLower().Split(' '))
         {
             if (string.IsNullOrEmpty(pattern))
