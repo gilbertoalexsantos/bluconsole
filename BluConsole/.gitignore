@@ -2,7 +2,7 @@
 .ignore
 
 
-# UNITY_3D
+## UNITY_3D
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -51,3 +51,4 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 *.lnk
+.vs
