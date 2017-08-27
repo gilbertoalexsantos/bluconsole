@@ -1,8 +1,6 @@
 BluConsole <img src="images/console-brand.png" width=30 style="margin: 0px 0px -5px">
 ========================
 
-*Does not work on Unity2017. They changed the API, so I need to decompile the UnityEditor code to figure out the changes*
-
 Are you looking for [images](#images)?
 
 Fell free to contribute! Any PR are welcome.
