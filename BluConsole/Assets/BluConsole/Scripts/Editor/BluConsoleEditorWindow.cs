@@ -106,6 +106,8 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
         InitVariables();
 
+        UpdateLogLine();
+
         DrawResizer();
 
         GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
@@ -812,6 +814,26 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
 
 
     #region Action
+
+    void UpdateLogLine()
+    {
+        // Handles moving up and down using the arrow keys on the keyboard.
+        Event e = Event.current;
+        if (e != null && e.type == EventType.KeyDown && e.isKey)
+        {
+            switch (e.keyCode)
+            {
+                case KeyCode.UpArrow:
+                    logListSelectedMessage--;
+                    break;
+                case KeyCode.DownArrow:
+                    logListSelectedMessage++;
+                    break;
+            }
+
+            logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, _qtLogs - 1);
+        }
+    }
 
     void PingLog(BluLog log)
     {
