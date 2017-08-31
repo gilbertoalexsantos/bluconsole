@@ -59,7 +59,9 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     // Filter Variables
     List<bool> toggledFilters = new List<bool>();
 
+    // Keyboard Controll Variables
     bool hadArrowClick;
+    int moveDir;
 
 
     [MenuItem("Window/BluConsole")]
@@ -383,14 +385,14 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
 
         if (hadArrowClick)
         {
-            if (logListSelectedMessage < firstRenderLogIndex + 1)
+            if (logListSelectedMessage < firstRenderLogIndex + 1 && this.moveDir == 1)
                 _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
-            else if (logListSelectedMessage > lastRenderLogIndex - 2)
+            else if (logListSelectedMessage > lastRenderLogIndex - 3 && this.moveDir == -1)
             {
                 int md = lastRenderLogIndex - firstRenderLogIndex - 3;
                 float ss = md * ButtonHeight;
-                float sd = ss - windowHeight;
-                _logListScrollPosition.y = ButtonHeight * logListSelectedMessage - ss - sd;
+                float sd = windowHeight - ss;
+                _logListScrollPosition.y = (ButtonHeight * (logListSelectedMessage + 1) - ss - sd);
             }
         }
 
@@ -842,15 +844,18 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
         // Handles moving up and down using the arrow keys on the keyboard.
         Event e = Event.current;
         hadArrowClick = false;
+        moveDir = 0;
         if (e != null && e.type == EventType.KeyDown && e.isKey) {
             bool refresh = false;
             switch (e.keyCode)
             {
                 case KeyCode.UpArrow:
                     refresh = true;
+                    moveDir = 1;
                     logListSelectedMessage--;
                     break;
                 case KeyCode.DownArrow:
+                    moveDir = -1;
                     refresh = true;
                     logListSelectedMessage++;
                     break;
