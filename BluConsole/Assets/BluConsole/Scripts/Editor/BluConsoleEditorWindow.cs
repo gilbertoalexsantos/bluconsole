@@ -59,6 +59,8 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     // Filter Variables
     List<bool> toggledFilters = new List<bool>();
 
+    bool hadArrowClick;
+
 
     [MenuItem("Window/BluConsole")]
     public static void ShowWindow()
@@ -105,6 +107,8 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     void OnGUI()
     {
         InitVariables();
+
+        UpdateLogLine();
 
         DrawResizer();
 
@@ -377,6 +381,19 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
         int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
         lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
+        if (hadArrowClick)
+        {
+            if (logListSelectedMessage < firstRenderLogIndex + 1)
+                _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
+            else if (logListSelectedMessage > lastRenderLogIndex - 2)
+            {
+                int md = lastRenderLogIndex - firstRenderLogIndex - 3;
+                float ss = md * ButtonHeight;
+                float sd = ss - windowHeight;
+                _logListScrollPosition.y = ButtonHeight * logListSelectedMessage - ss - sd;
+            }
+        }
+
         float buttonY = firstRenderLogIndex * ButtonHeight;
         bool hasSomeClick = false;
 
@@ -402,6 +419,13 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
             
             bool messageClicked = IsClicked(rectMessage);
             bool isLeftClick = messageClicked ? Event.current.button == 0 : false;
+
+            if (hadArrowClick && i == logListSelectedMessage)
+            {
+                // Arrow clicks simulates a click at the current element.
+                messageClicked = true;
+                isLeftClick = true;
+            }
 
             if (hasCollapse)
             {
@@ -813,6 +837,33 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
 
     #region Action
 
+    void UpdateLogLine()
+    {
+        // Handles moving up and down using the arrow keys on the keyboard.
+        Event e = Event.current;
+        hadArrowClick = false;
+        if (e != null && e.type == EventType.KeyDown && e.isKey) {
+            bool refresh = false;
+            switch (e.keyCode)
+            {
+                case KeyCode.UpArrow:
+                    refresh = true;
+                    logListSelectedMessage--;
+                    break;
+                case KeyCode.DownArrow:
+                    refresh = true;
+                    logListSelectedMessage++;
+                    break;
+            }
+
+            if (!refresh)
+                return;
+
+            hadArrowClick = true;
+            logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, this._qtLogs - 1);
+        }
+    }
+
     void PingLog(BluLog log)
     {
         if (log.InstanceID != 0)
@@ -901,7 +952,7 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
         get
         {
-            return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f;
+            return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f && !hadArrowClick;
         }
     }
 
