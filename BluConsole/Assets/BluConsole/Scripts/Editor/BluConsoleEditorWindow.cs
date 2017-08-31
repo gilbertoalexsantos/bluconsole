@@ -381,6 +381,19 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
         int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
         lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
+        if (hadArrowClick)
+        {
+            if (logListSelectedMessage < firstRenderLogIndex + 1)
+                _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
+            else if (logListSelectedMessage > lastRenderLogIndex - 2)
+            {
+                int md = lastRenderLogIndex - firstRenderLogIndex - 3;
+                float ss = md * ButtonHeight;
+                float sd = ss - windowHeight;
+                _logListScrollPosition.y = ButtonHeight * logListSelectedMessage - ss - sd;
+            }
+        }
+
         float buttonY = firstRenderLogIndex * ButtonHeight;
         bool hasSomeClick = false;
 
