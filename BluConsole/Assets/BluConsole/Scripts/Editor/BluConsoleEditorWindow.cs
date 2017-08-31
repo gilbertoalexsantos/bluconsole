@@ -385,9 +385,9 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
 
         if (hadArrowClick)
         {
-            if (logListSelectedMessage < firstRenderLogIndex + 1 && this.moveDir == 1)
+            if (logListSelectedMessage < firstRenderLogIndex + 1 && moveDir == 1)
                 _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
-            else if (logListSelectedMessage > lastRenderLogIndex - 3 && this.moveDir == -1)
+            else if (logListSelectedMessage > lastRenderLogIndex - 3 && moveDir == -1)
             {
                 int md = lastRenderLogIndex - firstRenderLogIndex - 3;
                 float ss = md * ButtonHeight;
@@ -865,7 +865,7 @@ public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
                 return;
 
             hadArrowClick = true;
-            logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, this._qtLogs - 1);
+            logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, _qtLogs - 1);
         }
     }
 
