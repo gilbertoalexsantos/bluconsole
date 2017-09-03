@@ -4,14 +4,14 @@
 namespace BluConsole.Test
 {
 
-public static class Test5
-{
-
-    public static void LogLevelFive(string message, BluLogType type = BluLogType.Normal)
+    public static class Test5
     {
-        TestManager.Log(message, type);
-    }
 
-}
+        public static void LogLevelFive(string message, BluLogType type = BluLogType.Normal)
+        {
+            TestManager.Log(message, type);
+        }
+
+    }
 
 }

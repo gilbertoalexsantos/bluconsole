@@ -4,51 +4,51 @@
 namespace BluConsole.Core
 {
 
-[Serializable]
-public class BluLogFrame
-{
-
-    public string FrameInformation { get; private set; }
-
-    public string File { get; private set; }
-
-    public int Line { get; private set; }
-
-    public BluLogFrame(string frameInformation)
+    [Serializable]
+    public class BluLogFrame
     {
-        FrameInformation = frameInformation;
 
-        int index = frameInformation.IndexOf("(at");
-        if (index == -1)
-            return;
+        public string FrameInformation { get; private set; }
 
-        index += 4;
+        public string File { get; private set; }
 
-        int begFile = index;
-        while (index < frameInformation.Length && frameInformation[index] != ':')
-            index++;
-        int endFile = index-1;
+        public int Line { get; private set; }
 
-        index += 1;
-
-        int begLine = index;
-        while (index < frameInformation.Length && frameInformation[index] != ')')
-            index++;
-        int endLine = index-1;
-
-        int line;
-        if (index+1 != frameInformation.Length || 
-            !int.TryParse(frameInformation.Substring(begLine, endLine - begLine + 1), out line))
+        public BluLogFrame(string frameInformation)
         {
-            File = "";
-            Line = 0;
-            return;
+            FrameInformation = frameInformation;
+
+            int index = frameInformation.IndexOf("(at");
+            if (index == -1)
+                return;
+
+            index += 4;
+
+            int begFile = index;
+            while (index < frameInformation.Length && frameInformation[index] != ':')
+                index++;
+            int endFile = index-1;
+
+            index += 1;
+
+            int begLine = index;
+            while (index < frameInformation.Length && frameInformation[index] != ')')
+                index++;
+            int endLine = index-1;
+
+            int line;
+            if (index+1 != frameInformation.Length || 
+                !int.TryParse(frameInformation.Substring(begLine, endLine - begLine + 1), out line))
+            {
+                File = "";
+                Line = 0;
+                return;
+            }
+
+            File = frameInformation.Substring(begFile, endFile - begFile + 1);
+            Line = line;
         }
 
-        File = frameInformation.Substring(begFile, endFile - begFile + 1);
-        Line = line;
     }
-
-}
 
 }

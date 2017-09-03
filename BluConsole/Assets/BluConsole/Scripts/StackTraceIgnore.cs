@@ -4,9 +4,9 @@
 namespace BluConsole
 {
 
-[AttributeUsageAttribute(AttributeTargets.Method)]
-public class StackTraceIgnore : Attribute
-{
-}
+    [AttributeUsageAttribute(AttributeTargets.Method)]
+    public class StackTraceIgnore : Attribute
+    {
+    }
 
 }

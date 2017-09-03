@@ -6,230 +6,230 @@ using BluConsole.Core;
 namespace BluConsole.Editor
 {
 
-public class BluConsoleSkin
-{
-
-    #region Texture
-
-    public static Texture2D ConsoleIcon
+    public class BluConsoleSkin
     {
-        get
+
+        #region Texture
+
+        public static Texture2D ConsoleIcon
         {
-            string path = "BluConsole/Images/bluconsole-icon";
-            return Resources.Load<Texture2D>(path);
+            get
+            {
+                string path = "BluConsole/Images/bluconsole-icon";
+                return Resources.Load<Texture2D>(path);
+            }
         }
-    }
 
-    public static Texture2D EvenBackTexture
-    {
-        get
+        public static Texture2D EvenBackTexture
         {
-            return EvenBackStyle.normal.background;
+            get
+            {
+                return EvenBackStyle.normal.background;
+            }
         }
-    }
 
-    public static Texture2D OddBackTexture
-    {
-        get
+        public static Texture2D OddBackTexture
         {
-            return OddBackStyle.normal.background;
+            get
+            {
+                return OddBackStyle.normal.background;
+            }
         }
-    }
 
-    public static Texture2D InfoIcon
-    {
-        get
+        public static Texture2D InfoIcon
         {
-            return EditorGUIUtility.FindTexture("d_console.infoicon");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.infoicon");
+            }
         }
-    }
 
-    public static Texture2D InfoIconSmall
-    {
-        get
+        public static Texture2D InfoIconSmall
         {
-            return EditorGUIUtility.FindTexture("d_console.infoicon.sml");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.infoicon.sml");
+            }
         }
-    }
 
-    public static Texture2D WarningIcon
-    {
-        get
+        public static Texture2D WarningIcon
         {
-            return EditorGUIUtility.FindTexture("d_console.warnicon");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.warnicon");
+            }
         }
-    }
 
-    public static Texture2D WarningIconSmall
-    {
-        get
+        public static Texture2D WarningIconSmall
         {
-            return EditorGUIUtility.FindTexture("d_console.warnicon.sml");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.warnicon.sml");
+            }
         }
-    }
 
-    public static Texture2D ErrorIcon
-    {
-        get
+        public static Texture2D ErrorIcon
         {
-            return EditorGUIUtility.FindTexture("d_console.erroricon");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.erroricon");
+            }
         }
-    }
 
-    public static Texture2D ErrorIconSmall
-    {
-        get
+        public static Texture2D ErrorIconSmall
         {
-            return EditorGUIUtility.FindTexture("d_console.erroricon.sml");
+            get
+            {
+                return EditorGUIUtility.FindTexture("d_console.erroricon.sml");
+            }
         }
-    }
 
-    public static GUIStyle GetLogListStyle(BluLogType logType)
-    {
-        switch (logType)
+        public static GUIStyle GetLogListStyle(BluLogType logType)
         {
-        case BluLogType.Normal:
+            switch (logType)
+            {
+            case BluLogType.Normal:
+                return BluConsoleSkin.LogInfoStyle;
+            case BluLogType.Warning:
+                return BluConsoleSkin.LogWarnStyle;
+            case BluLogType.Error:
+                return BluConsoleSkin.LogErrorStyle;
+            }
             return BluConsoleSkin.LogInfoStyle;
-        case BluLogType.Warning:
-            return BluConsoleSkin.LogWarnStyle;
-        case BluLogType.Error:
-            return BluConsoleSkin.LogErrorStyle;
         }
-        return BluConsoleSkin.LogInfoStyle;
-    }
 
-    #endregion Texture
+        #endregion Texture
 
 
-    #region Style
+        #region Style
 
-    public static GUIStyle MessageDetailCallstackStyle
-    {
-        get
+        public static GUIStyle MessageDetailCallstackStyle
         {
-            var style = new GUIStyle(MessageDetailFirstLogStyle);
-            style.wordWrap = false;
-            return style;
+            get
+            {
+                var style = new GUIStyle(MessageDetailFirstLogStyle);
+                style.wordWrap = false;
+                return style;
+            }
         }
-    }
 
-    public static GUIStyle MessageDetailFirstLogStyle
-    {
-        get
+        public static GUIStyle MessageDetailFirstLogStyle
         {
-            var style = new GUIStyle(BluConsoleSkin.MessageStyle);
-            style.stretchWidth = true;
-            style.wordWrap = true;
-            return style;
+            get
+            {
+                var style = new GUIStyle(BluConsoleSkin.MessageStyle);
+                style.stretchWidth = true;
+                style.wordWrap = true;
+                return style;
+            }
         }
-    }
 
-    public static GUIStyle BoxStyle
-    {
-        get
+        public static GUIStyle BoxStyle
         {
-            return GUI.skin.FindStyle("CN Box");
+            get
+            {
+                return GUI.skin.FindStyle("CN Box");
+            }
         }
-    }
 
-    public static GUIStyle CollapseStyle
-    {
-        get
+        public static GUIStyle CollapseStyle
         {
-            return GUI.skin.FindStyle("CN CountBadge");
+            get
+            {
+                return GUI.skin.FindStyle("CN CountBadge");
+            }
         }
-    }
 
-    public static GUIStyle ButtonStyle
-    {
-        get
+        public static GUIStyle ButtonStyle
         {
-            return GUI.skin.FindStyle("Button");
+            get
+            {
+                return GUI.skin.FindStyle("Button");
+            }
         }
-    }
 
-    public static GUIStyle ToolbarButtonStyle
-    {
-        get
+        public static GUIStyle ToolbarButtonStyle
         {
-            return GUI.skin.FindStyle("ToolbarButton");
+            get
+            {
+                return GUI.skin.FindStyle("ToolbarButton");
+            }
         }
-    }
 
-    public static GUIStyle ToolbarSearchTextFieldStyle
-    {
-        get
+        public static GUIStyle ToolbarSearchTextFieldStyle
         {
-            return GUI.skin.FindStyle("ToolbarSeachTextField");
+            get
+            {
+                return GUI.skin.FindStyle("ToolbarSeachTextField");
+            }
         }
-    }
 
-    public static GUIStyle ToolbarSearchCancelButtonStyle
-    {
-        get
+        public static GUIStyle ToolbarSearchCancelButtonStyle
         {
-            return GUI.skin.FindStyle("ToolbarSeachCancelButton");
+            get
+            {
+                return GUI.skin.FindStyle("ToolbarSeachCancelButton");
+            }
         }
-    }
 
-    public static GUIStyle EvenBackStyle
-    {
-        get
+        public static GUIStyle EvenBackStyle
         {
-            return GUI.skin.FindStyle("CN EntryBackEven");
+            get
+            {
+                return GUI.skin.FindStyle("CN EntryBackEven");
+            }
         }
-    }
 
-    public static GUIStyle OddBackStyle
-    {
-        get
+        public static GUIStyle OddBackStyle
         {
-            return GUI.skin.FindStyle("CN EntryBackOdd");
+            get
+            {
+                return GUI.skin.FindStyle("CN EntryBackOdd");
+            }
         }
-    }
 
-    public static GUIStyle MessageStyle
-    {
-        get
+        public static GUIStyle MessageStyle
         {
-            return GUI.skin.FindStyle("CN Message");
+            get
+            {
+                return GUI.skin.FindStyle("CN Message");
+            }
         }
-    }
 
-    public static GUIStyle LogInfoStyle
-    {
-        get
+        public static GUIStyle LogInfoStyle
         {
-            return GUI.skin.FindStyle("CN EntryInfo");
+            get
+            {
+                return GUI.skin.FindStyle("CN EntryInfo");
+            }
         }
-    }
 
-    public static GUIStyle LogWarnStyle
-    {
-        get
+        public static GUIStyle LogWarnStyle
         {
-            return GUI.skin.FindStyle("CN EntryWarn");
+            get
+            {
+                return GUI.skin.FindStyle("CN EntryWarn");
+            }
         }
-    }
 
-    public static GUIStyle LogErrorStyle
-    {
-        get
+        public static GUIStyle LogErrorStyle
         {
-            return GUI.skin.FindStyle("CN EntryError");
+            get
+            {
+                return GUI.skin.FindStyle("CN EntryError");
+            }
         }
-    }
 
-    public static GUIStyle ToolbarStyle
-    {
-        get
+        public static GUIStyle ToolbarStyle
         {
-            return GUI.skin.FindStyle("Toolbar");
+            get
+            {
+                return GUI.skin.FindStyle("Toolbar");
+            }
         }
+
+        #endregion Style
+
     }
-
-    #endregion Style
-
-}
 
 }

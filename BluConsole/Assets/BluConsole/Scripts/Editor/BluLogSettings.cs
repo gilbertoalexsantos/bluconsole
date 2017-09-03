@@ -8,50 +8,50 @@ using UnityEngine;
 namespace BluConsole.Editor
 {
 
-public class BluLogSettings : ScriptableObject
-{
+    public class BluLogSettings : ScriptableObject
+    {
     
-    [SerializeField] List<BluLogFilter> filters = new List<BluLogFilter>();
+        [SerializeField] List<BluLogFilter> filters = new List<BluLogFilter>();
 
-    public List<BluLogFilter> Filters
-    {
-        get
+        public List<BluLogFilter> Filters
         {
-            return filters;
-        }
-    }
-
-    public static BluLogSettings Instance
-    {
-        get
-        {
-            var path = "BluConsole/BluLogSettings";
-            var settings = Resources.Load<BluLogSettings>(path);
-            if (settings == null)
+            get
             {
-                settings = CreateInstance<BluLogSettings>();
-                var paths = AssetDatabase.GetAllAssetPaths();
-                var settingsPath = "";
-                foreach (var p in paths)
+                return filters;
+            }
+        }
+
+        public static BluLogSettings Instance
+        {
+            get
+            {
+                var path = "BluConsole/BluLogSettings";
+                var settings = Resources.Load<BluLogSettings>(path);
+                if (settings == null)
                 {
-                    if (p.EndsWith("BluConsole/Resources/BluConsole"))
+                    settings = CreateInstance<BluLogSettings>();
+                    var paths = AssetDatabase.GetAllAssetPaths();
+                    var settingsPath = "";
+                    foreach (var p in paths)
                     {
-                        settingsPath = p;
-                        break;
+                        if (p.EndsWith("BluConsole/Resources/BluConsole"))
+                        {
+                            settingsPath = p;
+                            break;
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(settingsPath))
+                    {
+                        AssetDatabase.CreateAsset(settings, settingsPath + "/BluLogSettings.asset");
+                        AssetDatabase.SaveAssets ();
+                        AssetDatabase.Refresh();
                     }
                 }
-                if (!string.IsNullOrEmpty(settingsPath))
-                {
-                    AssetDatabase.CreateAsset(settings, settingsPath + "/BluLogSettings.asset");
-                    AssetDatabase.SaveAssets ();
-                    AssetDatabase.Refresh();
-                }
-            }
 
-            return settings ?? CreateInstance<BluLogSettings>();
+                return settings ?? CreateInstance<BluLogSettings>();
+            }
         }
-    }
     
-}
+    }
 
 }

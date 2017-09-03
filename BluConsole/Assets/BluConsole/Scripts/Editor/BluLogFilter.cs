@@ -7,54 +7,54 @@ using System.Collections.Generic;
 namespace BluConsole.Editor
 {
 
-[Serializable]
-public class BluLogFilter : ISerializationCallbackReceiver
-{
+    [Serializable]
+    public class BluLogFilter : ISerializationCallbackReceiver
+    {
     
-    [SerializeField] string name;
-    [SerializeField] string pattern;
-    List<string> patterns;
+        [SerializeField] string name;
+        [SerializeField] string pattern;
+        List<string> patterns;
 
-    public string Name
-    {
-        get
+        public string Name
         {
-            return string.IsNullOrEmpty(name) ? "?" : name;
+            get
+            {
+                return string.IsNullOrEmpty(name) ? "?" : name;
+            }
         }
-    }
 
-    public string Pattern 
-    { 
-        get 
-        {
-            return pattern == null ? "" : pattern;
-        } 
-    }
-
-    public List<string> Patterns
-    {
-        get
-        {
-            return patterns = patterns == null ? new List<string>() : patterns;
+        public string Pattern 
+        { 
+            get 
+            {
+                return pattern == null ? "" : pattern;
+            } 
         }
-    }
 
-    public void OnAfterDeserialize()
-    {
-        Patterns.Clear();
-
-        foreach (var pattern in Pattern.ToLower().Split(' '))
+        public List<string> Patterns
         {
-            if (string.IsNullOrEmpty(pattern))
-                continue;
-            Patterns.Add(pattern);
+            get
+            {
+                return patterns = patterns == null ? new List<string>() : patterns;
+            }
         }
-    }
 
-    public void OnBeforeSerialize()
-    {
-    }
+        public void OnAfterDeserialize()
+        {
+            Patterns.Clear();
 
-}
+            foreach (var pattern in Pattern.ToLower().Split(' '))
+            {
+                if (string.IsNullOrEmpty(pattern))
+                    continue;
+                Patterns.Add(pattern);
+            }
+        }
+
+        public void OnBeforeSerialize()
+        {
+        }
+
+    }
 
 }

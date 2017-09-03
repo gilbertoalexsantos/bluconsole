@@ -4,15 +4,15 @@
 namespace BluConsole.Extensions
 {
 
-public static class Extensions 
-{
-
-    public static void SafeInvoke(this Action action)
+    public static class Extensions 
     {
-        if (action != null)
-            action();
-    }
+
+        public static void SafeInvoke(this Action action)
+        {
+            if (action != null)
+                action();
+        }
     
-}
+    }
 
 }

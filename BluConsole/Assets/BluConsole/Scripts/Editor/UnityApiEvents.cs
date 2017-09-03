@@ -7,80 +7,80 @@ using BluConsole.Extensions;
 namespace BluConsole.Editor
 {
 
-public class UnityApiEvents : ScriptableObject
-{
+    public class UnityApiEvents : ScriptableObject
+    {
 
-    bool isCompiling;
-    bool isPlaying;
+        bool isCompiling;
+        bool isPlaying;
     
-    public event Action OnBeforeCompileEvent;
-    public event Action OnAfterCompileEvent;
-    public event Action OnBeginPlayEvent;
-    public event Action OnStopPlayEvent;
+        public event Action OnBeforeCompileEvent;
+        public event Action OnAfterCompileEvent;
+        public event Action OnBeginPlayEvent;
+        public event Action OnStopPlayEvent;
 
-    public static UnityApiEvents Instance
-    {
-        get
+        public static UnityApiEvents Instance
         {
-            var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
-            if (loggerAsset == null)
-                loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
-            return loggerAsset;
-        }
-    }
-
-    void OnEnable()
-    {
-        EditorApplication.update -= Update;
-        EditorApplication.update += Update;
-        hideFlags = HideFlags.HideAndDontSave;
-    }
-
-    void Update()
-    {
-        if (EditorApplication.isCompiling && !isCompiling)
-        {
-            isCompiling = true;
-            OnBeforeCompile();
-        }
-        else if (!EditorApplication.isCompiling && isCompiling)
-        {
-            isCompiling = false;
-            OnAfterCompile();
+            get
+            {
+                var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
+                if (loggerAsset == null)
+                    loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
+                return loggerAsset;
+            }
         }
 
-        if (EditorApplication.isPlaying && !isPlaying)
+        void OnEnable()
         {
-            isPlaying = true;
-            OnBeginPlay();
+            EditorApplication.update -= Update;
+            EditorApplication.update += Update;
+            hideFlags = HideFlags.HideAndDontSave;
         }
-        else if (!EditorApplication.isPlaying && isPlaying)
+
+        void Update()
         {
-            isPlaying = false;
-            OnStopPlay();
+            if (EditorApplication.isCompiling && !isCompiling)
+            {
+                isCompiling = true;
+                OnBeforeCompile();
+            }
+            else if (!EditorApplication.isCompiling && isCompiling)
+            {
+                isCompiling = false;
+                OnAfterCompile();
+            }
+
+            if (EditorApplication.isPlaying && !isPlaying)
+            {
+                isPlaying = true;
+                OnBeginPlay();
+            }
+            else if (!EditorApplication.isPlaying && isPlaying)
+            {
+                isPlaying = false;
+                OnStopPlay();
+            }
         }
-    }
 
-    void OnBeforeCompile()
-    {
-        OnBeforeCompileEvent.SafeInvoke();
-    }
+        void OnBeforeCompile()
+        {
+            OnBeforeCompileEvent.SafeInvoke();
+        }
 
-    void OnAfterCompile()
-    {
-        OnAfterCompileEvent.SafeInvoke();
-    }
+        void OnAfterCompile()
+        {
+            OnAfterCompileEvent.SafeInvoke();
+        }
 
-    void OnBeginPlay()
-    {
-        OnBeginPlayEvent.SafeInvoke();
-    }
+        void OnBeginPlay()
+        {
+            OnBeginPlayEvent.SafeInvoke();
+        }
 
-    void OnStopPlay()
-    {
-        OnStopPlayEvent.SafeInvoke();
-    }
+        void OnStopPlay()
+        {
+            OnStopPlayEvent.SafeInvoke();
+        }
 
-}
+    }
 
 }
