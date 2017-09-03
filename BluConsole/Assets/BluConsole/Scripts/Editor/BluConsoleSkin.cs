@@ -109,6 +109,7 @@ namespace BluConsole.Editor
             {
                 var style = new GUIStyle(MessageDetailFirstLogStyle);
                 style.wordWrap = false;
+                style.onNormal.textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor;
                 return style;
             }
         }
@@ -120,6 +121,7 @@ namespace BluConsole.Editor
                 var style = new GUIStyle(BluConsoleSkin.MessageStyle);
                 style.stretchWidth = true;
                 style.wordWrap = true;
+                style.onNormal.textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor;
                 return style;
             }
         }
