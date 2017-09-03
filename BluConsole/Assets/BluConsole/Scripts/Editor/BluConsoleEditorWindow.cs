@@ -11,6 +11,13 @@ using BluConsole.Core.UnityLoggerApi;
 namespace BluConsole.Editor
 {
 
+    public enum ClickContext
+    {
+        None = 0,
+        List = 1,
+        Detail = 2
+    }
+
     public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
 
@@ -37,7 +44,6 @@ namespace BluConsole.Editor
         bool isShowNormal;
         bool isShowWarning;
         bool isShowError;
-    
 
         // LogList Variables
         Vector2 _logListScrollPosition;
@@ -62,6 +68,7 @@ namespace BluConsole.Editor
         // Keyboard Controll Variables
         bool hadArrowClick;
         int moveDir;
+        ClickContext clickContext;
 
 
         [MenuItem("Window/BluConsole")]
@@ -212,7 +219,7 @@ namespace BluConsole.Editor
             {
                 isPauseOnError = actualPauseOnError;
             }
-        
+
 
             GUILayout.FlexibleSpace();
 
@@ -260,7 +267,7 @@ namespace BluConsole.Editor
             if (newIsShowNormal != isShowNormal)
             {
                 SetDirtyLogs();
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);            
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);
                 isShowNormal = newIsShowNormal;
             }
             else if (newIsShowNormal != actualIsShowNormal)
@@ -271,7 +278,7 @@ namespace BluConsole.Editor
 
 
             bool actualIsShowWarning = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelWarning);
-            bool newIsShowWarning = GetToggleClamped(isShowWarning, 
+            bool newIsShowWarning = GetToggleClamped(isShowWarning,
                                                      new GUIContent(qtWarningLogsStr, BluConsoleSkin.WarningIconSmall),
                                                      BluConsoleSkin.ToolbarButtonStyle);
             if (newIsShowWarning != isShowWarning)
@@ -288,7 +295,7 @@ namespace BluConsole.Editor
 
 
             bool actualIsShowError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelError);
-            bool newIsShowError = GetToggleClamped(isShowError, 
+            bool newIsShowError = GetToggleClamped(isShowError,
                                                    new GUIContent(qtErrorLogsStr, BluConsoleSkin.ErrorIconSmall),
                                                    BluConsoleSkin.ToolbarButtonStyle);
             if (newIsShowError != isShowError)
@@ -308,8 +315,8 @@ namespace BluConsole.Editor
                 var name = settings.Filters[i].Name;
                 var style = BluConsoleSkin.ToolbarButtonStyle;
                 bool oldAdditionalFilter = toggledFilters[i];
-                toggledFilters[i] = GUILayout.Toggle(toggledFilters[i], 
-                                                     name, 
+                toggledFilters[i] = GUILayout.Toggle(toggledFilters[i],
+                                                     name,
                                                      style,
                                                      GUILayout.MaxWidth(style.CalcSize(new GUIContent(name)).x));
                 if (oldAdditionalFilter != toggledFilters[i])
@@ -383,11 +390,15 @@ namespace BluConsole.Editor
             int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
-            if (hadArrowClick)
+            if (hadArrowClick && clickContext == ClickContext.List)
             {
-                if (logListSelectedMessage < firstRenderLogIndex + 1 && moveDir == 1)
+                bool isFrameOutsideOfRange = logListSelectedMessage < firstRenderLogIndex + 1 ||
+                                             logListSelectedMessage > lastRenderLogIndex - 3;
+                if (isFrameOutsideOfRange && moveDir == 1)
+                {
                     _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
-                else if (logListSelectedMessage > lastRenderLogIndex - 3 && moveDir == -1)
+                }
+                else if (isFrameOutsideOfRange && moveDir == -1)
                 {
                     int md = lastRenderLogIndex - firstRenderLogIndex - 3;
                     float ss = md * ButtonHeight;
@@ -418,16 +429,9 @@ namespace BluConsole.Editor
                 DrawBack(rectMessage, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
-            
+
                 bool messageClicked = IsClicked(rectMessage);
                 bool isLeftClick = messageClicked ? Event.current.button == 0 : false;
-
-                if (hadArrowClick && i == logListSelectedMessage)
-                {
-                    // Arrow clicks simulates a click at the current element.
-                    messageClicked = true;
-                    isLeftClick = true;
-                }
 
                 if (hasCollapse)
                 {
@@ -449,6 +453,8 @@ namespace BluConsole.Editor
 
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.List;
+
                     _selectedLog = GetCompleteLog(row);
 
                     hasSomeClick = true;
@@ -558,8 +564,8 @@ namespace BluConsole.Editor
 
             float buttonHeight = GetDetailMessageHeight("A", BluConsoleSkin.MessageDetailCallstackStyle);
             float buttonWidth = ButtonWidth;
-            float firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message), 
-                                                                                  BluConsoleSkin.MessageDetailFirstLogStyle, 
+            float firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message),
+                                                                                  BluConsoleSkin.MessageDetailFirstLogStyle,
                                                                                   buttonWidth));
 
             float viewHeight = size * buttonHeight + firstLogHeight;
@@ -567,9 +573,9 @@ namespace BluConsole.Editor
             if (viewHeight > windowHeight)
                 buttonWidth -= 15f;
 
-            // Recalculate it because we decreased the buttonWdith
-            firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message), 
-                                                                            BluConsoleSkin.MessageDetailFirstLogStyle, 
+            // Recalculate it because we decreased the buttonWidth
+            firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message),
+                                                                            BluConsoleSkin.MessageDetailFirstLogStyle,
                                                                             buttonWidth));
             viewHeight = size * buttonHeight + firstLogHeight;
 
@@ -609,14 +615,42 @@ namespace BluConsole.Editor
             }
             else
             {
-                lastRenderLogIndex = firstRenderLogIndex + (int)((windowHeight / buttonHeight)) + 2;
+                lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / buttonHeight) + 2;
             }
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, sizePlus);
 
             float buttonY = 0f;
             if (firstRenderLogIndex > 0)
                 buttonY = firstLogHeight + (firstRenderLogIndex - 1) * buttonHeight;
-            
+
+            if (hadArrowClick && clickContext == ClickContext.Detail)
+            {
+                int frame = logDetailSelectedFrame == -2 ? 0 : logDetailSelectedFrame + 1;
+                bool isFrameOutsideOfRange = frame < firstRenderLogIndex + 1 || frame > lastRenderLogIndex - 2;
+                if (isFrameOutsideOfRange && moveDir == 1)
+                {
+                    if (frame == 0)
+                    {
+                        _logDetailScrollPosition.y = 0f;
+                    }
+                    else
+                    {
+                        _logDetailScrollPosition.y = firstLogHeight + (frame - 1) * buttonHeight;
+                    }
+                }
+                else if (isFrameOutsideOfRange && moveDir == -1)
+                {
+                    if (frame == 0)
+                    {
+                        _logDetailScrollPosition.y = 0f;
+                    }
+                    else
+                    {
+                        _logDetailScrollPosition.y = firstLogHeight + frame * buttonHeight - windowHeight;
+                    }
+                }
+            }
+
             // Logging first message
             if (firstRenderLogIndex == 0)
             {
@@ -624,7 +658,7 @@ namespace BluConsole.Editor
                 var styleMessage = BluConsoleSkin.MessageDetailFirstLogStyle;
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: firstLogHeight);
 
-                var isSelected = logDetailSelectedFrame == -2 ? true : false;
+                var isSelected = logDetailSelectedFrame == -2;
                 var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
 
                 DrawBack(rectButton, styleBack, isSelected);
@@ -634,6 +668,8 @@ namespace BluConsole.Editor
                 bool messageClicked = IsClicked(rectButton);
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.Detail;
+
                     bool isLeftClick = Event.current.button == 0;
 
                     if (!isLeftClick && logDetailSelectedFrame == -2)
@@ -668,7 +704,7 @@ namespace BluConsole.Editor
                 var styleMessage = BluConsoleSkin.MessageDetailCallstackStyle;
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 
-                var isSelected = i == logDetailSelectedFrame ? true : false;
+                var isSelected = i == logDetailSelectedFrame;
                 DrawBack(rectButton, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
@@ -676,6 +712,8 @@ namespace BluConsole.Editor
                 bool messageClicked = IsClicked(rectButton);
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.Detail;
+
                     bool isLeftClick = Event.current.button == 0;
 
                     if (isLeftClick && i == logDetailSelectedFrame)
@@ -773,7 +811,7 @@ namespace BluConsole.Editor
             return row % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
         }
 
-        float GetDetailMessageHeight(string message, GUIStyle style, float width=0f)
+        float GetDetailMessageHeight(string message, GUIStyle style, float width = 0f)
         {
             return style.CalcHeight(new GUIContent(message), width);
         }
@@ -793,7 +831,7 @@ namespace BluConsole.Editor
             return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
         }
 
-        bool HasPattern(BluLog log, int row) 
+        bool HasPattern(BluLog log, int row)
         {
             string messageLower = log.MessageLower;
 
@@ -836,7 +874,6 @@ namespace BluConsole.Editor
 
         #endregion Gets
 
-
         #region Action
 
         void UpdateLogLine()
@@ -845,19 +882,40 @@ namespace BluConsole.Editor
             Event e = Event.current;
             hadArrowClick = false;
             moveDir = 0;
-            if (e != null && e.type == EventType.KeyDown && e.isKey) {
+            if (e != null && e.type == EventType.KeyDown && e.isKey)
+            {
                 bool refresh = false;
                 switch (e.keyCode)
                 {
                     case KeyCode.UpArrow:
                         refresh = true;
                         moveDir = 1;
-                        logListSelectedMessage--;
+                        if (clickContext == ClickContext.List)
+                        {
+                            logListSelectedMessage--;
+                        }
+                        else
+                        {
+                            if (logDetailSelectedFrame == 0)
+                                logDetailSelectedFrame = -2;
+                            else
+                                logDetailSelectedFrame--;
+                        }
                         break;
                     case KeyCode.DownArrow:
-                        moveDir = -1;
                         refresh = true;
-                        logListSelectedMessage++;
+                        moveDir = -1;
+                        if (clickContext == ClickContext.List)
+                        {
+                            logListSelectedMessage++;
+                        }
+                        else
+                        {
+                            if (logDetailSelectedFrame == -2)
+                                logDetailSelectedFrame = 0;
+                            else
+                                logDetailSelectedFrame++;
+                        }
                         break;
                 }
 
@@ -866,6 +924,13 @@ namespace BluConsole.Editor
 
                 hadArrowClick = true;
                 logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, _qtLogs - 1);
+                if (_selectedLog != null)
+                {
+                    if (logDetailSelectedFrame < -2)
+                        logDetailSelectedFrame = -2;
+                    else if (logDetailSelectedFrame >= _selectedLog.StackTrace.Count)
+                        logDetailSelectedFrame = _selectedLog.StackTrace.Count - 1;
+                }
             }
         }
 
@@ -931,10 +996,10 @@ namespace BluConsole.Editor
 
         #region Properties
 
-        bool IsFollowScroll 
-        { 
-            get; 
-            set; 
+        bool IsFollowScroll
+        {
+            get;
+            set;
         }
 
         bool HasScrollUp
@@ -965,7 +1030,7 @@ namespace BluConsole.Editor
         {
             get
             {
-                return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f;
+                return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f && !hadArrowClick;
             }
         }
 
