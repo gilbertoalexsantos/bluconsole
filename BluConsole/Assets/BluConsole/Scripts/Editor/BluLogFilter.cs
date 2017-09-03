@@ -11,8 +11,8 @@ namespace BluConsole.Editor
 public class BluLogFilter : ISerializationCallbackReceiver
 {
     
-    [SerializeField] string name;
-    [SerializeField] string pattern;
+    [SerializeField] string name = "";
+    [SerializeField] string pattern = "";
     List<string> patterns;
 
     public string Name
