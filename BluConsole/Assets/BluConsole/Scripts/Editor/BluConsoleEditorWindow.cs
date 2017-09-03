@@ -137,6 +137,8 @@ namespace BluConsole.Editor
 
             GUILayout.EndVertical();
 
+            CheckEnterAction();
+
             Repaint();
         }
 
@@ -876,6 +878,17 @@ namespace BluConsole.Editor
 
         #region Action
 
+        void CheckEnterAction()
+        {
+            if (!IsEnterPressed || _selectedLog == null)
+                return;
+
+            if (clickContext == ClickContext.List)
+                JumpToSource(_selectedLog, 0);
+            else if (clickContext == ClickContext.Detail)
+                JumpToSource(_selectedLog, logDetailSelectedFrame < 0 ? 0 : logDetailSelectedFrame);
+        }
+
         void UpdateLogLine()
         {
             // Handles moving up and down using the arrow keys on the keyboard.
@@ -995,6 +1008,15 @@ namespace BluConsole.Editor
         #endregion
 
         #region Properties
+
+        private bool IsEnterPressed
+        {
+            get
+            {
+                Event e = Event.current;
+                return e != null && e.isKey && e.type == EventType.KeyUp && e.keyCode == KeyCode.Return;
+            }
+        }
 
         bool IsFollowScroll
         {
