@@ -702,6 +702,7 @@ namespace BluConsole.Editor
             {
                 var contentMessage = new GUIContent(GetTruncatedMessage(log.StackTrace[i].FrameInformation));
 
+                buttonHeight = GetDetailMessageHeight(contentMessage.text, BluConsoleSkin.MessageDetailCallstackStyle, viewWidth);
                 var styleBack = GetLogBackStyle(0);
                 var styleMessage = BluConsoleSkin.MessageDetailCallstackStyle;
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);

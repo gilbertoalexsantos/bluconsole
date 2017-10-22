@@ -108,7 +108,7 @@ namespace BluConsole.Editor
             get
             {
                 var style = new GUIStyle(MessageDetailFirstLogStyle);
-                style.wordWrap = false;
+                style.wordWrap = true;
                 style.onNormal.textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor;
                 return style;
             }
