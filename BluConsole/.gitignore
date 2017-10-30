@@ -1,5 +1,8 @@
 ### General
 .ignore
+.idea
+.ignore
+.projectile
 
 
 ## UNITY_3D
