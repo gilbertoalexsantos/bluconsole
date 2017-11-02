@@ -453,39 +453,33 @@ namespace BluConsole.Editor
                     GUI.Label(collapseRect, collapseContent, BluConsoleSkin.CollapseStyle);
                 }
 
-                if (messageClicked)
-                {
+				if (messageClicked)
+				{
                     clickContext = ClickContext.List;
-
-                    _selectedLog = GetCompleteLog(row);
-
-                    hasSomeClick = true;
-
-                    if (!isLeftClick && i == logListSelectedMessage)
-                        DrawPopup(Event.current, log);
-
-                    if (isLeftClick && i == logListSelectedMessage)
-                    {
-                        if (IsDoubleClickLogListButton)
-                        {
-                            _logListLastTimeClicked = 0.0f;
-                            var completeLog = GetCompleteLog(row);
-                            JumpToSource(completeLog, 0);
-                        }
-                        else
-                        {
-                            PingLog(_selectedLog);
-                            _logListLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
-                    }
-                    else
-                    {
-                        PingLog(_selectedLog);
-                        logListSelectedMessage = i;
-                    }
-
-                    logDetailSelectedFrame = -1;
-                }
+					_selectedLog = GetCompleteLog(row);
+					hasSomeClick = true;
+					if (!IsDoubleClickLogDetailButton)
+					{
+						PingLog(_selectedLog);
+						logListSelectedMessage = i;
+					}
+					if (!isLeftClick && i == logListSelectedMessage)
+						DrawPopup(Event.current, log);
+					if (isLeftClick && i == logListSelectedMessage)
+					{
+						if (IsDoubleClickLogListButton)
+						{
+							_logListLastTimeClicked = 0.0f;
+							var completeLog = GetCompleteLog(row);
+							JumpToSource(completeLog, 0);
+						}
+						else
+						{
+							_logListLastTimeClicked = EditorApplication.timeSinceStartup;
+						}
+					}
+					logDetailSelectedFrame = -1;
+				}
 
                 buttonY += ButtonHeight;
                 cnt++;
@@ -668,32 +662,27 @@ namespace BluConsole.Editor
                     styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
                 bool messageClicked = IsClicked(rectButton);
-                if (messageClicked)
-                {
+				if (messageClicked)
+				{
                     clickContext = ClickContext.Detail;
-
-                    bool isLeftClick = Event.current.button == 0;
-
-                    if (!isLeftClick && logDetailSelectedFrame == -2)
-                        DrawPopup(Event.current, log);
-
-                    if (isLeftClick && logDetailSelectedFrame == -2)
-                    {
-                        if (IsDoubleClickLogDetailButton)
-                        {
-                            _logDetailLastTimeClicked = 0.0f;
-                            JumpToSource(log, 0);
-                        }
-                        else
-                        {
-                            _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
-                    }
-                    else
-                    {
-                        logDetailSelectedFrame = -2;
-                    }
-                }
+					bool isLeftClick = Event.current.button == 0;
+					if (!IsDoubleClickLogDetailButton)
+						logDetailSelectedFrame = -2;
+					if (!isLeftClick && logDetailSelectedFrame == -2)
+						DrawPopup(Event.current, log);
+					if (isLeftClick && logDetailSelectedFrame == -2)
+					{
+						if (IsDoubleClickLogDetailButton)
+						{
+							_logDetailLastTimeClicked = 0.0f;
+							JumpToSource(log, 0);
+						}
+						else
+						{
+							_logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
+						}
+					}
+				}
 
                 buttonY += firstLogHeight;
             }
@@ -712,29 +701,25 @@ namespace BluConsole.Editor
                     styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
                 bool messageClicked = IsClicked(rectButton);
-                if (messageClicked)
-                {
+				if (messageClicked)
+				{
                     clickContext = ClickContext.Detail;
-
-                    bool isLeftClick = Event.current.button == 0;
-
-                    if (isLeftClick && i == logDetailSelectedFrame)
-                    {
-                        if (IsDoubleClickLogDetailButton)
-                        {
-                            _logDetailLastTimeClicked = 0.0f;
-                            JumpToSource(log, i);
-                        }
-                        else
-                        {
-                            _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
-                    }
-                    else
-                    {
-                        logDetailSelectedFrame = i;
-                    }
-                }
+					bool isLeftClick = Event.current.button == 0;
+					if (!IsDoubleClickLogDetailButton)
+						logDetailSelectedFrame = i;
+					if (isLeftClick && logDetailSelectedFrame == i)
+					{
+						if (IsDoubleClickLogDetailButton)
+						{
+							_logDetailLastTimeClicked = 0.0f;
+							JumpToSource(log, i);
+						}
+						else
+						{
+							_logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
+						}
+					}
+				}
 
                 buttonY += buttonHeight;
             }
