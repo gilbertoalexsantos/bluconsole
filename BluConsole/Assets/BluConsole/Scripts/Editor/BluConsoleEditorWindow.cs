@@ -365,12 +365,12 @@ namespace BluConsole.Editor
             float windowWidth = WindowWidth;
             float windowHeight = _topPanelHeight - DrawYPos;
 
-            float buttonWidth = ButtonWidth;
-            if (_qtLogs * ButtonHeight > windowHeight)
+            float buttonWidth = DefaultButtonWidth;
+            if (_qtLogs * DefaultButtonHeight > windowHeight)
                 buttonWidth -= 15f;
 
             float viewWidth = buttonWidth;
-            float viewHeight = _qtLogs * ButtonHeight;
+            float viewHeight = _qtLogs * DefaultButtonHeight;
 
             Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
             Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
@@ -382,10 +382,10 @@ namespace BluConsole.Editor
                                                          scrollPosition: _logListScrollPosition,
                                                          viewRect: scrollViewViewRect);
 
-            int firstRenderLogIndex = (int)(_logListScrollPosition.y / ButtonHeight);
+            int firstRenderLogIndex = (int)(_logListScrollPosition.y / DefaultButtonHeight);
             firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, _qtLogs);
 
-            int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / ButtonHeight) + 2;
+            int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / DefaultButtonHeight) + 2;
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
             if (hadArrowClick && clickContext == ClickContext.List)
@@ -394,18 +394,18 @@ namespace BluConsole.Editor
                                              logListSelectedMessage > lastRenderLogIndex - 3;
                 if (isFrameOutsideOfRange && moveDir == 1)
                 {
-                    _logListScrollPosition.y = ButtonHeight * logListSelectedMessage;
+                    _logListScrollPosition.y = DefaultButtonHeight * logListSelectedMessage;
                 }
                 else if (isFrameOutsideOfRange && moveDir == -1)
                 {
                     int md = lastRenderLogIndex - firstRenderLogIndex - 3;
-                    float ss = md * ButtonHeight;
+                    float ss = md * DefaultButtonHeight;
                     float sd = windowHeight - ss;
-                    _logListScrollPosition.y = (ButtonHeight * (logListSelectedMessage + 1) - ss - sd);
+                    _logListScrollPosition.y = (DefaultButtonHeight * (logListSelectedMessage + 1) - ss - sd);
                 }
             }
 
-            float buttonY = firstRenderLogIndex * ButtonHeight;
+            float buttonY = firstRenderLogIndex * DefaultButtonHeight;
             bool hasSomeClick = false;
 
             int cnt = 0;
@@ -422,7 +422,7 @@ namespace BluConsole.Editor
                 var rectMessage = new Rect(x: 0,
                                            y: buttonY,
                                            width: viewWidth,
-                                           height: ButtonHeight);
+                                           height: DefaultButtonHeight);
                 bool isSelected = i == logListSelectedMessage ? true : false;
                 DrawBack(rectMessage, styleBack, isSelected);
                 if (IsRepaintEvent)
@@ -442,7 +442,7 @@ namespace BluConsole.Editor
                     var collapseSize = BluConsoleSkin.CollapseStyle.CalcSize(collapseContent);
 
                     var collapseRect = new Rect(x: viewWidth - collapseSize.x - 5f,
-                                                y: (buttonY + buttonY + ButtonHeight - collapseSize.y) * 0.5f,
+                                                y: (buttonY + buttonY + DefaultButtonHeight - collapseSize.y) * 0.5f,
                                                 width: collapseSize.x,
                                                 height: collapseSize.y);
 
@@ -479,7 +479,7 @@ namespace BluConsole.Editor
                         logDetailSelectedFrame = -1;
                 }
 
-                buttonY += ButtonHeight;
+                buttonY += DefaultButtonHeight;
                 cnt++;
             }
 
@@ -487,7 +487,7 @@ namespace BluConsole.Editor
 
             GUI.EndScrollView();
 
-            if (HasScrollUp || hasSomeClick)
+            if (IsScrollUp || hasSomeClick)
             {
                 IsFollowScroll = false;
             }
@@ -557,7 +557,7 @@ namespace BluConsole.Editor
             var sizePlus = size + 1;
 
             float buttonHeight = GetDetailMessageHeight("A", BluConsoleSkin.MessageDetailCallstackStyle);
-            float buttonWidth = ButtonWidth;
+            float buttonWidth = DefaultButtonWidth;
             float firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message),
                                                                                   BluConsoleSkin.MessageDetailFirstLogStyle,
                                                                                   buttonWidth));
@@ -859,6 +859,7 @@ namespace BluConsole.Editor
 
         #endregion Gets
 
+        
         #region Action
 
         void CheckEnterAction()
@@ -983,13 +984,14 @@ namespace BluConsole.Editor
         {
             while (toggledFilters.Count < settings.Filters.Count)
                 toggledFilters.Add(false);
-            ButtonWidth = position.width;
-            ButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + 15.0f;
+            DefaultButtonWidth = position.width;
+            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + 15.0f;
             DrawYPos = 0f;
         }
 
         #endregion
 
+        
         #region Properties
 
         private bool IsEnterPressed
@@ -1001,13 +1003,7 @@ namespace BluConsole.Editor
             }
         }
 
-        bool IsFollowScroll
-        {
-            get;
-            set;
-        }
-
-        bool HasScrollUp
+        private bool IsScrollUp
         {
             get
             {
@@ -1015,7 +1011,7 @@ namespace BluConsole.Editor
             }
         }
 
-        bool IsRepaintEvent
+        private bool IsRepaintEvent
         {
             get
             {
@@ -1023,7 +1019,7 @@ namespace BluConsole.Editor
             }
         }
 
-        bool IsDoubleClickLogListButton
+        private bool IsDoubleClickLogListButton
         {
             get
             {
@@ -1031,7 +1027,7 @@ namespace BluConsole.Editor
             }
         }
 
-        bool IsDoubleClickLogDetailButton
+        private bool IsDoubleClickLogDetailButton
         {
             get
             {
@@ -1039,56 +1035,17 @@ namespace BluConsole.Editor
             }
         }
 
-        float DrawYPos
-        {
-            get;
-            set;
-        }
+        private float WindowWidth { get { return position.width; } }
+        private float WindowHeight { get { return position.height; } }
 
-        float WindowWidth
-        {
-            get
-            {
-                return position.width;
-            }
-        }
-
-        float WindowHeight
-        {
-            get
-            {
-                return position.height;
-            }
-        }
-
-        float ButtonWidth
-        {
-            get;
-            set;
-        }
-
-        float ButtonHeight
-        {
-            get;
-            set;
-        }
-
-        float ResizerHeight
-        {
-            get
-            {
-                return 1.0f;
-            }
-        }
-
-        float MinHeightOfTopAndBottom
-        {
-            get
-            {
-                return 60.0f;
-            }
-        }
-
+        private bool IsFollowScroll { get; set; }
+        private float DrawYPos { get; set; }
+        private float DefaultButtonWidth { get; set; }
+        private float DefaultButtonHeight { get; set; }
+        
+        private float ResizerHeight { get { return 1.0f; } }
+        private float MinHeightOfTopAndBottom { get { return 60.0f; } }
+        
         #endregion Properties
 
     }
