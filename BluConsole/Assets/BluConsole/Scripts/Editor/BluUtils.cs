@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Reflection;
+
 
 namespace BluConsole.Editor
 {
@@ -9,15 +11,21 @@ namespace BluConsole.Editor
     public static class BluUtils
     {
 
-        static List<string> defaultIgnorePrefixes = new List<string>()
+        public static void AddCallback(this Action a, Action cb)
         {
-            "UnityEngine.Debug"
-        };
-
+            a -= cb;
+            a += cb;
+        }
+        
         public static GUIContent GUIContent(this string text)
         {
             return new GUIContent(text);
         }
+
+        private static readonly List<string> defaultIgnorePrefixes = new List<string>()
+        {
+            "UnityEngine.Debug"
+        };
 
         public static void OpenFileOnEditor(string path, int line)
         {

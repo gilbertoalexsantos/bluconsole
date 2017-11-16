@@ -13,10 +13,10 @@ namespace BluConsole.Editor
         bool isCompiling;
         bool isPlaying;
     
-        public event Action OnBeforeCompileEvent;
-        public event Action OnAfterCompileEvent;
-        public event Action OnBeginPlayEvent;
-        public event Action OnStopPlayEvent;
+        public Action OnBeforeCompileEvent;
+        public Action OnAfterCompileEvent;
+        public Action OnBeginPlayEvent;
+        public Action OnStopPlayEvent;
 
         public static UnityApiEvents Instance
         {

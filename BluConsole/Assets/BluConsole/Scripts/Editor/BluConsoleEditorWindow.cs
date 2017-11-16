@@ -103,14 +103,10 @@ namespace BluConsole.Editor
 
         void Update()
         {
-            unityApiEvents.OnBeforeCompileEvent -= SetDirtyLogs;
-            unityApiEvents.OnBeforeCompileEvent += SetDirtyLogs;
-            unityApiEvents.OnAfterCompileEvent -= OnAfterCompile;
-            unityApiEvents.OnAfterCompileEvent += OnAfterCompile;
-            unityApiEvents.OnBeginPlayEvent -= SetDirtyLogs;
-            unityApiEvents.OnBeginPlayEvent += SetDirtyLogs;
-            unityApiEvents.OnStopPlayEvent -= SetDirtyLogs;
-            unityApiEvents.OnStopPlayEvent += SetDirtyLogs;
+            unityApiEvents.OnBeforeCompileEvent.AddCallback(SetDirtyLogs);
+            unityApiEvents.OnAfterCompileEvent.AddCallback(OnAfterCompile);
+            unityApiEvents.OnBeginPlayEvent.AddCallback(SetDirtyLogs);
+            unityApiEvents.OnStopPlayEvent.AddCallback(SetDirtyLogs);
         }
 
         void OnGUI()
