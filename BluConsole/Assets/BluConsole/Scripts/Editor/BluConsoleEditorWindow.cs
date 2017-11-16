@@ -456,14 +456,18 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     clickContext = ClickContext.List;
-
-                    _selectedLog = GetCompleteLog(row);
-
+                    if (isLeftClick)
+                        _selectedLog = GetCompleteLog(row);
                     hasSomeClick = true;
-
-                    if (!isLeftClick && i == logListSelectedMessage)
+                    if (logListSelectedMessage != i)
+                        _logListLastTimeClicked = 0.0f;
+                    if (isLeftClick && !IsDoubleClickLogDetailButton)
+                    {
+                        PingLog(_selectedLog);
+                        logListSelectedMessage = i;
+                    }
+                    if (!isLeftClick)
                         DrawPopup(Event.current, log);
-
                     if (isLeftClick && i == logListSelectedMessage)
                     {
                         if (IsDoubleClickLogListButton)
@@ -473,18 +477,10 @@ namespace BluConsole.Editor
                             JumpToSource(completeLog, 0);
                         }
                         else
-                        {
-                            PingLog(_selectedLog);
                             _logListLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
                     }
-                    else
-                    {
-                        PingLog(_selectedLog);
-                        logListSelectedMessage = i;
-                    }
-
-                    logDetailSelectedFrame = -1;
+                    if (isLeftClick)
+                        logDetailSelectedFrame = -1;
                 }
 
                 buttonY += ButtonHeight;
@@ -671,12 +667,13 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     clickContext = ClickContext.Detail;
-
                     bool isLeftClick = Event.current.button == 0;
-
-                    if (!isLeftClick && logDetailSelectedFrame == -2)
+                    if (logDetailSelectedFrame != -2)
+                        _logDetailLastTimeClicked = 0.0f;
+                    if (isLeftClick && !IsDoubleClickLogDetailButton)
+                        logDetailSelectedFrame = -2;
+                    if (!isLeftClick)
                         DrawPopup(Event.current, log);
-
                     if (isLeftClick && logDetailSelectedFrame == -2)
                     {
                         if (IsDoubleClickLogDetailButton)
@@ -685,13 +682,7 @@ namespace BluConsole.Editor
                             JumpToSource(log, 0);
                         }
                         else
-                        {
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
-                    }
-                    else
-                    {
-                        logDetailSelectedFrame = -2;
                     }
                 }
 
@@ -715,10 +706,12 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     clickContext = ClickContext.Detail;
-
                     bool isLeftClick = Event.current.button == 0;
-
-                    if (isLeftClick && i == logDetailSelectedFrame)
+                    if (logDetailSelectedFrame != i)
+                        _logDetailLastTimeClicked = 0.0f;
+                    if (isLeftClick && !IsDoubleClickLogDetailButton)
+                        logDetailSelectedFrame = i;
+                    if (isLeftClick && logDetailSelectedFrame == i)
                     {
                         if (IsDoubleClickLogDetailButton)
                         {
@@ -726,13 +719,7 @@ namespace BluConsole.Editor
                             JumpToSource(log, i);
                         }
                         else
-                        {
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
-                    }
-                    else
-                    {
-                        logDetailSelectedFrame = i;
                     }
                 }
 
