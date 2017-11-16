@@ -453,11 +453,13 @@ namespace BluConsole.Editor
                     GUI.Label(collapseRect, collapseContent, BluConsoleSkin.CollapseStyle);
                 }
 
-		if (messageClicked)
+                if (messageClicked)
                 {
                     if (isLeftClick)
                         _selectedLog = GetCompleteLog(row);
                     hasSomeClick = true;
+                    if (logListSelectedMessage != i)
+                        _logListLastTimeClicked = 0.0f;
                     if (isLeftClick && !IsDoubleClickLogDetailButton)
                     {
                         PingLog(_selectedLog);
@@ -475,7 +477,6 @@ namespace BluConsole.Editor
                         }
                         else
                             _logListLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
                     }
                     if (isLeftClick)
                         logDetailSelectedFrame = -1;
@@ -665,6 +666,8 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     bool isLeftClick = Event.current.button == 0;
+                    if (logDetailSelectedFrame != -2)
+                        _logDetailLastTimeClicked = 0.0f;
                     if (isLeftClick && !IsDoubleClickLogDetailButton)
                         logDetailSelectedFrame = -2;
                     if (!isLeftClick)
@@ -677,9 +680,7 @@ namespace BluConsole.Editor
                             JumpToSource(log, 0);
                         }
                         else
-                        {
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
                     }
                 }
 
@@ -703,6 +704,8 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     bool isLeftClick = Event.current.button == 0;
+                    if (logDetailSelectedFrame != i)
+                        _logDetailLastTimeClicked = 0.0f;
                     if (isLeftClick && !IsDoubleClickLogDetailButton)
                         logDetailSelectedFrame = i;
                     if (isLeftClick && logDetailSelectedFrame == i)
@@ -713,9 +716,7 @@ namespace BluConsole.Editor
                             JumpToSource(log, i);
                         }
                         else
-                        {
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
-                        }
                     }
                 }
 
