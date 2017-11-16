@@ -455,6 +455,7 @@ namespace BluConsole.Editor
 
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.List;
                     if (isLeftClick)
                         _selectedLog = GetCompleteLog(row);
                     hasSomeClick = true;
@@ -665,6 +666,7 @@ namespace BluConsole.Editor
                 bool messageClicked = IsClicked(rectButton);
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.Detail;
                     bool isLeftClick = Event.current.button == 0;
                     if (logDetailSelectedFrame != -2)
                         _logDetailLastTimeClicked = 0.0f;
@@ -703,6 +705,7 @@ namespace BluConsole.Editor
                 bool messageClicked = IsClicked(rectButton);
                 if (messageClicked)
                 {
+                    clickContext = ClickContext.Detail;
                     bool isLeftClick = Event.current.button == 0;
                     if (logDetailSelectedFrame != i)
                         _logDetailLastTimeClicked = 0.0f;
