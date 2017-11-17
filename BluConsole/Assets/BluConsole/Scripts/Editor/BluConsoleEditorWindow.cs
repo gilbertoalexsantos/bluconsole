@@ -134,12 +134,9 @@ namespace BluConsole.Editor
             DrawYPos += DrawTopToolbar();
             DrawYPos -= 1f;
             
-            DrawLogList();
-
-            DrawResizer();
-
-            DrawYPos = _topPanelHeight + ResizerHeight;
-            DrawLogDetail();
+            DrawYPos += DrawLogList();
+            DrawYPos += DrawResizer();
+            DrawYPos += DrawLogDetail();
 
             Repaint();
         }
@@ -339,11 +336,13 @@ namespace BluConsole.Editor
             return height;
         }
 
-        void DrawLogList()
+        private float DrawLogList()
         {
             _qtLogs = UnityLoggerServer.StartGettingLogs();
             _cacheLogCount = _qtLogs;
 
+            
+            // Filtering logs with ugly code
             int cntLogs = 0;
             int[] rows = GetCachedIntArr(_qtLogs);
             BluLog[] logs = GetCachedLogsArr(_qtLogs);
@@ -372,28 +371,30 @@ namespace BluConsole.Editor
                     logs[index++] = log;
                 }
             }
-
             _qtLogs = cntLogs;
 
             float windowWidth = WindowWidth;
             float windowHeight = _topPanelHeight - DrawYPos;
 
             float buttonWidth = DefaultButtonWidth;
+            
+            // If the amount of logs is greater than the window height, then the ScrollBar will appear. 
+            // We need to decrease the ScrollBar width then.
             if (_qtLogs * DefaultButtonHeight > windowHeight)
                 buttonWidth -= 15f;
 
             float viewWidth = buttonWidth;
             float viewHeight = _qtLogs * DefaultButtonHeight;
 
-            Rect scrollViewPosition = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
-            Rect scrollViewViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
+            Rect scrollWindowRect = new Rect(x: 0f, y: DrawYPos, width: windowWidth, height: windowHeight);
+            Rect scrollViewRect = new Rect(x: 0f, y: 0f, width: viewWidth, height: viewHeight);
 
-            GUI.DrawTexture(scrollViewPosition, BluConsoleSkin.EvenBackTexture);
+            GUI.DrawTexture(scrollWindowRect, BluConsoleSkin.EvenBackTexture);
 
             Vector2 oldScrollPosition = _logListScrollPosition;
-            _logListScrollPosition = GUI.BeginScrollView(position: scrollViewPosition,
+            _logListScrollPosition = GUI.BeginScrollView(position: scrollWindowRect,
                                                          scrollPosition: _logListScrollPosition,
-                                                         viewRect: scrollViewViewRect);
+                                                         viewRect: scrollViewRect);
 
             int firstRenderLogIndex = (int)(_logListScrollPosition.y / DefaultButtonHeight);
             firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, _qtLogs);
@@ -401,6 +402,8 @@ namespace BluConsole.Editor
             int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / DefaultButtonHeight) + 2;
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
+            
+            // Handling up/down arrow keys
             if (_hasKeyboardArrowKeyInput && _clickContext == ClickContext.List)
             {
                 bool isFrameOutsideOfRange = _logListSelectedMessage < firstRenderLogIndex + 1 ||
@@ -418,10 +421,10 @@ namespace BluConsole.Editor
                 }
             }
 
+            
             float buttonY = firstRenderLogIndex * DefaultButtonHeight;
             bool hasSomeClick = false;
 
-            int cnt = 0;
             bool hasCollapse = UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse);
             for (int i = firstRenderLogIndex; i < lastRenderLogIndex; i++)
             {
@@ -432,17 +435,15 @@ namespace BluConsole.Editor
                 var styleMessage = BluConsoleSkin.GetLogListStyle(log.LogType);
                 string showMessage = GetTruncatedMessage(GetLogListMessage(log));
                 var contentMessage = new GUIContent(showMessage);
-                var rectMessage = new Rect(x: 0,
-                                           y: buttonY,
-                                           width: viewWidth,
-                                           height: DefaultButtonHeight);
-                bool isSelected = i == _logListSelectedMessage ? true : false;
+                var rectMessage = new Rect(x: 0, y: buttonY, width: viewWidth, height: DefaultButtonHeight);
+                bool isSelected = i == _logListSelectedMessage;
+                
                 DrawBackground(rectMessage, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
 
                 bool messageClicked = IsClicked(rectMessage);
-                bool isLeftClick = messageClicked ? Event.current.button == 0 : false;
+                bool isLeftClick = messageClicked && Event.current.button == 0;
 
                 if (hasCollapse)
                 {
@@ -493,7 +494,6 @@ namespace BluConsole.Editor
                 }
 
                 buttonY += DefaultButtonHeight;
-                cnt++;
             }
 
             UnityLoggerServer.StopGettingsLogs();
@@ -513,22 +513,26 @@ namespace BluConsole.Editor
             }
 
             if (!IsFollowScroll)
-                return;
+                return windowHeight;
 
             float endY = viewHeight - windowHeight;
             _logListScrollPosition.y = endY;
+
+            return windowHeight;
         }
 
-        void DrawResizer()
+        private float DrawResizer()
         {
             if (!IsRepaintEvent)
-                return;
+                return ResizerHeight;
             
-            var rect = new Rect(0, _topPanelHeight, position.width, ResizerHeight);
+            var rect = new Rect(0, DrawYPos, position.width, ResizerHeight);
             EditorGUI.DrawRect(rect, ResizerColor);
+
+            return ResizerHeight;
         }
 
-        void DrawLogDetail()
+        private float DrawLogDetail()
         {
             var windowHeight = WindowHeight - DrawYPos;
 
@@ -543,11 +547,10 @@ namespace BluConsole.Editor
                 _selectedLog == null ||
                 _selectedLog.StackTrace == null)
             {
-                return;
+                return windowHeight;
             }
 
             var log = _selectedLog;
-
             var size = log.StackTrace.Count;
             var sizePlus = size + 1;
 
@@ -560,12 +563,15 @@ namespace BluConsole.Editor
             float viewHeight = size * buttonHeight + firstLogHeight;
 
             if (viewHeight > windowHeight)
+            {
                 buttonWidth -= 15f;
 
-            // Recalculate it because we decreased the buttonWidth
-            firstLogHeight = Mathf.Max(buttonHeight, GetDetailMessageHeight(GetTruncatedMessage(log.Message),
-                                                                            BluConsoleSkin.MessageDetailFirstLogStyle,
-                                                                            buttonWidth));
+                // Recalculate it because we decreased the buttonWidth
+                firstLogHeight = Mathf.Max(buttonHeight, 
+                                           GetDetailMessageHeight(GetTruncatedMessage(log.Message),
+                                                                  BluConsoleSkin.MessageDetailFirstLogStyle,
+                                                                  buttonWidth));
+            }
             viewHeight = size * buttonHeight + firstLogHeight;
 
             float viewWidth = buttonWidth;
@@ -581,7 +587,7 @@ namespace BluConsole.Editor
             if (_logListSelectedMessage == -1 || _qtLogs == 0 || _logListSelectedMessage >= _qtLogs)
             {
                 GUI.EndScrollView();
-                return;
+                return windowHeight;
             }
 
             float scrollY = _logDetailScrollPosition.y;
@@ -612,6 +618,8 @@ namespace BluConsole.Editor
             if (firstRenderLogIndex > 0)
                 buttonY = firstLogHeight + (firstRenderLogIndex - 1) * buttonHeight;
 
+            
+            // Handling up/down arrow keys
             if (_hasKeyboardArrowKeyInput && _clickContext == ClickContext.Detail)
             {
                 int frame = _logDetailSelectedFrame == -2 ? 0 : _logDetailSelectedFrame + 1;
@@ -718,6 +726,8 @@ namespace BluConsole.Editor
             }
 
             GUI.EndScrollView();
+
+            return windowHeight;
         }
 
         private void DrawPopup(Event clickEvent, BluLog log)
