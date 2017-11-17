@@ -18,6 +18,13 @@ namespace BluConsole.Editor
         Detail = 2
     }
 
+    public enum Direction
+    {
+        None = 0,
+        Up   = 1,
+        Down = 2
+    }
+
     public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
 
@@ -66,8 +73,8 @@ namespace BluConsole.Editor
         List<bool> toggledFilters = new List<bool>();
 
         // Keyboard Controll Variables
-        bool hadArrowClick;
-        int moveDir;
+        bool hasKeyboardArrowKeyInput;
+        Direction logMoveDirection;
         ClickContext clickContext;
 
 
@@ -113,7 +120,7 @@ namespace BluConsole.Editor
         {
             InitVariables();
 
-            UpdateLogLine();
+            HandleKeyboardArrowKeys();
 
             DrawResizer();
 
@@ -133,7 +140,7 @@ namespace BluConsole.Editor
 
             GUILayout.EndVertical();
 
-            CheckEnterAction();
+            HandleKeyboardEnterKey();
 
             Repaint();
         }
@@ -388,15 +395,15 @@ namespace BluConsole.Editor
             int lastRenderLogIndex = firstRenderLogIndex + (int)(windowHeight / DefaultButtonHeight) + 2;
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, _qtLogs);
 
-            if (hadArrowClick && clickContext == ClickContext.List)
+            if (hasKeyboardArrowKeyInput && clickContext == ClickContext.List)
             {
                 bool isFrameOutsideOfRange = logListSelectedMessage < firstRenderLogIndex + 1 ||
                                              logListSelectedMessage > lastRenderLogIndex - 3;
-                if (isFrameOutsideOfRange && moveDir == 1)
+                if (isFrameOutsideOfRange && logMoveDirection == Direction.Up)
                 {
                     _logListScrollPosition.y = DefaultButtonHeight * logListSelectedMessage;
                 }
-                else if (isFrameOutsideOfRange && moveDir == -1)
+                else if (isFrameOutsideOfRange && logMoveDirection == Direction.Down)
                 {
                     int md = lastRenderLogIndex - firstRenderLogIndex - 3;
                     float ss = md * DefaultButtonHeight;
@@ -470,7 +477,7 @@ namespace BluConsole.Editor
                         {
                             _logListLastTimeClicked = 0.0f;
                             var completeLog = GetCompleteLog(row);
-                            JumpToSource(completeLog, 0);
+                            JumpToSourceFile(completeLog, 0);
                         }
                         else
                             _logListLastTimeClicked = EditorApplication.timeSinceStartup;
@@ -617,11 +624,11 @@ namespace BluConsole.Editor
             if (firstRenderLogIndex > 0)
                 buttonY = firstLogHeight + (firstRenderLogIndex - 1) * buttonHeight;
 
-            if (hadArrowClick && clickContext == ClickContext.Detail)
+            if (hasKeyboardArrowKeyInput && clickContext == ClickContext.Detail)
             {
                 int frame = logDetailSelectedFrame == -2 ? 0 : logDetailSelectedFrame + 1;
                 bool isFrameOutsideOfRange = frame < firstRenderLogIndex + 1 || frame > lastRenderLogIndex - 2;
-                if (isFrameOutsideOfRange && moveDir == 1)
+                if (isFrameOutsideOfRange && logMoveDirection == Direction.Up)
                 {
                     if (frame == 0)
                     {
@@ -632,7 +639,7 @@ namespace BluConsole.Editor
                         _logDetailScrollPosition.y = firstLogHeight + (frame - 1) * buttonHeight;
                     }
                 }
-                else if (isFrameOutsideOfRange && moveDir == -1)
+                else if (isFrameOutsideOfRange && logMoveDirection == Direction.Down)
                 {
                     if (frame == 0)
                     {
@@ -675,7 +682,7 @@ namespace BluConsole.Editor
                         if (IsDoubleClickLogDetailButton)
                         {
                             _logDetailLastTimeClicked = 0.0f;
-                            JumpToSource(log, 0);
+                            JumpToSourceFile(log, 0);
                         }
                         else
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
@@ -712,7 +719,7 @@ namespace BluConsole.Editor
                         if (IsDoubleClickLogDetailButton)
                         {
                             _logDetailLastTimeClicked = 0.0f;
-                            JumpToSource(log, i);
+                            JumpToSourceFile(log, i);
                         }
                         else
                             _logDetailLastTimeClicked = EditorApplication.timeSinceStartup;
@@ -860,84 +867,92 @@ namespace BluConsole.Editor
         #endregion Gets
 
         
-        #region Action
+        #region Actions
 
-        void CheckEnterAction()
+        private void HandleKeyboardEnterKey()
         {
-            if (!IsEnterPressed || _selectedLog == null)
+            Event e = Event.current;
+
+            if (e == null || !e.isKey || e.type != EventType.KeyUp || e.keyCode != KeyCode.Return)
+                return;
+            
+            if (_selectedLog == null)
                 return;
 
-            if (clickContext == ClickContext.List)
-                JumpToSource(_selectedLog, 0);
-            else if (clickContext == ClickContext.Detail)
-                JumpToSource(_selectedLog, logDetailSelectedFrame < 0 ? 0 : logDetailSelectedFrame);
-        }
-
-        void UpdateLogLine()
-        {
-            // Handles moving up and down using the arrow keys on the keyboard.
-            Event e = Event.current;
-            hadArrowClick = false;
-            moveDir = 0;
-            if (e != null && e.type == EventType.KeyDown && e.isKey)
+            switch (clickContext)
             {
-                bool refresh = false;
-                switch (e.keyCode)
-                {
-                    case KeyCode.UpArrow:
-                        refresh = true;
-                        moveDir = 1;
-                        if (clickContext == ClickContext.List)
-                        {
-                            logListSelectedMessage--;
-                        }
-                        else
-                        {
-                            if (logDetailSelectedFrame == 0)
-                                logDetailSelectedFrame = -2;
-                            else
-                                logDetailSelectedFrame--;
-                        }
-                        break;
-                    case KeyCode.DownArrow:
-                        refresh = true;
-                        moveDir = -1;
-                        if (clickContext == ClickContext.List)
-                        {
-                            logListSelectedMessage++;
-                        }
-                        else
-                        {
-                            if (logDetailSelectedFrame == -2)
-                                logDetailSelectedFrame = 0;
-                            else
-                                logDetailSelectedFrame++;
-                        }
-                        break;
-                }
-
-                if (!refresh)
-                    return;
-
-                hadArrowClick = true;
-                logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, _qtLogs - 1);
-                if (_selectedLog != null)
-                {
-                    if (logDetailSelectedFrame < -2)
-                        logDetailSelectedFrame = -2;
-                    else if (logDetailSelectedFrame >= _selectedLog.StackTrace.Count)
-                        logDetailSelectedFrame = _selectedLog.StackTrace.Count - 1;
-                }
+                case ClickContext.List:
+                    JumpToSourceFile(_selectedLog, 0);
+                    break;
+                case ClickContext.Detail:
+                    JumpToSourceFile(_selectedLog, logDetailSelectedFrame < 0 ? 0 : logDetailSelectedFrame);
+                    break;
             }
         }
 
-        void PingLog(BluLog log)
+        private void HandleKeyboardArrowKeys()
+        {
+            Event e = Event.current;
+            hasKeyboardArrowKeyInput = false;
+            logMoveDirection = Direction.None;
+            
+            if (e == null || e.type != EventType.KeyDown || !e.isKey) 
+                return;
+            
+            var refresh = false;
+            switch (e.keyCode)
+            {
+                case KeyCode.UpArrow:
+                    refresh = true;
+                    logMoveDirection = Direction.Up;
+                    MoveLogPosition(Direction.Up, clickContext);
+                    break;
+                case KeyCode.DownArrow:
+                    refresh = true;
+                    logMoveDirection = Direction.Down;
+                    MoveLogPosition(Direction.Down, clickContext);
+                    break;
+            }
+
+            if (!refresh)
+                return;
+
+            hasKeyboardArrowKeyInput = true;
+            logListSelectedMessage = Mathf.Clamp(logListSelectedMessage, 0, _qtLogs - 1);
+            if (_selectedLog != null)
+            {
+                if (logDetailSelectedFrame < -2)
+                    logDetailSelectedFrame = -2;
+                else if (logDetailSelectedFrame >= _selectedLog.StackTrace.Count)
+                    logDetailSelectedFrame = _selectedLog.StackTrace.Count - 1;
+            }
+        }
+
+        private void MoveLogPosition(Direction direction, ClickContext context)
+        {
+            switch (context)
+            {
+                case ClickContext.List:
+                    logListSelectedMessage += direction == Direction.Up ? -1 : +1;
+                    break;
+                case ClickContext.Detail:
+                    if (logDetailSelectedFrame == -2)
+                        logDetailSelectedFrame = direction == Direction.Up ? -2 : 0;
+                    else if (logDetailSelectedFrame == 0)
+                        logDetailSelectedFrame = direction == Direction.Up ? -2 : 1;
+                    else
+                        logDetailSelectedFrame += direction == Direction.Up ? -1 : +1;
+                    break;
+            }
+        }
+
+        private void PingLog(BluLog log)
         {
             if (log.InstanceID != 0)
                 EditorGUIUtility.PingObject(log.InstanceID);
         }
 
-        void CacheLogComparer(int row, bool value)
+        private void CacheLogComparer(int row, bool value)
         {
             if (row < cacheLogComparer.Count)
                 cacheLogComparer[row] = value;
@@ -945,21 +960,20 @@ namespace BluConsole.Editor
                 cacheLogComparer.Add(value);
         }
 
-        void JumpToSource(BluLog log, int row)
+        private void JumpToSourceFile(BluLog log, int row)
         {
             var file = "";
             var line = -1;
-            var frames = log.StackTrace;
 
-            if (frames.Count == 0)
+            if (log.StackTrace.Count == 0)
             {
                 file = log.File;
                 line = log.Line;
             }
-            else if (row < frames.Count)
+            else if (row < log.StackTrace.Count)
             {
-                file = frames[row].File;
-                line = frames[row].Line;
+                file = log.StackTrace[row].File;
+                line = log.StackTrace[row].Line;
             }
 
             if (string.IsNullOrEmpty(file) || line == -1)
@@ -968,40 +982,31 @@ namespace BluConsole.Editor
             BluUtils.OpenFileOnEditor(file, line);
         }
 
-        void SetDirtyComparer()
+        private void SetDirtyComparer()
         {
             cacheLogComparer.Clear();
         }
 
-        void SetDirtyLogs()
+        private void SetDirtyLogs()
         {
             cacheLog.Clear();
             cacheLogCount = 0;
             SetDirtyComparer();
         }
 
-        void InitVariables()
+        private void InitVariables()
         {
             while (toggledFilters.Count < settings.Filters.Count)
                 toggledFilters.Add(false);
             DefaultButtonWidth = position.width;
-            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + 15.0f;
+            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + DefaultButtonHeightOffset;
             DrawYPos = 0f;
         }
 
-        #endregion
+        #endregion Actions
 
         
         #region Properties
-
-        private bool IsEnterPressed
-        {
-            get
-            {
-                Event e = Event.current;
-                return e != null && e.isKey && e.type == EventType.KeyUp && e.keyCode == KeyCode.Return;
-            }
-        }
 
         private bool IsScrollUp
         {
@@ -1023,7 +1028,7 @@ namespace BluConsole.Editor
         {
             get
             {
-                return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f && !hadArrowClick;
+                return (EditorApplication.timeSinceStartup - _logListLastTimeClicked) < 0.3f && !hasKeyboardArrowKeyInput;
             }
         }
 
@@ -1031,7 +1036,7 @@ namespace BluConsole.Editor
         {
             get
             {
-                return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f && !hadArrowClick;
+                return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f && !hasKeyboardArrowKeyInput;
             }
         }
 
@@ -1045,6 +1050,7 @@ namespace BluConsole.Editor
         
         private float ResizerHeight { get { return 1.0f; } }
         private float MinHeightOfTopAndBottom { get { return 60.0f; } }
+        private float DefaultButtonHeightOffset { get { return 15.0f; } }
         
         #endregion Properties
 
