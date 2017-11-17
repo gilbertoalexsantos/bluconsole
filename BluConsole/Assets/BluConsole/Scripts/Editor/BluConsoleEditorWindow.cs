@@ -426,7 +426,7 @@ namespace BluConsole.Editor
                                            width: viewWidth,
                                            height: DefaultButtonHeight);
                 bool isSelected = i == _logListSelectedMessage ? true : false;
-                DrawBack(rectMessage, styleBack, isSelected);
+                DrawBackground(rectMessage, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectMessage, contentMessage, false, false, isSelected, false);
 
@@ -657,7 +657,7 @@ namespace BluConsole.Editor
                 var isSelected = _logDetailSelectedFrame == -2;
                 var contentMessage = new GUIContent(GetTruncatedMessage(log.Message));
 
-                DrawBack(rectButton, styleBack, isSelected);
+                DrawBackground(rectButton, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
@@ -696,7 +696,7 @@ namespace BluConsole.Editor
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 
                 var isSelected = i == _logDetailSelectedFrame;
-                DrawBack(rectButton, styleBack, isSelected);
+                DrawBackground(rectButton, styleBack, isSelected);
                 if (IsRepaintEvent)
                     styleMessage.Draw(rectButton, contentMessage, false, false, isSelected, false);
 
@@ -727,7 +727,7 @@ namespace BluConsole.Editor
             GUI.EndScrollView();
         }
 
-        void DrawPopup(Event clickEvent, BluLog log)
+        private void DrawPopup(Event clickEvent, BluLog log)
         {
             GenericMenu.MenuFunction copyCallback = () => { EditorGUIUtility.systemCopyBuffer = log.Message; };
 
@@ -738,7 +738,7 @@ namespace BluConsole.Editor
             clickEvent.Use();
         }
 
-        void DrawBack(Rect rect, GUIStyle style, bool isSelected)
+        private void DrawBackground(Rect rect, GUIStyle style, bool isSelected)
         {
             if (IsRepaintEvent)
                 style.Draw(rect, false, false, isSelected, false);
@@ -746,6 +746,7 @@ namespace BluConsole.Editor
 
         #endregion Draw
 
+        
         #region Gets
 
         private int[] GetCachedIntArr(int size)
@@ -817,7 +818,7 @@ namespace BluConsole.Editor
         {
             return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
         }
-
+        
         private bool ShouldLog(BluLog log, int row)
         {
             var messageLower = log.MessageLower;
@@ -846,6 +847,23 @@ namespace BluConsole.Editor
         }
 
         #endregion Gets
+        
+        
+        #region Sets
+        
+        private void SetDirtyComparer()
+        {
+            _cacheLogComparer.Clear();
+        }
+
+        private void SetDirtyLogs()
+        {
+            _cacheLog.Clear();
+            _cacheLogCount = 0;
+            SetDirtyComparer();
+        }
+        
+        #endregion Sets
 
         
         #region Actions
@@ -961,18 +979,6 @@ namespace BluConsole.Editor
                 return;
 
             BluUtils.OpenFileOnEditor(file, line);
-        }
-
-        private void SetDirtyComparer()
-        {
-            _cacheLogComparer.Clear();
-        }
-
-        private void SetDirtyLogs()
-        {
-            _cacheLog.Clear();
-            _cacheLogCount = 0;
-            SetDirtyComparer();
         }
 
         private void InitVariables()
