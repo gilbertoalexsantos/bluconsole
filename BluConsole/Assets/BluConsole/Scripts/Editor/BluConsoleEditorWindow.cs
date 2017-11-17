@@ -127,26 +127,19 @@ namespace BluConsole.Editor
             InitVariables();
 
             HandleKeyboardArrowKeys();
+            HandleKeyboardEnterKey();
 
-            DrawResizer();
-
-            GUILayout.BeginVertical(GUILayout.Height(_topPanelHeight), GUILayout.MinHeight(MinHeightOfTopAndBottom));
+            CalculateResizer();
 
             DrawYPos += DrawTopToolbar();
             DrawYPos -= 1f;
+            
             DrawLogList();
 
-            GUILayout.EndVertical();
+            DrawResizer();
 
-            GUILayout.Space(ResizerHeight);
-
-            GUILayout.BeginVertical(GUILayout.Height(WindowHeight - _topPanelHeight - ResizerHeight));
             DrawYPos = _topPanelHeight + ResizerHeight;
             DrawLogDetail();
-
-            GUILayout.EndVertical();
-
-            HandleKeyboardEnterKey();
 
             Repaint();
         }
@@ -180,9 +173,10 @@ namespace BluConsole.Editor
         
         #region Draw
 
-        float DrawTopToolbar()
+        private float DrawTopToolbar()
         {
             float height = BluConsoleSkin.ToolbarButtonStyle.CalcSize("Clear".GUIContent()).y;
+            
             GUILayout.BeginHorizontal(BluConsoleSkin.ToolbarStyle, GUILayout.Height(height));
 
             if (GetButtonClamped("Clear".GUIContent(), BluConsoleSkin.ToolbarButtonStyle))
@@ -195,13 +189,13 @@ namespace BluConsole.Editor
 
             GUILayout.Space(6.0f);
 
-            bool actualCollapse = UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse);
-            bool newCollapse = GetToggleClamped(_isCollapse, "Collapse".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
+            var actualCollapse = UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse);
+            var newCollapse = GetToggleClamped(_isCollapse, "Collapse".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
             if (newCollapse != _isCollapse)
             {
                 SetDirtyLogs();
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.Collapse, newCollapse);
                 _isCollapse = newCollapse;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.Collapse, newCollapse);
             }
             else if (newCollapse != actualCollapse)
             {
@@ -210,12 +204,12 @@ namespace BluConsole.Editor
             }
 
 
-            bool actualClearOnPlay = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ClearOnPlay);
-            bool newClearOnPlay = GetToggleClamped(_isClearOnPlay, "Clear on Play".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
+            var actualClearOnPlay = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ClearOnPlay);
+            var newClearOnPlay = GetToggleClamped(_isClearOnPlay, "Clear on Play".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
             if (newClearOnPlay != _isClearOnPlay)
             {
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ClearOnPlay, newClearOnPlay);
                 _isClearOnPlay = newClearOnPlay;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ClearOnPlay, newClearOnPlay);
             }
             else if (newClearOnPlay != actualClearOnPlay)
             {
@@ -223,12 +217,12 @@ namespace BluConsole.Editor
             }
 
 
-            bool actualPauseOnError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ErrorPause);
-            bool newPauseOnError = GetToggleClamped(_isPauseOnError, "Pause on Error".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
+            var actualPauseOnError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ErrorPause);
+            var newPauseOnError = GetToggleClamped(_isPauseOnError, "Pause on Error".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
             if (newPauseOnError != _isPauseOnError)
             {
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ErrorPause, newPauseOnError);
                 _isPauseOnError = newPauseOnError;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ErrorPause, newPauseOnError);
             }
             else if (newPauseOnError != actualPauseOnError)
             {
@@ -238,11 +232,12 @@ namespace BluConsole.Editor
 
             GUILayout.FlexibleSpace();
 
+            
             // Search Area
             var oldString = _searchString;
             _searchString = EditorGUILayout.TextArea(_searchString,
                                                      BluConsoleSkin.ToolbarSearchTextFieldStyle,
-                                                     GUILayout.Width(200.0f));
+                                                     GUILayout.Width(SearchStringBoxWidth));
             if (_searchString != oldString)
                 SetDirtyComparer();
 
@@ -255,6 +250,7 @@ namespace BluConsole.Editor
 
             _searchStringPatterns = _searchString.Trim().ToLower().Split(' ');
 
+            
             GUILayout.Space(10.0f);
 
 
@@ -262,28 +258,28 @@ namespace BluConsole.Editor
             int qtNormalLogs = 0, qtWarningLogs = 0, qtErrorLogs = 0;
             UnityLoggerServer.GetCount(ref qtNormalLogs, ref qtWarningLogs, ref qtErrorLogs);
 
-            string qtNormalLogsStr = qtNormalLogs.ToString();
+            var qtNormalLogsStr = qtNormalLogs.ToString();
             if (qtNormalLogs >= MaxAmountOfLogs)
-                qtNormalLogsStr = MaxAmountOfLogs.ToString() + "+";
+                qtNormalLogsStr = MaxAmountOfLogs + "+";
 
-            string qtWarningLogsStr = qtWarningLogs.ToString();
+            var qtWarningLogsStr = qtWarningLogs.ToString();
             if (qtWarningLogs >= MaxAmountOfLogs)
-                qtWarningLogsStr = MaxAmountOfLogs.ToString() + "+";
+                qtWarningLogsStr = MaxAmountOfLogs + "+";
 
-            string qtErrorLogsStr = qtErrorLogs.ToString();
+            var qtErrorLogsStr = qtErrorLogs.ToString();
             if (qtErrorLogs >= MaxAmountOfLogs)
-                qtErrorLogsStr = MaxAmountOfLogs.ToString() + "+";
+                qtErrorLogsStr = MaxAmountOfLogs + "+";
 
 
-            bool actualIsShowNormal = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelLog);
-            bool newIsShowNormal = GetToggleClamped(_isShowNormal,
+            var actualIsShowNormal = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelLog);
+            var newIsShowNormal = GetToggleClamped(_isShowNormal,
                                                     new GUIContent(qtNormalLogsStr, BluConsoleSkin.InfoIconSmall),
                                                     BluConsoleSkin.ToolbarButtonStyle);
             if (newIsShowNormal != _isShowNormal)
             {
                 SetDirtyLogs();
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);
                 _isShowNormal = newIsShowNormal;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);
             }
             else if (newIsShowNormal != actualIsShowNormal)
             {
@@ -292,15 +288,15 @@ namespace BluConsole.Editor
             }
 
 
-            bool actualIsShowWarning = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelWarning);
-            bool newIsShowWarning = GetToggleClamped(_isShowWarning,
+            var actualIsShowWarning = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelWarning);
+            var newIsShowWarning = GetToggleClamped(_isShowWarning,
                                                      new GUIContent(qtWarningLogsStr, BluConsoleSkin.WarningIconSmall),
                                                      BluConsoleSkin.ToolbarButtonStyle);
             if (newIsShowWarning != _isShowWarning)
             {
                 SetDirtyLogs();
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelWarning, newIsShowWarning);
                 _isShowWarning = newIsShowWarning;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelWarning, newIsShowWarning);
             }
             else if (newIsShowWarning != actualIsShowWarning)
             {
@@ -309,15 +305,15 @@ namespace BluConsole.Editor
             }
 
 
-            bool actualIsShowError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelError);
-            bool newIsShowError = GetToggleClamped(_isShowError,
+            var actualIsShowError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelError);
+            var newIsShowError = GetToggleClamped(_isShowError,
                                                    new GUIContent(qtErrorLogsStr, BluConsoleSkin.ErrorIconSmall),
                                                    BluConsoleSkin.ToolbarButtonStyle);
             if (newIsShowError != _isShowError)
             {
                 SetDirtyLogs();
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelError, newIsShowError);
                 _isShowError = newIsShowError;
+                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelError, newIsShowError);
             }
             else if (newIsShowError != actualIsShowError)
             {
@@ -325,7 +321,7 @@ namespace BluConsole.Editor
                 _isShowError = actualIsShowError;
             }
 
-            for (int i = 0; i < _settings.Filters.Count; i++)
+            for (var i = 0; i < _settings.Filters.Count; i++)
             {
                 var name = _settings.Filters[i].Name;
                 var style = BluConsoleSkin.ToolbarButtonStyle;
@@ -525,29 +521,11 @@ namespace BluConsole.Editor
 
         void DrawResizer()
         {
-            var resizerY = _topPanelHeight;
-
-            _cursorChangeRect = new Rect(0, resizerY - 2f, position.width, ResizerHeight + 3f);
-            var cursorChangeCenterRect = new Rect(0, resizerY, position.width, ResizerHeight);
-
-            if (IsRepaintEvent)
-                EditorGUI.DrawRect(_cursorChangeRect, ResizerColor);
-            EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
-
-            if (IsClicked(_cursorChangeRect))
-                _isResizing = true;
-            else if (Event.current.rawType == EventType.MouseUp)
-                _isResizing = false;
-
-            if (_isResizing)
-            {
-                _topPanelHeight = Event.current.mousePosition.y;
-                _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
-            }
-
-            _topPanelHeight = Mathf.Clamp(_topPanelHeight,
-                                          MinHeightOfTopAndBottom,
-                                          position.height - MinHeightOfTopAndBottom);
+            if (!IsRepaintEvent)
+                return;
+            
+            var rect = new Rect(0, _topPanelHeight, position.width, ResizerHeight);
+            EditorGUI.DrawRect(rect, ResizerColor);
         }
 
         void DrawLogDetail()
@@ -883,6 +861,28 @@ namespace BluConsole.Editor
         
         #region Actions
 
+        private void CalculateResizer()
+        {
+            var resizerY = _topPanelHeight;
+
+            _cursorChangeRect = new Rect(0, resizerY - 2f, position.width, ResizerHeight + 3f);
+
+            EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
+
+            if (IsClicked(_cursorChangeRect))
+                _isResizing = true;
+            else if (Event.current.rawType == EventType.MouseUp)
+                _isResizing = false;
+
+            if (_isResizing)
+            {
+                _topPanelHeight = Event.current.mousePosition.y;
+                _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
+            }
+
+            _topPanelHeight = Mathf.Clamp(_topPanelHeight, MinHeightOfTopAndBottom, position.height - MinHeightOfTopAndBottom);
+        }
+
         private void HandleKeyboardEnterKey()
         {
             Event e = Event.current;
@@ -1057,6 +1057,7 @@ namespace BluConsole.Editor
         private int MaxAmountOfLogs { get { return 999; } }
         private int MaxLengthtoCollapse { get { return 999; } }
         private Color ResizerColor { get { return Color.black; } }
+        private float SearchStringBoxWidth { get { return 200.0f; } }
         
         #endregion Properties
 
