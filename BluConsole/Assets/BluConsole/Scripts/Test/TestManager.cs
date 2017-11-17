@@ -1,7 +1,5 @@
 ﻿using BluConsole.Core;
-using BluConsole.Core.UnityLoggerApi;
 using UnityEngine;
-using System;
 
 
 namespace BluConsole.Test
@@ -10,7 +8,7 @@ namespace BluConsole.Test
     public class TestManager : MonoBehaviour
     {
 
-        void Update()
+        private void Update()
         {
             if (Input.GetKeyDown(KeyCode.A))
             {
@@ -40,10 +38,10 @@ namespace BluConsole.Test
 
         private void GenerateLotOfLogs()
         {
-            int qt = UnityEngine.Random.Range(100, 200);
+            int qt = Random.Range(100, 200);
             for (int i = 0; i < qt; i++)
             {
-                int random = UnityEngine.Random.Range(1, 6);
+                int random = Random.Range(1, 6);
                 if (random == 1)
                     Test1.LogLevelOne(RandomMessage, RandomLogType);
                 else if (random == 2)
@@ -57,11 +55,11 @@ namespace BluConsole.Test
             }
         }
 
-        BluLogType RandomLogType
+        private BluLogType RandomLogType
         {
             get
             {
-                int random = UnityEngine.Random.Range(0, 3);
+                int random = Random.Range(0, 3);
                 if (random == 0)
                     return BluLogType.Normal;
                 else if (random == 1)
@@ -71,11 +69,11 @@ namespace BluConsole.Test
             }
         }
 
-        string RandomMessage
+        private string RandomMessage
         {
             get
             {
-                int random = UnityEngine.Random.Range(0, 101);
+                int random = Random.Range(0, 101);
                 if (random >= 0 && random < 40)
                     return "Small Message";
                 else if (random >= 40 && random < 90)
@@ -85,7 +83,7 @@ namespace BluConsole.Test
             }
         }
 
-        string BigString
+        private string BigString
         {
             get
             {

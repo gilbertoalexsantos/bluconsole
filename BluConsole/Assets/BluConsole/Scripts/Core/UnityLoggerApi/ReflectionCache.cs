@@ -16,65 +16,65 @@ namespace BluConsole.Core.UnityLoggerApi
     public static class ReflectionCache
     {
 
-        static Dictionary<UnityClassType, string> cacheStrUnityClassType = new Dictionary<UnityClassType, string>()
+        private static Dictionary<UnityClassType, string> _cacheStrUnityClassType = new Dictionary<UnityClassType, string>()
         {
             { UnityClassType.ConsoleWindow, "0" },
             { UnityClassType.LogEntries,    "1" },
             { UnityClassType.LogEntry,      "2" },
         };
 
-        static Dictionary<Type, string> cacheStrType = new Dictionary<Type, string>()
+        private static Dictionary<Type, string> _cacheStrType = new Dictionary<Type, string>()
         {
             { typeof(MethodInfo),   "0" },
             { typeof(PropertyInfo), "1" },
             { typeof(FieldInfo),    "2" },
         };
 
-        static Dictionary<string, object> cache = new Dictionary<string, object>();
+        private static Dictionary<string, object> _cache = new Dictionary<string, object>();
 
         public static MethodInfo GetMethod(string key, UnityClassType type)
         {
             var cacheKey = GetKey<MethodInfo>(key, type);
             if (!Has(cacheKey))
-                cache[cacheKey] = GetType(type).GetMethod(key, GetFlags(type));
-            return (MethodInfo)cache[cacheKey];
+                _cache[cacheKey] = GetType(type).GetMethod(key, GetFlags(type));
+            return (MethodInfo)_cache[cacheKey];
         }
 
         public static PropertyInfo GetProperty(string key, UnityClassType type)
         {
             var cacheKey = GetKey<PropertyInfo>(key, type);
             if (!Has(cacheKey))
-                cache[cacheKey] = GetType(type).GetProperty(key, GetFlags(type));
-            return (PropertyInfo)cache[cacheKey];
+                _cache[cacheKey] = GetType(type).GetProperty(key, GetFlags(type));
+            return (PropertyInfo)_cache[cacheKey];
         }
 
         public static FieldInfo GetField(string key, UnityClassType type)
         {
             var cacheKey = GetKey<FieldInfo>(key, type);
             if (!Has(cacheKey))
-                cache[cacheKey] = GetType(type).GetField(key);
-            return (FieldInfo)cache[cacheKey];
+                _cache[cacheKey] = GetType(type).GetField(key);
+            return (FieldInfo)_cache[cacheKey];
         }
 
         public static Type GetType(UnityClassType type)
         {
             var cacheKey = type.ToString();
             if (!Has(cacheKey))
-                cache[cacheKey] = GetTypeFromAssembly(type);
-            return (Type)cache[cacheKey];
+                _cache[cacheKey] = GetTypeFromAssembly(type);
+            return (Type)_cache[cacheKey];
         }
 
-        static string GetKey<T>(string key, UnityClassType type)
+        private static string GetKey<T>(string key, UnityClassType type)
         {
-            return String.Format("{0}:{1}:{2}", cacheStrUnityClassType[type], cacheStrType[typeof(T)], key);
+            return string.Format("{0}:{1}:{2}", _cacheStrUnityClassType[type], _cacheStrType[typeof(T)], key);
         }
 
-        static bool Has(string key)
+        private static bool Has(string key)
         {
-            return cache.ContainsKey(key);
+            return _cache.ContainsKey(key);
         }
 
-        static Type GetTypeFromAssembly(UnityClassType type)
+        private static Type GetTypeFromAssembly(UnityClassType type)
         {
 #if UNITY_2017_1_OR_NEWER
             switch (type)
@@ -103,7 +103,7 @@ namespace BluConsole.Core.UnityLoggerApi
 #endif
         }
 
-        static BindingFlags GetFlags(UnityClassType type)
+        private static BindingFlags GetFlags(UnityClassType type)
         {
             switch (type)
             {

@@ -68,27 +68,25 @@
             return ConsoleWindow.HasMode(mode, modeToCheck);
         }
 
-        static BluLogType GetLogType(BluLog log)
+        private static BluLogType GetLogType(BluLog log)
         {
-            int mode = log.Mode;
-            if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)UnityLoggerServer.GetLogMask(BluLogType.Error)))
+            if (HasMode(log.Mode, (ConsoleWindowMode)GetLogMask(BluLogType.Error)))
                 return BluLogType.Error;
-            else if (UnityLoggerServer.HasMode(mode, (ConsoleWindowMode)UnityLoggerServer.GetLogMask(BluLogType.Warning)))
+            if (HasMode(log.Mode, (ConsoleWindowMode)GetLogMask(BluLogType.Warning)))
                 return BluLogType.Warning;
-            else
-                return BluLogType.Normal;
+            return BluLogType.Normal;
         }
 
-        static int GetLogMask(BluLogType type)
+        private static int GetLogMask(BluLogType type)
         {
             switch (type)
             {
-            case BluLogType.Normal:
-                return 1028;
-            case BluLogType.Warning:
-                return 4736;
-            default:
-                return 3148115;
+                case BluLogType.Normal:
+                    return 1028;
+                case BluLogType.Warning:
+                    return 4736;
+                default:
+                    return 3148115;
             }
         }
 

@@ -19,15 +19,15 @@ namespace BluConsole.Core.UnityLoggerApi
     public static class LogEntry
     {
 
-        static object cachedLogEntry = null;
+        private static object _cachedLogEntry;
 
         public static object CachedLogEntry 
         { 
             get 
             {
-                if (cachedLogEntry == null)
-                    cachedLogEntry = Activator.CreateInstance(ReflectionCache.GetType(UnityClassType.LogEntry));
-                return cachedLogEntry;
+                if (_cachedLogEntry == null)
+                    _cachedLogEntry = Activator.CreateInstance(ReflectionCache.GetType(UnityClassType.LogEntry));
+                return _cachedLogEntry;
             }
         }
 
@@ -54,7 +54,7 @@ namespace BluConsole.Core.UnityLoggerApi
             return log;
         }
 
-        static FieldInfo GetField(string key)
+        private static FieldInfo GetField(string key)
         {
             return ReflectionCache.GetField(key, UnityClassType.LogEntry);
         }

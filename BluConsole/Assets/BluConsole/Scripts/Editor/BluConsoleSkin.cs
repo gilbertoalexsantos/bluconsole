@@ -6,7 +6,7 @@ using BluConsole.Core;
 namespace BluConsole.Editor
 {
 
-    public class BluConsoleSkin
+    public static class BluConsoleSkin
     {
 
         #region Texture
@@ -15,8 +15,7 @@ namespace BluConsole.Editor
         {
             get
             {
-                string path = "BluConsole/Images/bluconsole-icon";
-                return Resources.Load<Texture2D>(path);
+                return Resources.Load<Texture2D>("BluConsole/Images/bluconsole-icon");
             }
         }
 
@@ -89,13 +88,13 @@ namespace BluConsole.Editor
             switch (logType)
             {
             case BluLogType.Normal:
-                return BluConsoleSkin.LogInfoStyle;
+                return LogInfoStyle;
             case BluLogType.Warning:
-                return BluConsoleSkin.LogWarnStyle;
+                return LogWarnStyle;
             case BluLogType.Error:
-                return BluConsoleSkin.LogErrorStyle;
+                return LogErrorStyle;
             }
-            return BluConsoleSkin.LogInfoStyle;
+            return LogInfoStyle;
         }
 
         #endregion Texture
@@ -107,10 +106,11 @@ namespace BluConsole.Editor
         {
             get
             {
-                var style = new GUIStyle(MessageDetailFirstLogStyle);
-                style.wordWrap = false;
-                style.onNormal.textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor;
-                return style;
+                return new GUIStyle(MessageDetailFirstLogStyle)
+                {
+                    wordWrap = false,
+                    onNormal = {textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor}
+                };
             }
         }
 
@@ -118,11 +118,12 @@ namespace BluConsole.Editor
         {
             get
             {
-                var style = new GUIStyle(BluConsoleSkin.MessageStyle);
-                style.stretchWidth = true;
-                style.wordWrap = true;
-                style.onNormal.textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor;
-                return style;
+                return new GUIStyle(BluConsoleSkin.MessageStyle)
+                {
+                    stretchWidth = true,
+                    wordWrap = true,
+                    onNormal = {textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor}
+                };
             }
         }
 

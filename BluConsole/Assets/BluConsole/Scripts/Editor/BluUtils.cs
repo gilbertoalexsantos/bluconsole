@@ -11,17 +11,6 @@ namespace BluConsole.Editor
     public static class BluUtils
     {
 
-        public static void AddCallback(this Action a, Action cb)
-        {
-            a -= cb;
-            a += cb;
-        }
-        
-        public static GUIContent GUIContent(this string text)
-        {
-            return new GUIContent(text);
-        }
-
         private static readonly List<string> defaultIgnorePrefixes = new List<string>()
         {
             "UnityEngine.Debug"

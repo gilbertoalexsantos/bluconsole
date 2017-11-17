@@ -30,7 +30,7 @@ namespace BluConsole.Core
             if (string.IsNullOrEmpty(condition))
                 return;
         
-            int index = 0;
+            var index = 0;
             while (index < condition.Length && condition[index++] != '\n');
             Message = condition.Substring(0, index-1);
             MessageLower = Message.ToLower();
@@ -59,7 +59,7 @@ namespace BluConsole.Core
                 return;
 
             var splits = condition.Split('\n');
-            for (int i = 1; i < splits.Length; i++)
+            for (var i = 1; i < splits.Length; i++)
             {
                 if (string.IsNullOrEmpty(splits[i]))
                     continue;
@@ -77,7 +77,7 @@ namespace BluConsole.Core
             var newStackTrace = new List<BluLogFrame>(StackTrace.Count);
             foreach (var frame in StackTrace)
             {
-                bool hasPrefix = false;
+                var hasPrefix = false;
                 foreach (var prefix in prefixs)
                 {
                     if (frame.FrameInformation.StartsWith(prefix))

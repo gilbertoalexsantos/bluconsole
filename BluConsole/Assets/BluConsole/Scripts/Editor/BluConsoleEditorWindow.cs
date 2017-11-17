@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using BluConsole.Core;
 using BluConsole.Core.UnityLoggerApi;
+using BluConsole.Extensions;
 
 
 namespace BluConsole.Editor

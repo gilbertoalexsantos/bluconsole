@@ -9,9 +9,9 @@ namespace BluConsole.Editor
 
     public class UnityApiEvents : ScriptableObject
     {
-
-        bool isCompiling;
-        bool isPlaying;
+        
+        private bool isCompiling;
+        private bool isPlaying;
     
         public Action OnBeforeCompileEvent;
         public Action OnAfterCompileEvent;
@@ -29,14 +29,14 @@ namespace BluConsole.Editor
             }
         }
 
-        void OnEnable()
+        private void OnEnable()
         {
             EditorApplication.update -= Update;
             EditorApplication.update += Update;
             hideFlags = HideFlags.HideAndDontSave;
         }
 
-        void Update()
+        private void Update()
         {
             if (EditorApplication.isCompiling && !isCompiling)
             {
@@ -61,22 +61,22 @@ namespace BluConsole.Editor
             }
         }
 
-        void OnBeforeCompile()
+        private void OnBeforeCompile()
         {
             OnBeforeCompileEvent.SafeInvoke();
         }
 
-        void OnAfterCompile()
+        private void OnAfterCompile()
         {
             OnAfterCompileEvent.SafeInvoke();
         }
 
-        void OnBeginPlay()
+        private void OnBeginPlay()
         {
             OnBeginPlayEvent.SafeInvoke();
         }
 
-        void OnStopPlay()
+        private void OnStopPlay()
         {
             OnStopPlayEvent.SafeInvoke();
         }
