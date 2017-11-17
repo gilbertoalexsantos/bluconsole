@@ -513,10 +513,10 @@ namespace BluConsole.Editor
             var resizerY = _topPanelHeight;
 
             _cursorChangeRect = new Rect(0, resizerY - 2f, position.width, ResizerHeight + 3f);
-            var cursorChangeCenterRect = new Rect(0, resizerY, position.width, 1.0f);
+            var cursorChangeCenterRect = new Rect(0, resizerY, position.width, ResizerHeight);
 
             if (IsRepaintEvent)
-                BluConsoleSkin.BoxStyle.Draw(cursorChangeCenterRect, false, false, false, false);
+                EditorGUI.DrawRect(_cursorChangeRect, ResizerColor);
             EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
 
             if (IsClicked(_cursorChangeRect))
@@ -1029,12 +1029,13 @@ namespace BluConsole.Editor
         private float DefaultButtonWidth { get; set; }
         private float DefaultButtonHeight { get; set; }
         
-        private float ResizerHeight { get { return 1.0f; } }
+        private float ResizerHeight { get { return 2.0f; } }
         private float MinHeightOfTopAndBottom { get { return 60.0f; } }
         private float DefaultButtonHeightOffset { get { return 15.0f; } }
         private int MaxLengthMessage { get { return 999; } }
         private int MaxAmountOfLogs { get { return 999; } }
         private int MaxLengthtoCollapse { get { return 999; } }
+        private Color ResizerColor { get { return Color.black; } }
         
         #endregion Properties
 
