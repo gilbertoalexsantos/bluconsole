@@ -26,6 +26,8 @@ namespace BluConsole.Editor
 
     public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
+        
+        #region Variables
 
         // Cache Variables
         private UnityApiEvents _unityApiEvents;
@@ -72,7 +74,11 @@ namespace BluConsole.Editor
         private Direction _logMoveDirection;
         private ClickContext _clickContext;
 
+        #endregion Variables
 
+        
+        #region Windows
+        
         [MenuItem("Window/BluConsole")]
         public static void ShowWindow()
         {
@@ -86,8 +92,13 @@ namespace BluConsole.Editor
 
             window._topPanelHeight = window.position.height / 2.0f;
         }
+        
+        #endregion Windows
+        
+        
+        #region OnEvents
 
-        void OnEnable()
+        private void OnEnable()
         {
             _stackTraceIgnorePrefixs = BluUtils.StackTraceIgnorePrefixs;
             _settings = BluLogSettings.Instance;
@@ -95,7 +106,7 @@ namespace BluConsole.Editor
             SetDirtyLogs();
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             _settings = null;
             _unityApiEvents = null;
@@ -103,7 +114,7 @@ namespace BluConsole.Editor
             Resources.UnloadUnusedAssets();
         }
 
-        void Update()
+        private void Update()
         {
             _unityApiEvents.OnBeforeCompileEvent.AddCallback(SetDirtyLogs);
             _unityApiEvents.OnAfterCompileEvent.AddCallback(OnAfterCompile);
@@ -111,7 +122,7 @@ namespace BluConsole.Editor
             _unityApiEvents.OnStopPlayEvent.AddCallback(SetDirtyLogs);
         }
 
-        void OnGUI()
+        private void OnGUI()
         {
             InitVariables();
 
@@ -140,12 +151,15 @@ namespace BluConsole.Editor
             Repaint();
         }
 
-        void OnAfterCompile()
+        private void OnAfterCompile()
         {
             SetDirtyLogs();
             _logListSelectedMessage = -1;
             _logDetailSelectedFrame = -1;
         }
+        
+        #endregion OnEvents
+
 
         #region IHasCustomMenu
 
@@ -154,7 +168,7 @@ namespace BluConsole.Editor
             menu.AddItem(new GUIContent("Add Filter"), false, OnAddFilterTabClicked);
         }
 
-        void OnAddFilterTabClicked()
+        private void OnAddFilterTabClicked()
         {
             if (_settings == null)
                 return;
@@ -163,6 +177,7 @@ namespace BluConsole.Editor
 
         #endregion IHasCustomMenu
 
+        
         #region Draw
 
         float DrawTopToolbar()
