@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 
 
 namespace BluConsole.Core.UnityLoggerApi
@@ -23,8 +22,8 @@ namespace BluConsole.Core.UnityLoggerApi
 
         public static BluLog GetSimpleLog(int row)
         {
-            int mode = 0;
-            string message = "";
+            var mode = 0;
+            var message = "";
             GetFirstTwoLinesEntryTextAndModeInternal(row, ref mode, ref message);
             BluLog log = new BluLog();
             log.SetMessage(message);
@@ -68,13 +67,13 @@ namespace BluConsole.Core.UnityLoggerApi
             method.Invoke(null, null);
         }
 
-        static bool GetEntryInternal(int row, object output)
+        private static bool GetEntryInternal(int row, object output)
         {
             var method = GetMethod("GetEntryInternal");
             return (bool)method.Invoke(null, new object[] { row, output });
         }
 
-        static void GetFirstTwoLinesEntryTextAndModeInternal(int row, ref int mode, ref string text)
+        private static void GetFirstTwoLinesEntryTextAndModeInternal(int row, ref int mode, ref string text)
         {
             var method = GetMethod("GetFirstTwoLinesEntryTextAndModeInternal");
 
@@ -85,7 +84,7 @@ namespace BluConsole.Core.UnityLoggerApi
             text = (string)parameters[2];
         }
 
-        static MethodInfo GetMethod(string key)
+        private static MethodInfo GetMethod(string key)
         {
             return ReflectionCache.GetMethod(key, UnityClassType.LogEntries);
         }

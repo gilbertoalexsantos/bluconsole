@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 
@@ -11,33 +10,13 @@ namespace BluConsole.Editor
     public class BluLogFilter : ISerializationCallbackReceiver
     {
     
-        [SerializeField] string name;
-        [SerializeField] string pattern;
-        List<string> patterns;
+        [SerializeField] private string _name;
+        [SerializeField] private string _pattern;
+        private List<string> _patterns;
 
-        public string Name
-        {
-            get
-            {
-                return string.IsNullOrEmpty(name) ? "?" : name;
-            }
-        }
-
-        public string Pattern 
-        { 
-            get 
-            {
-                return pattern == null ? "" : pattern;
-            } 
-        }
-
-        public List<string> Patterns
-        {
-            get
-            {
-                return patterns = patterns == null ? new List<string>() : patterns;
-            }
-        }
+        public string Name { get { return string.IsNullOrEmpty(_name) ? "?" : _name; } }
+        public string Pattern  {  get  { return string.IsNullOrEmpty(_pattern) ? "" : _pattern; }  }
+        public List<string> Patterns { get { return _patterns = _patterns ?? new List<string>(); } }
 
         public void OnAfterDeserialize()
         {

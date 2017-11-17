@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 
 
 namespace BluConsole.Core.UnityLoggerApi
@@ -86,7 +85,7 @@ namespace BluConsole.Core.UnityLoggerApi
             return (bool)method.Invoke(null, new object[] { mode, (int)modeToCheck });
         }
 
-        static MethodInfo GetMethod(string key)
+        private static MethodInfo GetMethod(string key)
         {
             return ReflectionCache.GetMethod(key, UnityClassType.ConsoleWindow);
         }
