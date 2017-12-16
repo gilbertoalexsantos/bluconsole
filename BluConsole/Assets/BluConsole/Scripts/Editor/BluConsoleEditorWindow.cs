@@ -466,8 +466,6 @@ namespace BluConsole.Editor
                 if (messageClicked)
                 {
                     _clickContext = ClickContext.List;
-                    if (isLeftClick)
-                        _selectedLog = GetCompleteLog(row);
                     hasSomeClick = true;
                     if (_logListSelectedMessage != i)
                         _logListLastTimeClicked = 0.0f;
@@ -492,6 +490,9 @@ namespace BluConsole.Editor
                     if (isLeftClick)
                         _logDetailSelectedFrame = -1;
                 }
+                
+                if (_logListSelectedMessage == row)
+                    _selectedLog = GetCompleteLog(row);
 
                 buttonY += DefaultButtonHeight;
             }
