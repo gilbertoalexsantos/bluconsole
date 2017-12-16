@@ -864,6 +864,8 @@ namespace BluConsole.Editor
         {
             _cacheLog.Clear();
             _cacheLogCount = 0;
+            _cacheIntArr = new int[50];
+            _cacheLogArr = new BluLog[50];
             SetDirtyComparer();
         }
         
