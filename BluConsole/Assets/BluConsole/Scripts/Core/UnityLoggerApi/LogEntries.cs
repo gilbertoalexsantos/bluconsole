@@ -75,6 +75,15 @@ namespace BluConsole.Core.UnityLoggerApi
 
         private static void GetFirstTwoLinesEntryTextAndModeInternal(int row, ref int mode, ref string text)
         {
+#if UNITY_2017_3_OR_NEWER
+            var method = GetMethod("GetLinesAndModeFromEntryInternal");
+
+            var parameters = new object[] { row, 2, 1, "" };
+            method.Invoke(null, parameters);
+
+            mode = (int)parameters[2];
+            text = (string)parameters[3];
+#else
             var method = GetMethod("GetFirstTwoLinesEntryTextAndModeInternal");
 
             var parameters = new object[] { row, 0, "" };
@@ -82,6 +91,7 @@ namespace BluConsole.Core.UnityLoggerApi
 
             mode = (int)parameters[1];
             text = (string)parameters[2];
+#endif
         }
 
         private static MethodInfo GetMethod(string key)
