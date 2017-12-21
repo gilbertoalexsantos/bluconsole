@@ -87,12 +87,12 @@ namespace BluConsole.Editor
         {
             switch (logType)
             {
-            case BluLogType.Normal:
-                return LogInfoStyle;
-            case BluLogType.Warning:
-                return LogWarnStyle;
-            case BluLogType.Error:
-                return LogErrorStyle;
+                case BluLogType.Normal:
+                    return LogInfoStyle;
+                case BluLogType.Warning:
+                    return LogWarnStyle;
+                case BluLogType.Error:
+                    return LogErrorStyle;
             }
             return LogInfoStyle;
         }
@@ -203,7 +203,13 @@ namespace BluConsole.Editor
         {
             get
             {
+#if UNITY_2017_3_OR_NEWER
+                var style = new GUIStyle(GUI.skin.FindStyle("CN EntryInfo"));
+                style.normal.background = InfoIcon;
+                return style;
+#else
                 return GUI.skin.FindStyle("CN EntryInfo");
+#endif
             }
         }
 
@@ -211,7 +217,13 @@ namespace BluConsole.Editor
         {
             get
             {
+#if UNITY_2017_3_OR_NEWER
+                var style = new GUIStyle(GUI.skin.FindStyle("CN EntryWarn"));
+                style.normal.background = WarningIcon;
+                return style;
+#else
                 return GUI.skin.FindStyle("CN EntryWarn");
+#endif
             }
         }
 
@@ -219,7 +231,13 @@ namespace BluConsole.Editor
         {
             get
             {
+#if UNITY_2017_3_OR_NEWER
+                var style = new GUIStyle(GUI.skin.FindStyle("CN EntryError"));
+                style.normal.background = ErrorIcon;
+                return style;
+#else
                 return GUI.skin.FindStyle("CN EntryError");
+#endif
             }
         }
 
@@ -236,3 +254,4 @@ namespace BluConsole.Editor
     }
 
 }
+
