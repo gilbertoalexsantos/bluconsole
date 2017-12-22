@@ -1063,7 +1063,7 @@ namespace BluConsole.Editor
         private float DefaultButtonWidth { get; set; }
         private float DefaultButtonHeight { get; set; }
         
-        private float ResizerHeight { get { return 2.0f; } }
+        private float ResizerHeight { get { return 1.0f; } }
         private float MinHeightOfTopAndBottom { get { return 60.0f; } }
         private float DefaultButtonHeightOffset { get { return 15.0f; } }
         private int MaxLengthMessage { get { return 999; } }
