@@ -471,7 +471,7 @@ namespace BluConsole.Editor
                         _logListLastTimeClicked = 0.0f;
                     if (isLeftClick && !IsDoubleClickLogDetailButton)
                     {
-                        PingLog(_selectedLog);
+                        PingLog(GetCompleteLog(row));
                         _logListSelectedMessage = i;
                     }
                     if (!isLeftClick)
@@ -491,7 +491,7 @@ namespace BluConsole.Editor
                         _logDetailSelectedFrame = -1;
                 }
                 
-                if (_logListSelectedMessage == row)
+                if (_logListSelectedMessage == i)
                     _selectedLog = GetCompleteLog(row);
 
                 buttonY += DefaultButtonHeight;
