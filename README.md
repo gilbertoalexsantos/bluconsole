@@ -9,6 +9,8 @@ Any doubts, you can post an issue or send me an email: <gilberto.alexsantos@gmai
 
 To install, just download the **bluconsole.unitypackage**, install it, and open the window on: Window/BluConsole. Simple like that.
 
+When updating the version, delete the old version and import again. If you want to keep your filters, backup your BluLogSeetings.asset and use it with the new version.
+
 Features Implemented
 ----------------------------
 
@@ -40,7 +42,6 @@ TODO
 ----------------------------
 
 * Improve additional filter editor
-* Support Regex in the Search Box
 * Support for themes (Font size, Colors, etc)
 
 Known Issues
