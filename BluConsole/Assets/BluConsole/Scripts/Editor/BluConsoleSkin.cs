@@ -11,11 +11,11 @@ namespace BluConsole.Editor
 
         #region Texture
 
-        public static Texture2D ConsoleIcon
+        public static Texture ConsoleIcon
         {
             get
             {
-                return Resources.Load<Texture2D>("BluConsole/Images/bluconsole-icon");
+                return BluLogFiles.Instance.WindowIcon;
             }
         }
 
