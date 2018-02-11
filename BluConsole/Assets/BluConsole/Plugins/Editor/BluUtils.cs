@@ -13,7 +13,7 @@ namespace BluConsole.Editor
 
         private static readonly List<string> defaultIgnorePrefixes = new List<string>()
         {
-            "UnityEngine.Debug"
+            "UnityEngine.Debug:"
         };
 
         public static void OpenFileOnEditor(string path, int line)
@@ -44,7 +44,7 @@ namespace BluConsole.Editor
                     {
                         if (method.GetCustomAttributes(stackTraceIgnoreType, true).Length > 0)
                         {
-                            var key = string.Format("{0}:{1}", method.DeclaringType.FullName, method.Name);
+                            var key = string.Format("{0}:{1}(", method.DeclaringType.FullName, method.Name);
                             ret.Add(key);
                         }
                     }
