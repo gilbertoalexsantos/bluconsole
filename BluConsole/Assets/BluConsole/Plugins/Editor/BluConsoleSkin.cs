@@ -127,6 +127,11 @@ namespace BluConsole.Editor
             }
         }
 
+        public static GUIStyle GetLogBackStyle(int row)
+        {
+            return row % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
+        }
+
         public static GUIStyle BoxStyle
         {
             get
