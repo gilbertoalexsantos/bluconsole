@@ -15,16 +15,8 @@ namespace BluConsole.Editor
     public class BluListWindow : BluConsoleWindow
     {
 
-        // TODO: Remove
-        public float DefaultButtonWidth { get; set; }
-        public float DefaultButtonHeight { get; set; }
-        public double LogDetailLastTimeClicked { get; set; }
-        public bool IsDoubleClickLogDetailButton { get; set; }
-        public int LogDetailSelectedFrame { get; set; }
-        private int MaxLengthMessage { get { return 999; } }
-        private int MaxLengthtoCollapse { get { return 999; } }
-
         private bool IsFollowScroll { get; set; }
+
         private Vector2 ScrollPosition;
 
         public override void OnGUI(int id)
@@ -82,7 +74,7 @@ namespace BluConsole.Editor
                 var styleBack = BluConsoleSkin.GetLogBackStyle(i);
 
                 var styleMessage = BluConsoleSkin.GetLogListStyle(log.LogType);
-                string showMessage = GetTruncatedMessage(log, MaxLengthMessage);
+                string showMessage = GetTruncatedMessage(log, LogConfiguration.MaxLengthMessage);
                 var contentMessage = new GUIContent(showMessage);
                 var rectMessage = new Rect(x: 0, y: buttonY, width: viewWidth, height: DefaultButtonHeight);
                 bool isSelected = i == SelectedMessage;
@@ -97,9 +89,9 @@ namespace BluConsole.Editor
                 if (hasCollapse)
                 {
                     int quantity = UnityLoggerServer.GetLogCount(row);
-                    var collapseCount = Mathf.Min(quantity, MaxLengthtoCollapse);
+                    var collapseCount = Mathf.Min(quantity, LogConfiguration.MaxLengthCollapse);
                     var collapseText = collapseCount.ToString();
-                    if (collapseCount >= MaxLengthtoCollapse)
+                    if (collapseCount >= LogConfiguration.MaxLengthCollapse)
                         collapseText += "+";
                     var collapseContent = new GUIContent(collapseText);
                     var collapseSize = BluConsoleSkin.CollapseStyle.CalcSize(collapseContent);
@@ -117,7 +109,7 @@ namespace BluConsole.Editor
                     hasSomeClick = true;
                     if (SelectedMessage != i)
                         LastTimeClicked = 0.0f;
-                    if (isLeftClick && !IsDoubleClickLogDetailButton)
+                    if (isLeftClick)
                     {
                         BluUtils.PingLog(GetCompleteLog(row));
                         SelectedMessage = i;
@@ -135,8 +127,6 @@ namespace BluConsole.Editor
                         else
                             LastTimeClicked = EditorApplication.timeSinceStartup;
                     }
-                    if (isLeftClick)
-                        LogDetailSelectedFrame = -1;
                 }
 
                 buttonY += DefaultButtonHeight;

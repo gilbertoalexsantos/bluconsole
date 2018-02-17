@@ -18,6 +18,7 @@ namespace BluConsole.Editor
         // Cache Variables
         private UnityApiEvents _unityApiEvents;
         private BluLogSettings _settings;
+        private BluLogConfiguration _configuration;
         private List<BluLog> _cacheLog = new List<BluLog>();
         private List<bool> _cacheLogComparer = new List<bool>();
         private List<string> _stackTraceIgnorePrefixs = new List<string>();
@@ -86,6 +87,7 @@ namespace BluConsole.Editor
         {
             _stackTraceIgnorePrefixs = BluUtils.StackTraceIgnorePrefixs;
             _settings = BluLogSettings.Instance;
+            _configuration = BluLogConfiguration.Instance;
             _unityApiEvents = UnityApiEvents.Instance;
             SetDirtyLogs();
         }
@@ -339,13 +341,9 @@ namespace BluConsole.Editor
             ListWindow.WindowRect = hackWindowRect;
             ListWindow.Rows = GetCachedIntArr(_qtLogs);
             ListWindow.Logs = GetCachedLogsArr(_qtLogs);
+            ListWindow.LogConfiguration = _configuration;
             ListWindow.QtLogs = _qtLogs;
-            ListWindow.DefaultButtonWidth = DefaultButtonWidth;
-            ListWindow.DefaultButtonHeight = DefaultButtonHeight;
-            ListWindow.LogDetailLastTimeClicked = _logDetailLastTimeClicked;
-            ListWindow.IsDoubleClickLogDetailButton = IsDoubleClickLogDetailButton;
             ListWindow.StackTraceIgnorePrefixs = _stackTraceIgnorePrefixs;
-            ListWindow.LogDetailSelectedFrame = _logDetailSelectedFrame;
 
             GUI.Window(1, originalWindowRect, ListWindow.OnGUI, "", GUIStyle.none);
 

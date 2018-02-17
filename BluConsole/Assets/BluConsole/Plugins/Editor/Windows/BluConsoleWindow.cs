@@ -39,6 +39,7 @@ namespace BluConsole.Editor
         public double LastTimeClicked { get; set; }
         public bool HasKeyboardArrowKeyInput { get; private set; }
         public Direction KeyboardArrowKeyDirection { get; private set; }
+        public BluLogConfiguration LogConfiguration { get; set; }
 
         public bool IsRepaintEvent
         {
@@ -75,6 +76,22 @@ namespace BluConsole.Editor
             log.FilterStackTrace(StackTraceIgnorePrefixs);
             return log;
         }        
+
+        protected float DefaultButtonWidth 
+        { 
+            get 
+            { 
+                return WindowRect.width; 
+            }
+        }
+
+        protected float DefaultButtonHeight
+        {
+            get
+            {
+                return BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + LogConfiguration.DefaultButtonHeightOffset;
+            }
+        }
 
         protected void DrawPopup(BluLog log)
         {
