@@ -91,9 +91,9 @@ namespace BluConsole.Editor
                 if (hasCollapse)
                 {
                     int quantity = UnityLoggerServer.GetLogCount(row);
-                    var collapseCount = Mathf.Min(quantity, LogConfiguration.MaxLengthCollapse);
+                    var collapseCount = Mathf.Min(quantity, LogConfiguration.MaxAmountOfLogsCollapse);
                     var collapseText = collapseCount.ToString();
-                    if (collapseCount >= LogConfiguration.MaxLengthCollapse)
+                    if (collapseCount >= LogConfiguration.MaxAmountOfLogsCollapse)
                         collapseText += "+";
                     var collapseContent = new GUIContent(collapseText);
                     var collapseSize = BluConsoleSkin.CollapseStyle.CalcSize(collapseContent);
