@@ -45,10 +45,6 @@ namespace BluConsole.Editor
         // Filter Variables
         private List<bool> _toggledFilters = new List<bool>();
 
-
-        private BluListWindow ListWindow { get; set; }
-        private BluDetailWindow DetailWindow { get; set; }
-
         #endregion Variables
 
         
@@ -216,7 +212,7 @@ namespace BluConsole.Editor
             var oldString = _searchString;
             _searchString = EditorGUILayout.TextArea(_searchString,
                                                      BluConsoleSkin.ToolbarSearchTextFieldStyle,
-                                                     GUILayout.Width(SearchStringBoxWidth));
+                                                     GUILayout.Width(_configuration.SearchStringBoxWidth));
             if (_searchString != oldString)
                 SetDirtyComparer();
 
@@ -238,16 +234,16 @@ namespace BluConsole.Editor
             UnityLoggerServer.GetCount(ref qtNormalLogs, ref qtWarningLogs, ref qtErrorLogs);
 
             var qtNormalLogsStr = qtNormalLogs.ToString();
-            if (qtNormalLogs >= MaxAmountOfLogs)
-                qtNormalLogsStr = MaxAmountOfLogs + "+";
+            if (qtNormalLogs >= _configuration.MaxAmountOfLogs)
+                qtNormalLogsStr = _configuration.MaxAmountOfLogs + "+";
 
             var qtWarningLogsStr = qtWarningLogs.ToString();
-            if (qtWarningLogs >= MaxAmountOfLogs)
-                qtWarningLogsStr = MaxAmountOfLogs + "+";
+            if (qtWarningLogs >= _configuration.MaxAmountOfLogs)
+                qtWarningLogsStr = _configuration.MaxAmountOfLogs + "+";
 
             var qtErrorLogsStr = qtErrorLogs.ToString();
-            if (qtErrorLogs >= MaxAmountOfLogs)
-                qtErrorLogsStr = MaxAmountOfLogs + "+";
+            if (qtErrorLogs >= _configuration.MaxAmountOfLogs)
+                qtErrorLogsStr = _configuration.MaxAmountOfLogs + "+";
 
 
             var actualIsShowNormal = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelLog);
@@ -354,12 +350,12 @@ namespace BluConsole.Editor
         private float DrawResizer()
         {
             if (!IsRepaintEvent)
-                return ResizerHeight;
+                return _configuration.ResizerHeight;
             
-            var rect = new Rect(0, DrawYPos, position.width, ResizerHeight);
-            EditorGUI.DrawRect(rect, ResizerColor);
+            var rect = new Rect(0, DrawYPos, position.width, _configuration.ResizerHeight);
+            EditorGUI.DrawRect(rect, _configuration.ResizerColor);
 
-            return ResizerHeight;
+            return _configuration.ResizerHeight;
         }
 
         #endregion Draw
@@ -462,7 +458,7 @@ namespace BluConsole.Editor
         {
             var resizerY = _topPanelHeight;
 
-            _cursorChangeRect = new Rect(0, resizerY - 2f, position.width, ResizerHeight + 3f);
+            _cursorChangeRect = new Rect(0, resizerY - 2f, position.width, _configuration.ResizerHeight + 3f);
 
             EditorGUIUtility.AddCursorRect(_cursorChangeRect, MouseCursor.ResizeVertical);
 
@@ -477,7 +473,9 @@ namespace BluConsole.Editor
                 _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
             }
 
-            _topPanelHeight = Mathf.Clamp(_topPanelHeight, MinHeightOfTopAndBottom, position.height - MinHeightOfTopAndBottom);
+            _topPanelHeight = Mathf.Clamp(_topPanelHeight, 
+                                          _configuration.MinHeightOfTopAndBotton, 
+                                          position.height - _configuration.MinHeightOfTopAndBotton);
         }
 
         private void CacheLogComparer(int row, bool value)
@@ -493,7 +491,7 @@ namespace BluConsole.Editor
             while (_toggledFilters.Count < _settings.Filters.Count)
                 _toggledFilters.Add(false);
             DefaultButtonWidth = position.width;
-            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + DefaultButtonHeightOffset;
+            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + _configuration.DefaultButtonHeightOffset;
             DrawYPos = 0f;
         }
 
@@ -539,29 +537,14 @@ namespace BluConsole.Editor
         
         #region Properties
 
-        private bool IsRepaintEvent
-        {
-            get
-            {
-                return Event.current.type == EventType.Repaint;
-            }
-        }
-
+        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } }
         private float WindowWidth { get { return position.width; } }
         private float WindowHeight { get { return position.height; } }
-
         private float DrawYPos { get; set; }
         private float DefaultButtonWidth { get; set; }
         private float DefaultButtonHeight { get; set; }
-        
-        private float ResizerHeight { get { return 1.0f; } }
-        private float MinHeightOfTopAndBottom { get { return 60.0f; } }
-        private float DefaultButtonHeightOffset { get { return 15.0f; } }
-        private int MaxLengthMessage { get { return 999; } }
-        private int MaxAmountOfLogs { get { return 999; } }
-        private int MaxLengthtoCollapse { get { return 999; } }
-        private Color ResizerColor { get { return Color.black; } }
-        private float SearchStringBoxWidth { get { return 200.0f; } }
+        private BluListWindow ListWindow { get; set; }
+        private BluDetailWindow DetailWindow { get; set; }
         
         #endregion Properties
 

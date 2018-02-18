@@ -14,6 +14,11 @@ namespace BluConsole.Editor
 		public float DefaultButtonHeightOffset = 15.0f;
 		public int MaxLengthMessage = 999;
 		public int MaxLengthCollapse = 999;
+		public int MaxAmountOfLogs = 999;
+		public Color ResizerColor = Color.black;
+		public float SearchStringBoxWidth = 200f;
+		public float MinHeightOfTopAndBotton = 60f;
+		public float ResizerHeight = 1f;
 
 		public static BluLogConfiguration Instance
 		{
