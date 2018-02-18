@@ -21,6 +21,8 @@ namespace BluConsole.Editor
         {
             base.OnGUI(id);
 
+            UnityLoggerServer.StartGettingLogs();
+
             SelectedMessage = Mathf.Clamp(SelectedMessage, 0, QtLogs - 1);
 
             float buttonWidth = DefaultButtonWidth;
@@ -148,6 +150,8 @@ namespace BluConsole.Editor
 
             if (IsFollowScroll)
                 ScrollPosition.y = viewHeight - WindowRect.height;
+
+            UnityLoggerServer.StopGettingsLogs();
         }
 
         protected override void OnEnterKeyPressed()

@@ -27,25 +27,26 @@ namespace BluConsole.Editor
         private int _cacheLogCount;
         private int _qtLogs;
 
-        // Toolbar Variables
-        private string[] _searchStringPatterns;
-        private string _searchString = "";
-        private bool _isClearOnPlay;
-        private bool _isPauseOnError;
-        private bool _isCollapse;
-        private bool _isShowNormal;
-        private bool _isShowWarning;
-        private bool _isShowError;
-
         // Resizer Variables
         private float _topPanelHeight;
         private Rect _cursorChangeRect;
         private bool _isResizing;
 
-        // Filter Variables
-        private List<bool> _toggledFilters = new List<bool>();
+        private float _drawYPos;
+        private float _defaultButtonWidth;
+        private float _defaultButtonHeight;
+        private BluListWindow _listWindow;
+        private BluDetailWindow _detailWindow;
+        private BluToolbarWindow _toolbarWindow;
 
         #endregion Variables
+
+
+        #region Properties
+
+        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } }
+        
+        #endregion Properties        
 
         
         #region Windows
@@ -75,8 +76,9 @@ namespace BluConsole.Editor
             _settings = BluLogSettings.Instance;
             _configuration = BluLogConfiguration.Instance;
             _unityApiEvents = UnityApiEvents.Instance;
-            ListWindow = new BluListWindow();
-            DetailWindow = new BluDetailWindow();
+            _listWindow = new BluListWindow();
+            _detailWindow = new BluDetailWindow();
+            _toolbarWindow = new BluToolbarWindow();
             SetDirtyLogs();
         }
 
@@ -99,22 +101,18 @@ namespace BluConsole.Editor
         private void OnGUI()
         {
             InitVariables();
-
             CalculateResizer();
 
-            DrawYPos += DrawTopToolbar();
-            DrawYPos -= 1f;
-            
-            _qtLogs = UnityLoggerServer.StartGettingLogs();
-            PreProcessLogs();
-
             BeginWindows();
-            DrawYPos += DrawListWindow(id: 1);
-            DrawYPos += DrawResizer();
-            DrawYPos += DrawDetailWindow(id: 2);
+            {
+                _drawYPos += DrawToolbarWindow(id: 1);
+                CheckDirties();
+                PreProcessLogs();
+                _drawYPos += DrawListWindow(id: 2);
+                _drawYPos += DrawResizer();
+                _drawYPos += DrawDetailWindow(id: 3);
+            }
             EndWindows();
-
-            UnityLoggerServer.StopGettingsLogs();
 
             Repaint();
         }
@@ -122,8 +120,8 @@ namespace BluConsole.Editor
         private void OnAfterCompile()
         {
             SetDirtyLogs();
-            ListWindow.SelectedMessage = -1;
-            DetailWindow.SelectedMessage = -1;
+            _listWindow.SelectedMessage = -1;
+            _detailWindow.SelectedMessage = -1;
         }
         
         #endregion OnEvents
@@ -149,201 +147,51 @@ namespace BluConsole.Editor
         
         #region Draw
 
-        private float DrawTopToolbar()
+        private float DrawToolbarWindow(int id)
         {
             float height = BluConsoleSkin.ToolbarButtonStyle.CalcSize("Clear".GUIContent()).y;
-            
-            GUILayout.BeginHorizontal(BluConsoleSkin.ToolbarStyle, GUILayout.Height(height));
 
-            if (GetButtonClamped("Clear".GUIContent(), BluConsoleSkin.ToolbarButtonStyle))
-            {
-                UnityLoggerServer.Clear();
-                SetDirtyLogs();
-                ListWindow.SelectedMessage = -1;
-                DetailWindow.SelectedMessage = -1;
-            }
+            _toolbarWindow.Settings = _settings;
+            _toolbarWindow.Configuration = _configuration;
+            _toolbarWindow.ListWindow = _listWindow;
+            _toolbarWindow.DetailWindow = _detailWindow;
+            _toolbarWindow.HasSetDirtyLogs = false;
+            _toolbarWindow.HasSetDirtyComparer = false;
 
-            GUILayout.Space(6.0f);
-
-            var actualCollapse = UnityLoggerServer.HasFlag(ConsoleWindowFlag.Collapse);
-            var newCollapse = GetToggleClamped(_isCollapse, "Collapse".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
-            if (newCollapse != _isCollapse)
-            {
-                SetDirtyLogs();
-                _isCollapse = newCollapse;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.Collapse, newCollapse);
-            }
-            else if (newCollapse != actualCollapse)
-            {
-                SetDirtyLogs();
-                _isCollapse = actualCollapse;
-            }
-
-
-            var actualClearOnPlay = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ClearOnPlay);
-            var newClearOnPlay = GetToggleClamped(_isClearOnPlay, "Clear on Play".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
-            if (newClearOnPlay != _isClearOnPlay)
-            {
-                _isClearOnPlay = newClearOnPlay;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ClearOnPlay, newClearOnPlay);
-            }
-            else if (newClearOnPlay != actualClearOnPlay)
-            {
-                _isClearOnPlay = actualClearOnPlay;
-            }
-
-
-            var actualPauseOnError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.ErrorPause);
-            var newPauseOnError = GetToggleClamped(_isPauseOnError, "Pause on Error".GUIContent(), BluConsoleSkin.ToolbarButtonStyle);
-            if (newPauseOnError != _isPauseOnError)
-            {
-                _isPauseOnError = newPauseOnError;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.ErrorPause, newPauseOnError);
-            }
-            else if (newPauseOnError != actualPauseOnError)
-            {
-                _isPauseOnError = actualPauseOnError;
-            }
-
-
-            GUILayout.FlexibleSpace();
-
-            
-            // Search Area
-            var oldString = _searchString;
-            _searchString = EditorGUILayout.TextArea(_searchString,
-                                                     BluConsoleSkin.ToolbarSearchTextFieldStyle,
-                                                     GUILayout.Width(_configuration.SearchStringBoxWidth));
-            if (_searchString != oldString)
-                SetDirtyComparer();
-
-            if (GUILayout.Button("", BluConsoleSkin.ToolbarSearchCancelButtonStyle))
-            {
-                _searchString = "";
-                SetDirtyComparer();
-                GUI.FocusControl(null);
-            }
-
-            _searchStringPatterns = _searchString.Trim().ToLower().Split(' ');
-
-            
-            GUILayout.Space(10.0f);
-
-
-            // Info/Warning/Error buttons Area
-            int qtNormalLogs = 0, qtWarningLogs = 0, qtErrorLogs = 0;
-            UnityLoggerServer.GetCount(ref qtNormalLogs, ref qtWarningLogs, ref qtErrorLogs);
-
-            var qtNormalLogsStr = qtNormalLogs.ToString();
-            if (qtNormalLogs >= _configuration.MaxAmountOfLogs)
-                qtNormalLogsStr = _configuration.MaxAmountOfLogs + "+";
-
-            var qtWarningLogsStr = qtWarningLogs.ToString();
-            if (qtWarningLogs >= _configuration.MaxAmountOfLogs)
-                qtWarningLogsStr = _configuration.MaxAmountOfLogs + "+";
-
-            var qtErrorLogsStr = qtErrorLogs.ToString();
-            if (qtErrorLogs >= _configuration.MaxAmountOfLogs)
-                qtErrorLogsStr = _configuration.MaxAmountOfLogs + "+";
-
-
-            var actualIsShowNormal = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelLog);
-            var newIsShowNormal = GetToggleClamped(_isShowNormal,
-                                                    new GUIContent(qtNormalLogsStr, BluConsoleSkin.InfoIconSmall),
-                                                    BluConsoleSkin.ToolbarButtonStyle);
-            if (newIsShowNormal != _isShowNormal)
-            {
-                SetDirtyLogs();
-                _isShowNormal = newIsShowNormal;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelLog, newIsShowNormal);
-            }
-            else if (newIsShowNormal != actualIsShowNormal)
-            {
-                SetDirtyLogs();
-                _isShowNormal = actualIsShowNormal;
-            }
-
-
-            var actualIsShowWarning = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelWarning);
-            var newIsShowWarning = GetToggleClamped(_isShowWarning,
-                                                     new GUIContent(qtWarningLogsStr, BluConsoleSkin.WarningIconSmall),
-                                                     BluConsoleSkin.ToolbarButtonStyle);
-            if (newIsShowWarning != _isShowWarning)
-            {
-                SetDirtyLogs();
-                _isShowWarning = newIsShowWarning;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelWarning, newIsShowWarning);
-            }
-            else if (newIsShowWarning != actualIsShowWarning)
-            {
-                SetDirtyLogs();
-                _isShowWarning = actualIsShowWarning;
-            }
-
-
-            var actualIsShowError = UnityLoggerServer.HasFlag(ConsoleWindowFlag.LogLevelError);
-            var newIsShowError = GetToggleClamped(_isShowError,
-                                                   new GUIContent(qtErrorLogsStr, BluConsoleSkin.ErrorIconSmall),
-                                                   BluConsoleSkin.ToolbarButtonStyle);
-            if (newIsShowError != _isShowError)
-            {
-                SetDirtyLogs();
-                _isShowError = newIsShowError;
-                UnityLoggerServer.SetFlag(ConsoleWindowFlag.LogLevelError, newIsShowError);
-            }
-            else if (newIsShowError != actualIsShowError)
-            {
-                SetDirtyLogs();
-                _isShowError = actualIsShowError;
-            }
-
-            for (var i = 0; i < _settings.Filters.Count; i++)
-            {
-                var name = _settings.Filters[i].Name;
-                var style = BluConsoleSkin.ToolbarButtonStyle;
-                bool oldAdditionalFilter = _toggledFilters[i];
-                _toggledFilters[i] = GUILayout.Toggle(_toggledFilters[i],
-                                                     name,
-                                                     style,
-                                                     GUILayout.MaxWidth(style.CalcSize(new GUIContent(name)).x));
-                if (oldAdditionalFilter != _toggledFilters[i])
-                    SetDirtyLogs();
-            }
-
-            GUILayout.EndHorizontal();
+            GUI.Window(id, new Rect(0, 0, position.width, height), _toolbarWindow.OnGUI, GUIContent.none, GUIStyle.none);
 
             return height;
-        }
+        }        
 
         private float DrawListWindow(int id)
         {
-            Rect originalRect = new Rect(0, DrawYPos, WindowWidth, _topPanelHeight - DrawYPos);
+            Rect originalRect = new Rect(0, _drawYPos, position.width, _topPanelHeight - _drawYPos);
 
-            ListWindow.WindowRect = new Rect(0, 0, originalRect.width, originalRect.height);
-            ListWindow.Rows = GetCachedIntArr(_qtLogs);
-            ListWindow.Logs = GetCachedLogsArr(_qtLogs);
-            ListWindow.LogConfiguration = _configuration;
-            ListWindow.QtLogs = _qtLogs;
-            ListWindow.StackTraceIgnorePrefixs = _stackTraceIgnorePrefixs;
+            _listWindow.WindowRect = new Rect(0, 0, originalRect.width, originalRect.height);
+            _listWindow.Rows = GetCachedIntArr(_qtLogs);
+            _listWindow.Logs = GetCachedLogsArr(_qtLogs);
+            _listWindow.LogConfiguration = _configuration;
+            _listWindow.QtLogs = _qtLogs;
+            _listWindow.StackTraceIgnorePrefixs = _stackTraceIgnorePrefixs;
 
-            GUI.Window(id, originalRect, ListWindow.OnGUI, GUIContent.none, GUIStyle.none);
+            GUI.Window(id, originalRect, _listWindow.OnGUI, GUIContent.none, GUIStyle.none);
 
             return originalRect.height;
         }
 
         private float DrawDetailWindow(int id)
         {
-            Rect originalRect = new Rect(0, DrawYPos, WindowWidth, WindowHeight - DrawYPos);
+            Rect originalRect = new Rect(0, _drawYPos, position.width, position.height - _drawYPos);
 
-            DetailWindow.WindowRect = new Rect(0, 0, originalRect.width, originalRect.height);
-            DetailWindow.Rows = GetCachedIntArr(_qtLogs);
-            DetailWindow.Logs = GetCachedLogsArr(_qtLogs);
-            DetailWindow.LogConfiguration = _configuration;
-            DetailWindow.QtLogs = _qtLogs;
-            DetailWindow.StackTraceIgnorePrefixs = _stackTraceIgnorePrefixs;
-            DetailWindow.ListWindowSelectedMessage = ListWindow.SelectedMessage;
+            _detailWindow.WindowRect = new Rect(0, 0, originalRect.width, originalRect.height);
+            _detailWindow.Rows = GetCachedIntArr(_qtLogs);
+            _detailWindow.Logs = GetCachedLogsArr(_qtLogs);
+            _detailWindow.LogConfiguration = _configuration;
+            _detailWindow.QtLogs = _qtLogs;
+            _detailWindow.StackTraceIgnorePrefixs = _stackTraceIgnorePrefixs;
+            _detailWindow.ListWindowSelectedMessage = _listWindow.SelectedMessage;
 
-            GUI.Window(id, originalRect, DetailWindow.OnGUI, GUIContent.none, GUIStyle.none);
+            GUI.Window(id, originalRect, _detailWindow.OnGUI, GUIContent.none, GUIStyle.none);
 
             return originalRect.height;
         }
@@ -353,7 +201,7 @@ namespace BluConsole.Editor
             if (!IsRepaintEvent)
                 return _configuration.ResizerHeight;
             
-            var rect = new Rect(0, DrawYPos, position.width, _configuration.ResizerHeight);
+            var rect = new Rect(0, _drawYPos, position.width, _configuration.ResizerHeight);
             EditorGUI.DrawRect(rect, _configuration.ResizerColor);
 
             return _configuration.ResizerHeight;
@@ -408,7 +256,8 @@ namespace BluConsole.Editor
         {
             var messageLower = log.MessageLower;
 
-            if (_searchStringPatterns.Any(pattern => !messageLower.Contains(pattern)))
+            if (_toolbarWindow.SearchStringPatterns != null &&
+                _toolbarWindow.SearchStringPatterns.Any(pattern => !messageLower.Contains(pattern)))
             {
                 CacheLogComparer(row, false);
                 return false;
@@ -417,7 +266,7 @@ namespace BluConsole.Editor
             var hasPattern = true;
             for (var i = 0; i < _settings.Filters.Count; i++)
             {
-                if (!_toggledFilters[i])
+                if (!_toolbarWindow.ToggledFilters[i])
                     continue;
 
                 if (!_settings.Filters[i].Patterns.Any(pattern => messageLower.Contains(pattern)))
@@ -455,6 +304,14 @@ namespace BluConsole.Editor
         
         #region Actions
 
+        private void CheckDirties()
+        {
+            if (_toolbarWindow.HasSetDirtyLogs)
+                SetDirtyLogs();
+            if (_toolbarWindow.HasSetDirtyComparer)
+                SetDirtyComparer();
+        }
+
         private void CalculateResizer()
         {
             var resizerY = _topPanelHeight;
@@ -489,16 +346,18 @@ namespace BluConsole.Editor
 
         private void InitVariables()
         {
-            while (_toggledFilters.Count < _settings.Filters.Count)
-                _toggledFilters.Add(false);
+            while (_toolbarWindow.ToggledFilters.Count < _settings.Filters.Count)
+                _toolbarWindow.ToggledFilters.Add(false);
 
-            DefaultButtonWidth = position.width;
-            DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + _configuration.DefaultButtonHeightOffset;
-            DrawYPos = 0f;
+            _defaultButtonWidth = position.width;
+            _defaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + _configuration.DefaultButtonHeightOffset;
+            _drawYPos = 0f;
         }
 
         private void PreProcessLogs()
         {
+            _qtLogs = UnityLoggerServer.StartGettingLogs();
+
             _cacheLogCount = _qtLogs;
 
             // Filtering logs with ugly code
@@ -532,23 +391,11 @@ namespace BluConsole.Editor
             }
 
             _qtLogs = cntLogs;
+
+            UnityLoggerServer.StopGettingsLogs();
         }
 
         #endregion Actions
-
-        
-        #region Properties
-
-        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } }
-        private float WindowWidth { get { return position.width; } }
-        private float WindowHeight { get { return position.height; } }
-        private float DrawYPos { get; set; }
-        private float DefaultButtonWidth { get; set; }
-        private float DefaultButtonHeight { get; set; }
-        private BluListWindow ListWindow { get; set; }
-        private BluDetailWindow DetailWindow { get; set; }
-        
-        #endregion Properties
 
     }
 

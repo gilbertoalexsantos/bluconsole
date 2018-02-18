@@ -11,14 +11,6 @@ using BluConsole.Core.UnityLoggerApi;
 namespace BluConsole.Editor
 {
 
-    //TODO: Remove
-    public enum ClickContext
-    {
-        None = 0,
-        List = 1,
-        Detail = 2
-    }
-
     public enum Direction
     {
         None = 0,

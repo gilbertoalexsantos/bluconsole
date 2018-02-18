@@ -23,6 +23,8 @@ namespace BluConsole.Editor
 		{
 			base.OnGUI(id);
 
+            UnityLoggerServer.StartGettingLogs();
+
 			GUI.DrawTexture(WindowRect, BluConsoleSkin.EvenBackTexture);
 
             if (ListWindowSelectedMessage != -1 &&
@@ -43,6 +45,7 @@ namespace BluConsole.Editor
                 _selectedLog == null ||
                 _selectedLog.StackTrace == null)
             {
+                UnityLoggerServer.StopGettingsLogs();
                 return;
             }
 
@@ -83,6 +86,7 @@ namespace BluConsole.Editor
             if (ListWindowSelectedMessage == -1 || QtLogs == 0 || ListWindowSelectedMessage >= QtLogs)
             {
                 GUI.EndScrollView();
+                UnityLoggerServer.StopGettingsLogs();
                 return;
             }
 
@@ -216,6 +220,8 @@ namespace BluConsole.Editor
             }
 
             GUI.EndScrollView();
+
+            UnityLoggerServer.StopGettingsLogs();
 		}
 
         protected override void OnEnterKeyPressed()
