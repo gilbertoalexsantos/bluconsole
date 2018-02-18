@@ -105,8 +105,8 @@ namespace BluConsole.Editor
 
             BeginWindows();
             {
-                _drawYPos += DrawToolbarWindow(id: 1);
                 CheckDirties();
+                _drawYPos += DrawToolbarWindow(id: 1);
                 PreProcessLogs();
                 _drawYPos += DrawListWindow(id: 2);
                 _drawYPos += DrawResizer();
