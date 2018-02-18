@@ -62,7 +62,6 @@ namespace BluConsole.Editor
                 window.titleContent = new GUIContent("BluConsole");
 
             window._topPanelHeight = window.position.height / 2.0f;
-            window.ListWindow = new BluListWindow();
         }
         
         #endregion Windows
@@ -76,6 +75,8 @@ namespace BluConsole.Editor
             _settings = BluLogSettings.Instance;
             _configuration = BluLogConfiguration.Instance;
             _unityApiEvents = UnityApiEvents.Instance;
+            ListWindow = new BluListWindow();
+            DetailWindow = new BluDetailWindow();
             SetDirtyLogs();
         }
 
@@ -490,6 +491,7 @@ namespace BluConsole.Editor
         {
             while (_toggledFilters.Count < _settings.Filters.Count)
                 _toggledFilters.Add(false);
+
             DefaultButtonWidth = position.width;
             DefaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + _configuration.DefaultButtonHeightOffset;
             DrawYPos = 0f;
