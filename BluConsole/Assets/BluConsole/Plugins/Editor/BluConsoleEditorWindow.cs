@@ -42,22 +42,12 @@ namespace BluConsole.Editor
         private Rect _cursorChangeRect;
         private bool _isResizing;
 
-        // LogDetail Variables
-        private Vector2 _logDetailScrollPosition;
-        private int _logDetailSelectedFrame = -1;
-        private double _logDetailLastTimeClicked;
-        private BluLog _selectedLog;
-
         // Filter Variables
         private List<bool> _toggledFilters = new List<bool>();
 
-        // Keyboard Controll Variables
-        private bool _hasKeyboardArrowKeyInput;
-        private Direction _logMoveDirection;
-        private ClickContext _clickContext;
 
-        public BluListWindow ListWindow { get; set; }
-        public BluDetailWindow DetailWindow { get; set; }
+        private BluListWindow ListWindow { get; set; }
+        private BluDetailWindow DetailWindow { get; set; }
 
         #endregion Variables
 
@@ -136,7 +126,7 @@ namespace BluConsole.Editor
         {
             SetDirtyLogs();
             ListWindow.SelectedMessage = -1;
-            _logDetailSelectedFrame = -1;
+            DetailWindow.SelectedMessage = -1;
         }
         
         #endregion OnEvents
@@ -153,6 +143,7 @@ namespace BluConsole.Editor
         {
             if (_settings == null)
                 return;
+                
             Selection.activeObject = _settings;
         }
 
@@ -172,7 +163,7 @@ namespace BluConsole.Editor
                 UnityLoggerServer.Clear();
                 SetDirtyLogs();
                 ListWindow.SelectedMessage = -1;
-                _logDetailSelectedFrame = -1;
+                DetailWindow.SelectedMessage = -1;
             }
 
             GUILayout.Space(6.0f);
@@ -371,23 +362,6 @@ namespace BluConsole.Editor
             return ResizerHeight;
         }
 
-        private void DrawPopup(Event clickEvent, BluLog log)
-        {
-            GenericMenu.MenuFunction copyCallback = () => { EditorGUIUtility.systemCopyBuffer = log.Message; };
-
-            GenericMenu menu = new GenericMenu();
-            menu.AddItem(content: "Copy".GUIContent(), on: false, func: copyCallback);
-            menu.ShowAsContext();
-
-            clickEvent.Use();
-        }
-
-        private void DrawBackground(Rect rect, GUIStyle style, bool isSelected)
-        {
-            if (IsRepaintEvent)
-                style.Draw(rect, false, false, isSelected, false);
-        }
-
         #endregion Draw
 
         
@@ -416,36 +390,6 @@ namespace BluConsole.Editor
             else
                 _cacheLog.Add(log);
             return _cacheLog[row];
-        }
-
-        private BluLog GetCompleteLog(int row)
-        {
-            var log = UnityLoggerServer.GetCompleteLog(row);
-            log.FilterStackTrace(_stackTraceIgnorePrefixs);
-            return log;
-        }
-
-        private string GetTruncatedMessage(string message)
-        {
-            if (message.Length <= MaxLengthMessage)
-                return message;
-
-            return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: MaxLengthMessage));
-        }
-
-        private string GetLogListMessage(BluLog log)
-        {
-            return log.Message.Replace(System.Environment.NewLine, " ");
-        }
-
-        private GUIStyle GetLogBackStyle(int row)
-        {
-            return row % 2 == 0 ? BluConsoleSkin.EvenBackStyle : BluConsoleSkin.OddBackStyle;
-        }
-
-        private float GetDetailMessageHeight(string message, GUIStyle style, float width = 0f)
-        {
-            return style.CalcHeight(new GUIContent(message), width);
         }
 
         private bool GetButtonClamped(GUIContent content, GUIStyle style)
@@ -536,117 +480,12 @@ namespace BluConsole.Editor
             _topPanelHeight = Mathf.Clamp(_topPanelHeight, MinHeightOfTopAndBottom, position.height - MinHeightOfTopAndBottom);
         }
 
-        private void HandleKeyboardEnterKey()
-        {
-            Event e = Event.current;
-
-            if (e == null || !e.isKey || e.type != EventType.KeyUp || e.keyCode != KeyCode.Return)
-                return;
-            
-            if (_selectedLog == null)
-                return;
-
-            switch (_clickContext)
-            {
-                case ClickContext.List:
-                    JumpToSourceFile(_selectedLog, 0);
-                    break;
-                case ClickContext.Detail:
-                    JumpToSourceFile(_selectedLog, _logDetailSelectedFrame < 0 ? 0 : _logDetailSelectedFrame);
-                    break;
-            }
-        }
-
-        private void HandleKeyboardArrowKeys()
-        {
-            Event e = Event.current;
-            _hasKeyboardArrowKeyInput = false;
-            _logMoveDirection = Direction.None;
-            
-            if (e == null || e.type != EventType.KeyDown || !e.isKey) 
-                return;
-            
-            var refresh = false;
-            switch (e.keyCode)
-            {
-                case KeyCode.UpArrow:
-                    refresh = true;
-                    _logMoveDirection = Direction.Up;
-                    MoveLogPosition(Direction.Up, _clickContext);
-                    break;
-                case KeyCode.DownArrow:
-                    refresh = true;
-                    _logMoveDirection = Direction.Down;
-                    MoveLogPosition(Direction.Down, _clickContext);
-                    break;
-            }
-
-            if (!refresh)
-                return;
-
-            _hasKeyboardArrowKeyInput = true;
-            ListWindow.SelectedMessage = Mathf.Clamp(ListWindow.SelectedMessage, 0, _qtLogs - 1);
-            if (_selectedLog != null)
-            {
-                if (_logDetailSelectedFrame < -2)
-                    _logDetailSelectedFrame = -2;
-                else if (_logDetailSelectedFrame >= _selectedLog.StackTrace.Count)
-                    _logDetailSelectedFrame = _selectedLog.StackTrace.Count - 1;
-            }
-        }
-
-        private void MoveLogPosition(Direction direction, ClickContext context)
-        {
-            switch (context)
-            {
-                case ClickContext.List:
-                    ListWindow.SelectedMessage += direction == Direction.Up ? -1 : +1;
-                    break;
-                case ClickContext.Detail:
-                    if (_logDetailSelectedFrame == -2)
-                        _logDetailSelectedFrame = direction == Direction.Up ? -2 : 0;
-                    else if (_logDetailSelectedFrame == 0)
-                        _logDetailSelectedFrame = direction == Direction.Up ? -2 : 1;
-                    else
-                        _logDetailSelectedFrame += direction == Direction.Up ? -1 : +1;
-                    break;
-            }
-        }
-
-        private void PingLog(BluLog log)
-        {
-            if (log.InstanceID != 0)
-                EditorGUIUtility.PingObject(log.InstanceID);
-        }
-
         private void CacheLogComparer(int row, bool value)
         {
             if (row < _cacheLogComparer.Count)
                 _cacheLogComparer[row] = value;
             else
                 _cacheLogComparer.Add(value);
-        }
-
-        private void JumpToSourceFile(BluLog log, int row)
-        {
-            var file = "";
-            var line = -1;
-
-            if (log.StackTrace.Count == 0)
-            {
-                file = log.File;
-                line = log.Line;
-            }
-            else if (row < log.StackTrace.Count)
-            {
-                file = log.StackTrace[row].File;
-                line = log.StackTrace[row].Line;
-            }
-
-            if (string.IsNullOrEmpty(file) || line == -1)
-                return;
-
-            BluUtils.OpenFileOnEditor(file, line);
         }
 
         private void InitVariables()
@@ -700,14 +539,6 @@ namespace BluConsole.Editor
         
         #region Properties
 
-        private bool IsScrollUp
-        {
-            get
-            {
-                return Event.current.type == EventType.ScrollWheel && Event.current.delta.y < 0f;
-            }
-        }
-
         private bool IsRepaintEvent
         {
             get
@@ -716,18 +547,9 @@ namespace BluConsole.Editor
             }
         }
 
-        private bool IsDoubleClickLogDetailButton
-        {
-            get
-            {
-                return (EditorApplication.timeSinceStartup - _logDetailLastTimeClicked) < 0.3f && !_hasKeyboardArrowKeyInput;
-            }
-        }
-
         private float WindowWidth { get { return position.width; } }
         private float WindowHeight { get { return position.height; } }
 
-        private bool IsFollowScroll { get; set; }
         private float DrawYPos { get; set; }
         private float DefaultButtonWidth { get; set; }
         private float DefaultButtonHeight { get; set; }
