@@ -208,13 +208,14 @@ namespace BluConsole.Editor
         {
             get
             {
-#if UNITY_2017_3_OR_NEWER
                 var style = new GUIStyle(GUI.skin.FindStyle("CN EntryInfo"));
+                style.alignment = TextAnchor.MiddleLeft;
+                style.contentOffset = BluLogConfiguration.Instance.ListLogContentOffset;
+                style.fontSize = BluLogConfiguration.Instance.ListLogSize;
+#if UNITY_2017_3_OR_NEWER
                 style.normal.background = InfoIcon;
-                return style;
-#else
-                return GUI.skin.FindStyle("CN EntryInfo");
 #endif
+                return style;
             }
         }
 
@@ -222,13 +223,14 @@ namespace BluConsole.Editor
         {
             get
             {
-#if UNITY_2017_3_OR_NEWER
                 var style = new GUIStyle(GUI.skin.FindStyle("CN EntryWarn"));
+                style.alignment = TextAnchor.MiddleLeft;
+                style.contentOffset = BluLogConfiguration.Instance.ListLogContentOffset;
+                style.fontSize = BluLogConfiguration.Instance.ListLogSize;
+#if UNITY_2017_3_OR_NEWER
                 style.normal.background = WarningIcon;
-                return style;
-#else
-                return GUI.skin.FindStyle("CN EntryWarn");
 #endif
+                return style;
             }
         }
 
@@ -236,13 +238,14 @@ namespace BluConsole.Editor
         {
             get
             {
-#if UNITY_2017_3_OR_NEWER
                 var style = new GUIStyle(GUI.skin.FindStyle("CN EntryError"));
+                style.alignment = TextAnchor.MiddleLeft;  
+                style.contentOffset = BluLogConfiguration.Instance.ListLogContentOffset;
+                style.fontSize = BluLogConfiguration.Instance.ListLogSize;
+#if UNITY_2017_3_OR_NEWER
                 style.normal.background = ErrorIcon;
-                return style;
-#else
-                return GUI.skin.FindStyle("CN EntryError");
 #endif
+                return style;
             }
         }
 
