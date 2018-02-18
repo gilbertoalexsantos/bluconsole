@@ -41,6 +41,8 @@ namespace BluConsole.Editor
         public Direction KeyboardArrowKeyDirection { get; private set; }
         public BluLogConfiguration LogConfiguration { get; set; }
 
+        protected Vector2 ScrollPosition;
+
         public bool IsRepaintEvent
         {
             get
@@ -68,6 +70,7 @@ namespace BluConsole.Editor
 		public virtual void OnGUI(int id)
         {
             HandleKeyboardArrowKeys();
+            HandleKeyboardEnterKey();
         }
 
 		public BluLog GetCompleteLog(int row)
@@ -117,13 +120,18 @@ namespace BluConsole.Editor
                 style.Draw(rect, false, false, isSelected, false);
         }
 
-        protected string GetTruncatedMessage(BluLog log, int maxLength)
+        protected string GetTruncatedMessage(string m)
         {
-            string message = log.Message.Replace(System.Environment.NewLine, " ");
-            if (message.Length <= maxLength)
+            string message = m.Replace(System.Environment.NewLine, " ");
+            if (message.Length <= LogConfiguration.MaxLengthMessage)
                 return message;
 
-            return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: maxLength));
+            return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: LogConfiguration.MaxLengthMessage));
+        }
+
+        protected string GetTruncatedMessage(BluLog log)
+        {
+            return GetTruncatedMessage(log.Message);
         }   
 
         private void HandleKeyboardArrowKeys()
@@ -151,11 +159,23 @@ namespace BluConsole.Editor
             }
 
             if (refresh)
-            {
                 HasKeyboardArrowKeyInput = true;
-                SelectedMessage = Mathf.Clamp(SelectedMessage, 0, QtLogs - 1);
-            }
         }
+
+        private void HandleKeyboardEnterKey()
+        {
+            Event e = Event.current;
+
+            if (e == null || !e.isKey || e.type != EventType.KeyUp || e.keyCode != KeyCode.Return)
+                return;
+
+            OnEnterKeyPressed();
+        }   
+
+        protected virtual void OnEnterKeyPressed()
+        {
+
+        }     
 
         private void MoveLogPosition(Direction direction)
         {

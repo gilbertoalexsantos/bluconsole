@@ -17,11 +17,11 @@ namespace BluConsole.Editor
 
         private bool IsFollowScroll { get; set; }
 
-        private Vector2 ScrollPosition;
-
         public override void OnGUI(int id)
         {
             base.OnGUI(id);
+
+            SelectedMessage = Mathf.Clamp(SelectedMessage, 0, QtLogs - 1);
 
             float buttonWidth = DefaultButtonWidth;
             if (QtLogs * DefaultButtonHeight > WindowRect.height)
@@ -74,7 +74,7 @@ namespace BluConsole.Editor
                 var styleBack = BluConsoleSkin.GetLogBackStyle(i);
 
                 var styleMessage = BluConsoleSkin.GetLogListStyle(log.LogType);
-                string showMessage = GetTruncatedMessage(log, LogConfiguration.MaxLengthMessage);
+                string showMessage = GetTruncatedMessage(log);
                 var contentMessage = new GUIContent(showMessage);
                 var rectMessage = new Rect(x: 0, y: buttonY, width: viewWidth, height: DefaultButtonHeight);
                 bool isSelected = i == SelectedMessage;
@@ -148,6 +148,20 @@ namespace BluConsole.Editor
 
             if (IsFollowScroll)
                 ScrollPosition.y = viewHeight - WindowRect.height;
+        }
+
+        protected override void OnEnterKeyPressed()
+        {
+            BluLog log = null;
+            if (SelectedMessage != -1 &&
+                SelectedMessage >= 0 &&
+                SelectedMessage < QtLogs)
+            {
+                log = GetCompleteLog(Rows[SelectedMessage]);
+            }
+
+            if (log != null)
+                BluUtils.JumpToSourceFile(log, 0);
         }
         
     }
