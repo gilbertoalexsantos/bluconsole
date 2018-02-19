@@ -25,7 +25,7 @@ namespace BluConsole.Editor
 
             UnityLoggerServer.StartGettingLogs();
 
-			GUI.DrawTexture(WindowRect, BluConsoleSkin.EvenBackTexture);
+			GUI.DrawTexture(WindowRect, BluConsoleSkin.OddBackTexture);
 
             if (ListWindowSelectedMessage != -1 &&
                 ListWindowSelectedMessage >= 0 &&
@@ -143,7 +143,7 @@ namespace BluConsole.Editor
             // Logging first message
             if (firstRenderLogIndex == 0)
             {
-                var styleBack = BluConsoleSkin.GetLogBackStyle(0);
+                var styleBack = BluConsoleSkin.GetLogBackStyle(1);
                 var styleMessage = BluConsoleSkin.MessageDetailFirstLogStyle;
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: firstLogHeight);
 
@@ -185,7 +185,7 @@ namespace BluConsole.Editor
             {
                 var contentMessage = new GUIContent(GetTruncatedMessage(log.StackTrace[i].FrameInformation));
 
-                var styleBack = BluConsoleSkin.GetLogBackStyle(0);
+                var styleBack = BluConsoleSkin.GetLogBackStyle(1);
                 var styleMessage = BluConsoleSkin.MessageDetailCallstackStyle;
                 var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: buttonHeight);
 

@@ -42,6 +42,8 @@ namespace BluConsole.Editor
                                                  scrollPosition: ScrollPosition,
                                                  viewRect: scrollViewRect);
 
+            GUI.DrawTexture(WindowRect, BluConsoleSkin.OddBackTexture);                                                 
+
             int firstRenderLogIndex = (int)(ScrollPosition.y / DefaultButtonHeight);
             firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, QtLogs);
 
