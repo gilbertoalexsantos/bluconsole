@@ -76,9 +76,12 @@ namespace BluConsole.Editor
             _stackTraceIgnorePrefixs = BluUtils.StackTraceIgnorePrefixs;
             _settings = BluLogSettings.Instance;
             _configuration = BluLogConfiguration.Instance;
-            _listWindow = new BluListWindow();
-            _detailWindow = new BluDetailWindow();
-            _toolbarWindow = new BluToolbarWindow();
+            if (_listWindow == null)
+                _listWindow = new BluListWindow();
+            if (_detailWindow == null)
+                _detailWindow = new BluDetailWindow();
+            if (_toolbarWindow == null)
+                _toolbarWindow = new BluToolbarWindow();
             SetDirtyLogs();
         }
 
