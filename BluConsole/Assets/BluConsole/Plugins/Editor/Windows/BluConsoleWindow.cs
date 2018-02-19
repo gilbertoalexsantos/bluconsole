@@ -172,6 +172,8 @@ namespace BluConsole.Editor
         private void MoveLogPosition(Direction direction)
         {
             SelectedMessage += direction == Direction.Up ? -1 : +1;
+            if (SelectedMessage < 0)
+                SelectedMessage = 0;
         }
 
 	}

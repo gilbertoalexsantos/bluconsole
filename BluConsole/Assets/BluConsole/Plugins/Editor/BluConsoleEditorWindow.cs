@@ -15,6 +15,8 @@ namespace BluConsole.Editor
         
         #region Variables
 
+        public static BluConsoleEditorWindow Instance;
+
         // Cache Variables
         private UnityApiEvents _unityApiEvents;
         private BluLogSettings _settings;
@@ -33,8 +35,6 @@ namespace BluConsole.Editor
         private bool _isResizing;
 
         private float _drawYPos;
-        private float _defaultButtonWidth;
-        private float _defaultButtonHeight;
         private BluListWindow _listWindow;
         private BluDetailWindow _detailWindow;
         private BluToolbarWindow _toolbarWindow;
@@ -44,7 +44,7 @@ namespace BluConsole.Editor
 
         #region Properties
 
-        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } }
+        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } } 
         
         #endregion Properties        
 
@@ -72,6 +72,7 @@ namespace BluConsole.Editor
 
         private void OnEnable()
         {
+            Instance = this;
             _stackTraceIgnorePrefixs = BluUtils.StackTraceIgnorePrefixs;
             _settings = BluLogSettings.Instance;
             _configuration = BluLogConfiguration.Instance;
@@ -84,22 +85,15 @@ namespace BluConsole.Editor
 
         private void OnDestroy()
         {
+            Instance = null;
             _settings = null;
             _unityApiEvents = null;
             Resources.UnloadAsset(titleContent.image);
             Resources.UnloadUnusedAssets();
         }
 
-        private void Update()
-        {
-            _unityApiEvents.OnBeforeCompileEvent.AddCallback(SetDirtyLogs);
-            _unityApiEvents.OnAfterCompileEvent.AddCallback(OnAfterCompile);
-            _unityApiEvents.OnBeginPlayEvent.AddCallback(SetDirtyLogs);
-            _unityApiEvents.OnStopPlayEvent.AddCallback(SetDirtyLogs);
-        }
-
         private void OnGUI()
-        {
+        {       
             InitVariables();
             CalculateResizer();
 
@@ -117,11 +111,26 @@ namespace BluConsole.Editor
             Repaint();
         }
 
-        private void OnAfterCompile()
+        public void OnBeforeCompile()
+        { 
+            SetDirtyLogs(); 
+        }
+
+        public void OnAfterCompile()
         {
             SetDirtyLogs();
             _listWindow.SelectedMessage = -1;
             _detailWindow.SelectedMessage = -1;
+        }
+
+        public void OnBeginPlay()
+        {
+            SetDirtyLogs();
+        }
+
+        public void OnStopPlay()
+        {
+            SetDirtyLogs();
         }
         
         #endregion OnEvents
@@ -348,9 +357,6 @@ namespace BluConsole.Editor
         {
             while (_toolbarWindow.ToggledFilters.Count < _settings.Filters.Count)
                 _toolbarWindow.ToggledFilters.Add(false);
-
-            _defaultButtonWidth = position.width;
-            _defaultButtonHeight = BluConsoleSkin.MessageStyle.CalcSize("Test".GUIContent()).y + _configuration.DefaultButtonHeightOffset;
             _drawYPos = 0f;
         }
 

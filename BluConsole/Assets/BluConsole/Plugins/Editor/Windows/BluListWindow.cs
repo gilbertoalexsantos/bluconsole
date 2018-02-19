@@ -23,7 +23,7 @@ namespace BluConsole.Editor
 
             UnityLoggerServer.StartGettingLogs();
 
-            SelectedMessage = Mathf.Clamp(SelectedMessage, 0, QtLogs - 1);
+            SelectedMessage = Mathf.Clamp(SelectedMessage, -1, QtLogs - 1);
 
             float buttonWidth = DefaultButtonWidth;
             if (QtLogs * DefaultButtonHeight > WindowRect.height)

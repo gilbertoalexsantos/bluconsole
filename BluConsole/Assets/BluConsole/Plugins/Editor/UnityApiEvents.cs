@@ -62,23 +62,35 @@ namespace BluConsole.Editor
         }
 
         private void OnBeforeCompile()
-        {
+        { 
             OnBeforeCompileEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnBeforeCompile();
         }
 
         private void OnAfterCompile()
         {
             OnAfterCompileEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnAfterCompile();
         }
 
         private void OnBeginPlay()
         {
             OnBeginPlayEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnBeginPlay();
         }
 
         private void OnStopPlay()
         {
             OnStopPlayEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnStopPlay();
         }
 
     }
