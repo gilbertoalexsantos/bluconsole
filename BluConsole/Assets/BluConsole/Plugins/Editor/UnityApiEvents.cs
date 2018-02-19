@@ -30,8 +30,7 @@ namespace BluConsole.Editor
         {
             if (_instance == null)
                 return;
-            Resources.UnloadAsset(_instance);
-            Resources.UnloadUnusedAssets();
+            GameObject.DestroyImmediate(_instance);
         }
 
         private void OnEnable()
