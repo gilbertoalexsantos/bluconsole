@@ -9,7 +9,9 @@ namespace BluConsole.Editor
 
     public class UnityApiEvents : ScriptableObject
     {
-        
+
+        private static UnityApiEvents _instance;
+
         private bool isCompiling;
         private bool isPlaying;
     
@@ -18,15 +20,17 @@ namespace BluConsole.Editor
         public Action OnBeginPlayEvent;
         public Action OnStopPlayEvent;
 
-        public static UnityApiEvents Instance
+        public static void GenerateInstance()
+        { 
+            DestroyInstance();
+            _instance = ScriptableObject.CreateInstance<UnityApiEvents>();
+        }
+
+        public static void DestroyInstance()
         {
-            get
-            {
-                var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
-                if (loggerAsset == null)
-                    loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
-                return loggerAsset;
-            }
+            if (_instance == null)
+                return;
+            GameObject.DestroyImmediate(_instance);
         }
 
         private void OnEnable()
@@ -62,23 +66,35 @@ namespace BluConsole.Editor
         }
 
         private void OnBeforeCompile()
-        {
+        { 
             OnBeforeCompileEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnBeforeCompile();
         }
 
         private void OnAfterCompile()
         {
             OnAfterCompileEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnAfterCompile();
         }
 
         private void OnBeginPlay()
         {
             OnBeginPlayEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnBeginPlay();
         }
 
         private void OnStopPlay()
         {
             OnStopPlayEvent.SafeInvoke();
+
+            if (BluConsoleEditorWindow.Instance != null)
+                BluConsoleEditorWindow.Instance.OnStopPlay();
         }
 
     }

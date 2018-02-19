@@ -14,12 +14,6 @@ namespace BluConsole.Extensions
                 action();
         }
         
-        public static void AddCallback(this Action a, Action cb)
-        {
-            a -= cb;
-            a += cb;
-        }
-        
         public static GUIContent GUIContent(this string text)
         {
             return new GUIContent(text);
