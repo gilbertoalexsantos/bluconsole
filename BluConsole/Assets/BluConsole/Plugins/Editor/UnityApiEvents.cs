@@ -9,7 +9,9 @@ namespace BluConsole.Editor
 
     public class UnityApiEvents : ScriptableObject
     {
-        
+
+        private static UnityApiEvents _instance;
+
         private bool isCompiling;
         private bool isPlaying;
     
@@ -18,15 +20,18 @@ namespace BluConsole.Editor
         public Action OnBeginPlayEvent;
         public Action OnStopPlayEvent;
 
-        public static UnityApiEvents Instance
+        public static void GenerateInstance()
+        { 
+            DestroyInstance();
+            _instance = ScriptableObject.CreateInstance<UnityApiEvents>();
+        }
+
+        public static void DestroyInstance()
         {
-            get
-            {
-                var loggerAsset = ScriptableObject.FindObjectOfType<UnityApiEvents>();
-                if (loggerAsset == null)
-                    loggerAsset = ScriptableObject.CreateInstance<UnityApiEvents>();
-                return loggerAsset;
-            }
+            if (_instance == null)
+                return;
+            Resources.UnloadAsset(_instance);
+            Resources.UnloadUnusedAssets();
         }
 
         private void OnEnable()

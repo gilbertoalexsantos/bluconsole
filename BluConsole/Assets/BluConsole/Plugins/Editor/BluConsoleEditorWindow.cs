@@ -18,7 +18,6 @@ namespace BluConsole.Editor
         public static BluConsoleEditorWindow Instance;
 
         // Cache Variables
-        private UnityApiEvents _unityApiEvents;
         private BluLogSettings _settings;
         private BluLogConfiguration _configuration;
         private List<BluLog> _cacheLog = new List<BluLog>();
@@ -73,10 +72,10 @@ namespace BluConsole.Editor
         private void OnEnable()
         {
             Instance = this;
+            UnityApiEvents.GenerateInstance();
             _stackTraceIgnorePrefixs = BluUtils.StackTraceIgnorePrefixs;
             _settings = BluLogSettings.Instance;
             _configuration = BluLogConfiguration.Instance;
-            _unityApiEvents = UnityApiEvents.Instance;
             _listWindow = new BluListWindow();
             _detailWindow = new BluDetailWindow();
             _toolbarWindow = new BluToolbarWindow();
@@ -86,8 +85,8 @@ namespace BluConsole.Editor
         private void OnDestroy()
         {
             Instance = null;
+            UnityApiEvents.DestroyInstance();
             _settings = null;
-            _unityApiEvents = null;
             Resources.UnloadAsset(titleContent.image);
             Resources.UnloadUnusedAssets();
         }
