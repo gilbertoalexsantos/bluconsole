@@ -32,6 +32,21 @@ namespace BluConsole.Test
             Test2.LogLevelFive(message, type);
         }
 
+        public static void LogLevelSix(string message, BluLogType type = BluLogType.Normal)
+        {
+            Test2.LogLevelSix(message, type);
+        }
+
+        public static void BigCallStack(string message, BluLogType type = BluLogType.Normal)
+        {
+            Loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog(message, type);
+        }
+
+        public static void Loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooog(string message, BluLogType type = BluLogType.Normal)
+        {
+            Test2.LogLevelSix(message, type);
+        }
+
     }
 
 }

@@ -17,6 +17,11 @@ namespace BluConsole.Test
             Test5.LogLevelFive(message, type);
         }
 
+        public static void LogLevelSix(string message, BluLogType type = BluLogType.Normal)
+        {
+            Test5.LogLevelSix(message, type);
+        }        
+
     }
 
 }

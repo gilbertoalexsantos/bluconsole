@@ -12,25 +12,9 @@ namespace BluConsole.Test
         {
             if (Input.GetKeyDown(KeyCode.A))
             {
-                Test1.LogLevelOne(RandomMessage, RandomLogType);
+                Test1.BigCallStack(RandomMessage, RandomLogType);
             }
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                Test1.LogLevelTwo(RandomMessage, RandomLogType);
-            }
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                Test1.LogLevelThree(RandomMessage, RandomLogType);
-            }
-            else if (Input.GetKeyDown(KeyCode.F))
-            {
-                Test1.LogLevelFour(RandomMessage, RandomLogType);
-            }
-            else if (Input.GetKeyDown(KeyCode.G))
-            {
-                Test1.LogLevelFive(RandomMessage, RandomLogType);
-            }
-            else if (Input.GetKeyDown(KeyCode.H))
+            if (Input.GetKeyDown(KeyCode.H))
             {
                 GenerateLotOfLogs();
             }
@@ -41,7 +25,7 @@ namespace BluConsole.Test
             int qt = Random.Range(100, 200);
             for (int i = 0; i < qt; i++)
             {
-                int random = Random.Range(1, 6);
+                int random = Random.Range(1, 7);
                 if (random == 1)
                     Test1.LogLevelOne(RandomMessage, RandomLogType);
                 else if (random == 2)
@@ -50,8 +34,10 @@ namespace BluConsole.Test
                     Test1.LogLevelThree(RandomMessage, RandomLogType);
                 else if (random == 4)
                     Test1.LogLevelFour(RandomMessage, RandomLogType);
-                else
+                else if (random == 5)
                     Test1.LogLevelFive(RandomMessage, RandomLogType);
+                else if (random == 6)
+                    Test1.LogLevelSix(RandomMessage, RandomLogType);
             }
         }
 
@@ -98,7 +84,7 @@ namespace BluConsole.Test
                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
             }
-        }         
+        }  
 
         [StackTraceIgnore]
         public static void Log(string message, BluLogType type)
