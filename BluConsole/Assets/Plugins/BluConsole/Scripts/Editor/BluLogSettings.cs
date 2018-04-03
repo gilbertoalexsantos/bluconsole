@@ -10,22 +10,27 @@ namespace BluConsole.Editor
     [CreateAssetMenu(menuName="BluConsole/BluLogSettings")]
     public class BluLogSettings : ScriptableObject
     {
-    
-        [SerializeField] private List<BluLogFilter> _filters = new List<BluLogFilter>();
 
-        public List<BluLogFilter> Filters { get { return _filters; } }
+        private static BluLogSettings _instance;
 
         public static BluLogSettings Instance
         {
             get
             {
+                if (_instance != null)
+                    return _instance;
+
                 string[] guids = AssetDatabase.FindAssets("t:" + typeof(BluLogSettings).ToString());
                 if (guids.Length == 0) 
                     return null;
                 var assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
-                return (BluLogSettings) AssetDatabase.LoadAssetAtPath(assetPath, typeof(BluLogSettings));
+                return _instance = (BluLogSettings) AssetDatabase.LoadAssetAtPath(assetPath, typeof(BluLogSettings));
             }
         }
+    
+        [SerializeField] private List<BluLogFilter> _filters = new List<BluLogFilter>();
+
+        public List<BluLogFilter> Filters { get { return _filters; } }
     
     }
 
