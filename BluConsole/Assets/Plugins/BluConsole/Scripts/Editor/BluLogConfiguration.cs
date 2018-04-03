@@ -7,7 +7,7 @@ using UnityEditor;
 namespace BluConsole.Editor
 {
 
-	[CreateAssetMenu()]
+	[CreateAssetMenu(menuName="BluConsole/BluLogConfiguration")]
 	public class BluLogConfiguration : ScriptableObject 
 	{
 
