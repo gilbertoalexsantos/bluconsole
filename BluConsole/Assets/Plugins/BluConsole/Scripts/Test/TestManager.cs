@@ -26,6 +26,7 @@ namespace BluConsole.Test
             for (int i = 0; i < qt; i++)
             {
                 int random = Random.Range(1, 7);
+                Test1.BigCallStack(RandomMessage, RandomLogType);
                 if (random == 1)
                     Test1.LogLevelOne(RandomMessage, RandomLogType);
                 else if (random == 2)
