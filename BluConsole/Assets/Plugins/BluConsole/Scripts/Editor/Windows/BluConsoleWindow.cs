@@ -90,9 +90,14 @@ namespace BluConsole.Editor
 
         protected void DrawPopup(BluLog log)
         {
+			DrawPopup(log.Message);
+        }
+
+        protected void DrawPopup(string message)
+        {
 			Event clickEvent = Event.current;
 
-            GenericMenu.MenuFunction copyCallback = () => { EditorGUIUtility.systemCopyBuffer = log.Message; };
+            GenericMenu.MenuFunction copyCallback = () => { EditorGUIUtility.systemCopyBuffer = message; };
 
             GenericMenu menu = new GenericMenu();
             menu.AddItem(content: "Copy".GUIContent(), on: false, func: copyCallback);

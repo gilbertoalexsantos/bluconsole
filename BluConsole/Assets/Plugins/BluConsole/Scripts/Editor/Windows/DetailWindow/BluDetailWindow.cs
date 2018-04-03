@@ -108,6 +108,8 @@ namespace BluConsole.Editor
                         LastTimeClicked = 0.0f;
                     if (isLeftClick && !IsDoubleClick)
                         SelectedMessage = cells[i].SelectedMessageWhenClicked;
+                    if (!isLeftClick)
+                        DrawPopup(cells[i].Message);
                     if (isLeftClick && SelectedMessage == cells[i].SelectedMessageWhenClicked)
                     {
                         if (IsDoubleClick)
