@@ -106,18 +106,6 @@ namespace BluConsole.Editor
         {
             get
             {
-                return new GUIStyle(MessageDetailFirstLogStyle)
-                {
-                    wordWrap = false,
-                    onNormal = {textColor = GetLogListStyle(BluLogType.Normal).onNormal.textColor}
-                };
-            }
-        }
-
-        public static GUIStyle MessageDetailFirstLogStyle
-        {
-            get
-            {
                 return new GUIStyle(BluConsoleSkin.MessageStyle)
                 {
                     stretchWidth = true,

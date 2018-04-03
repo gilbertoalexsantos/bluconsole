@@ -14,8 +14,11 @@ namespace BluConsole.Editor
 		[Range(15, 50)]
 		public float DefaultButtonHeightOffset = 15.0f;
 
-		[Range(50, 999)]
-		public int MaxLengthMessage = 999;
+		[Range(50, 1500)]
+		public int MaxLengthListWindowText = 999;
+
+		[Range(50, 1500)]
+		public int MaxLengthDetailWindowText = 999;
 
 		[Range(1, 999)]
 		public int MaxAmountOfLogsCollapse = 999;

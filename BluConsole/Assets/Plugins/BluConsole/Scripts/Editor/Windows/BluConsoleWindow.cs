@@ -112,18 +112,33 @@ namespace BluConsole.Editor
                 style.Draw(rect, false, false, isSelected, false);
         }
 
-        protected string GetTruncatedMessage(string m)
+        private string GetTruncatedMessage(string m, int length)
         {
             string message = m.Replace(System.Environment.NewLine, " ");
-            if (message.Length <= LogConfiguration.MaxLengthMessage)
+            if (message.Length <= length)
                 return message;
 
-            return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: LogConfiguration.MaxLengthMessage));
+            return string.Format("{0}... <truncated>", message.Substring(startIndex: 0, length: length));
         }
 
-        protected string GetTruncatedMessage(BluLog log)
+        protected string GetTruncatedListMessage(string m)
         {
-            return GetTruncatedMessage(log.Message);
+            return GetTruncatedMessage(m, LogConfiguration.MaxLengthListWindowText);
+        }
+
+        protected string GetTruncatedDetailMessage(string m)
+        {
+            return GetTruncatedMessage(m, LogConfiguration.MaxLengthDetailWindowText);
+        }
+
+        protected string GetTruncatedDetailMessage(BluLog log)
+        {
+            return GetTruncatedDetailMessage(log.Message);
+        }   
+
+        protected string GetTruncatedListMessage(BluLog log)
+        {
+            return GetTruncatedListMessage(log.Message);
         }   
 
         private void HandleKeyboardArrowKeys()

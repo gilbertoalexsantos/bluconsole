@@ -78,7 +78,7 @@ namespace BluConsole.Editor
                 var styleBack = BluConsoleSkin.GetLogBackStyle(i);
 
                 var styleMessage = BluConsoleSkin.GetLogListStyle(log.LogType);
-                string showMessage = GetTruncatedMessage(log);
+                string showMessage = GetTruncatedListMessage(log);
                 var contentMessage = new GUIContent(showMessage);
                 var rectMessage = new Rect(x: 0, y: buttonY, width: viewWidth, height: DefaultButtonHeight);
                 bool isSelected = i == SelectedMessage;
