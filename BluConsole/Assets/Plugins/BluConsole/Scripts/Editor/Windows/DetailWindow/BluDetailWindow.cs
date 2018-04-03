@@ -19,6 +19,7 @@ namespace BluConsole.Editor
 		public int ListWindowSelectedMessage { get; set; }
 
 		private BluLog _selectedLog;
+        private float[] sums;
 
 		public override void OnGUI(int id)
 		{
@@ -50,16 +51,23 @@ namespace BluConsole.Editor
                 return;
             }
 
+            float buttonWidth = DefaultButtonWidth;
+
             var cells = GetCells(_selectedLog);
             foreach (var cell in cells)
                 cell.Message = GetTruncatedDetailMessage(cell.Message);
+            sums = new float[cells.Count+1];
+            sums[0] = 0;
+            for (int i = 1; i <= cells.Count; i++)
+                sums[i] = cells[i-1].GetHeight(buttonWidth) + sums[i-1];
 
-            float buttonWidth = DefaultButtonWidth;
-
-            float viewHeight = cells.Sum(c => c.GetHeight(buttonWidth));
+            float viewHeight = sums[cells.Count];
             if (viewHeight > WindowRect.height)
                 buttonWidth -= 15f;
-            viewHeight = cells.Sum(c => c.GetHeight(buttonWidth));
+
+            for (int i = 1; i <= cells.Count; i++)
+                sums[i] = cells[i-1].GetHeight(buttonWidth) + sums[i-1];
+            viewHeight = sums[cells.Count];
 
             float viewWidth = buttonWidth;
 
@@ -70,31 +78,32 @@ namespace BluConsole.Editor
                                                  scrollPosition: ScrollPosition,
                                                  viewRect: scrollViewViewRect);
 
-            int firstRenderLogIndex = GetFirstGreaterCellIndex(cells, ScrollPosition.y, 0f, buttonWidth) - 1;
+            int firstRenderLogIndex = GetFirstGreaterCellIndex(cells, ScrollPosition.y, 0f) - 1;
             firstRenderLogIndex = Mathf.Clamp(firstRenderLogIndex, 0, cells.Count - 1);
-            int lastRenderLogIndex = GetFirstGreaterCellIndex(cells, ScrollPosition.y, WindowRect.height, buttonWidth);
+            int lastRenderLogIndex = GetFirstGreaterCellIndex(cells, ScrollPosition.y, WindowRect.height);
             lastRenderLogIndex = Mathf.Clamp(lastRenderLogIndex, 0, cells.Count - 1);
 
-            float buttonY = cells.Take(firstRenderLogIndex).Sum(c => c.GetHeight(buttonWidth));
+            float buttonY = sums[firstRenderLogIndex];
             
             // Handling up/down arrow keys
             if (HasKeyboardArrowKeyInput)
             {
                 float lo = ScrollPosition.y;
                 float hi = ScrollPosition.y + WindowRect.height;
-                float selectedMessageLo = cells.Take(SelectedMessage).Sum(c => c.GetHeight(buttonWidth));
-                float selectedMessageHi = cells.Take(SelectedMessage+1).Sum(c => c.GetHeight(buttonWidth));
+                float selectedMessageLo = sums[SelectedMessage];
+                float selectedMessageHi = sums[SelectedMessage+1];
 
                 bool isFrameOutsideOfRange = !(selectedMessageLo >= lo && selectedMessageHi <= hi);
                 if (isFrameOutsideOfRange && KeyboardArrowKeyDirection == Direction.Up)
-                    ScrollPosition.y = cells.Take(SelectedMessage).Sum(c => c.GetHeight(buttonWidth));
+                    ScrollPosition.y = selectedMessageLo;
                 else if (isFrameOutsideOfRange && KeyboardArrowKeyDirection == Direction.Down)
-                    ScrollPosition.y = cells.Take(SelectedMessage+1).Sum(c => c.GetHeight(buttonWidth)) - WindowRect.height;
+                    ScrollPosition.y = selectedMessageHi - WindowRect.height;
             }
 
             for (int i = firstRenderLogIndex; i <= lastRenderLogIndex; i++)
             {
-                var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: cells[i].GetHeight(buttonWidth));
+                float cellHeight = sums[i+1] - sums[i];
+                var rectButton = new Rect(x: 0, y: buttonY, width: viewWidth, height: cellHeight);
                 var isSelected = cells[i].SelectedMessageWhenClicked == SelectedMessage;
                 DrawBackground(rectButton, cells[i].BackgroundStyle, isSelected);
                 if (IsRepaintEvent)
@@ -124,7 +133,7 @@ namespace BluConsole.Editor
                     }
                 }
 
-                buttonY += cells[i].GetHeight(buttonWidth);
+                buttonY += cellHeight;
             }
 
             GUI.EndScrollView();
@@ -145,7 +154,7 @@ namespace BluConsole.Editor
 			return style.CalcHeight(new GUIContent(message), width);
 		}
 
-        private int GetFirstGreaterCellIndex(List<BluDetailWindowCell> cells, float position, float offset, float buttonWidth)
+        private int GetFirstGreaterCellIndex(List<BluDetailWindowCell> cells, float position, float offset)
         {
             float sum = 0f;
             for (int i = 0; i < cells.Count; i++)
@@ -153,7 +162,7 @@ namespace BluConsole.Editor
                 if (position + offset <= sum)
                     return i;
 
-                sum += cells[i].GetHeight(buttonWidth);
+                sum += sums[i+1] - sums[i];
             }
 
             return cells.Count - 1;
@@ -161,7 +170,7 @@ namespace BluConsole.Editor
 
         private List<BluDetailWindowCell> GetCells(BluLog log)
         {
-            var cells = new List<BluDetailWindowCell>();
+            var cells = new List<BluDetailWindowCell>(1 + log.StackTrace.Count);
 
             cells.Add(new BluDetailWindowCell(
                 message: log.Message,
