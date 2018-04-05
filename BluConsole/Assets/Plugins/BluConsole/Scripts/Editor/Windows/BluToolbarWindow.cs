@@ -23,15 +23,15 @@ namespace BluConsole.Editor
         private bool _isShowWarning;
         private bool _isShowError;
 
-		public List<bool> ToggledFilters = new List<bool>();
-		public string[] SearchStringPatterns;
+        public List<bool> ToggledFilters = new List<bool>();
+        public string[] SearchStringPatterns;
 
-		public BluLogSettings Settings { get; set; }
+        public BluLogSettings Settings { get; set; }
         public BluLogConfiguration Configuration { get; set; }
-		public BluListWindow ListWindow { get; set; }
-		public BluDetailWindow DetailWindow { get; set; }
-		public bool HasSetDirtyLogs { get; set; }
-		public bool HasSetDirtyComparer { get; set; }
+        public BluListWindow ListWindow { get; set; }
+        public BluDetailWindow DetailWindow { get; set; }
+        public bool HasSetDirtyLogs { get; set; }
+        public bool HasSetDirtyComparer { get; set; }
 
         public void OnGUI(int id)
         {
@@ -188,7 +188,7 @@ namespace BluConsole.Editor
                 bool oldAdditionalFilter = ToggledFilters[i];
                 ToggledFilters[i] = GUILayout.Toggle(ToggledFilters[i],
                                                      name,
-													 style,
+                                                     style,
                                                      GUILayout.MaxWidth(style.CalcSize(new GUIContent(name)).x));
                 if (oldAdditionalFilter != ToggledFilters[i])
                     SetDirtyLogs();
@@ -197,15 +197,15 @@ namespace BluConsole.Editor
             GUILayout.EndHorizontal();
         }
 
-		private void SetDirtyLogs()
-		{
-			HasSetDirtyLogs = true;
-		}
+        private void SetDirtyLogs()
+        {
+            HasSetDirtyLogs = true;
+        }
 
-		private void SetDirtyComparer()
-		{
-			HasSetDirtyComparer = true;
-		}
+        private void SetDirtyComparer()
+        {
+            HasSetDirtyComparer = true;
+        }
 
         private bool GetButtonClamped(GUIContent content, GUIStyle style)
         {
@@ -215,7 +215,7 @@ namespace BluConsole.Editor
         private bool GetToggleClamped(bool state, GUIContent content, GUIStyle style)
         {
             return GUILayout.Toggle(state, content, style, GUILayout.MaxWidth(style.CalcSize(content).x));
-        }		
+        }        
         
     }
 

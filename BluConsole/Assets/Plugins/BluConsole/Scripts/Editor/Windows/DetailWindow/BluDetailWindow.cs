@@ -12,22 +12,22 @@ using BluConsole.Core.UnityLoggerApi;
 namespace BluConsole.Editor
 {
 
-	[Serializable]
-	public class BluDetailWindow : BluConsoleWindow
-	{
+    [Serializable]
+    public class BluDetailWindow : BluConsoleWindow
+    {
 
-		public int ListWindowSelectedMessage { get; set; }
+        public int ListWindowSelectedMessage { get; set; }
 
-		private BluLog _selectedLog;
+        private BluLog _selectedLog;
         private float[] sums;
 
-		public override void OnGUI(int id)
-		{
-			base.OnGUI(id);
+        public override void OnGUI(int id)
+        {
+            base.OnGUI(id);
 
             UnityLoggerServer.StartGettingLogs();
 
-			GUI.DrawTexture(WindowRect, BluConsoleSkin.OddBackTexture);
+            GUI.DrawTexture(WindowRect, BluConsoleSkin.OddBackTexture);
 
             if (ListWindowSelectedMessage != -1 &&
                 ListWindowSelectedMessage >= 0 &&
@@ -37,9 +37,9 @@ namespace BluConsole.Editor
             }
 
             if (_selectedLog != null)
-				SelectedMessage = Mathf.Clamp(SelectedMessage, 0, _selectedLog.StackTrace.Count);
-			else
-				SelectedMessage = -1;
+                SelectedMessage = Mathf.Clamp(SelectedMessage, 0, _selectedLog.StackTrace.Count);
+            else
+                SelectedMessage = -1;
 
             if (ListWindowSelectedMessage == -1 ||
                 QtLogs == 0 ||
@@ -127,9 +127,9 @@ namespace BluConsole.Editor
                             BluUtils.JumpToSourceFile(_selectedLog, cells[i].StackTraceIndex);
                         }
                         else
-						{
+                        {
                             LastTimeClicked = EditorApplication.timeSinceStartup;
-						}
+                        }
                     }
                 }
 
@@ -139,20 +139,20 @@ namespace BluConsole.Editor
             GUI.EndScrollView();
 
             UnityLoggerServer.StopGettingsLogs();
-		}
+        }
 
         protected override void OnEnterKeyPressed()
         {
-			if (_selectedLog == null)
-				return;
+            if (_selectedLog == null)
+                return;
 
             BluUtils.JumpToSourceFile(_selectedLog, SelectedMessage == 0 ? SelectedMessage : SelectedMessage-1);
         }
 
-		private float GetDetailMessageHeight(string message, GUIStyle style, float width = 0f)
-		{
-			return style.CalcHeight(new GUIContent(message), width);
-		}
+        private float GetDetailMessageHeight(string message, GUIStyle style, float width = 0f)
+        {
+            return style.CalcHeight(new GUIContent(message), width);
+        }
 
         private int GetFirstGreaterCellIndex(List<BluDetailWindowCell> cells, float position, float offset)
         {
@@ -194,6 +194,6 @@ namespace BluConsole.Editor
             return cells;
         }
 
-	}
+    }
 
 }

@@ -19,11 +19,11 @@ namespace BluConsole.Editor
     }
 
     [Serializable]
-	public abstract class BluConsoleWindow
-	{
+    public abstract class BluConsoleWindow
+    {
 
         public Rect WindowRect { get; set; }
-		public List<string> StackTraceIgnorePrefixs { get; set; }
+        public List<string> StackTraceIgnorePrefixs { get; set; }
         public int[] Rows { get; set; }
         public BluLog[] Logs { get; set; }
         public int QtLogs { get; set; }
@@ -41,7 +41,7 @@ namespace BluConsole.Editor
             {
                 return Event.current.type == EventType.Repaint;
             }
-        }	
+        }    
 
         public bool IsDoubleClick
         {
@@ -59,13 +59,13 @@ namespace BluConsole.Editor
             }
         }            
 
-		public virtual void OnGUI(int id)
+        public virtual void OnGUI(int id)
         {
             HandleKeyboardArrowKeys();
             HandleKeyboardEnterKey();
         }
 
-		public BluLog GetCompleteLog(int row)
+        public BluLog GetCompleteLog(int row)
         {
             var log = UnityLoggerServer.GetCompleteLog(row);
             log.FilterStackTrace(StackTraceIgnorePrefixs);
@@ -90,12 +90,12 @@ namespace BluConsole.Editor
 
         protected void DrawPopup(BluLog log)
         {
-			DrawPopup(log.Message);
+            DrawPopup(log.Message);
         }
 
         protected void DrawPopup(string message)
         {
-			Event clickEvent = Event.current;
+            Event clickEvent = Event.current;
 
             GenericMenu.MenuFunction copyCallback = () => { EditorGUIUtility.systemCopyBuffer = message; };
 
@@ -111,7 +111,7 @@ namespace BluConsole.Editor
             return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
         }
 
-		protected void DrawBackground(Rect rect, GUIStyle style, bool isSelected)
+        protected void DrawBackground(Rect rect, GUIStyle style, bool isSelected)
         {
             if (IsRepaintEvent)
                 style.Draw(rect, false, false, isSelected, false);
@@ -196,6 +196,6 @@ namespace BluConsole.Editor
                 SelectedMessage = 0;
         }
 
-	}
+    }
 
 }

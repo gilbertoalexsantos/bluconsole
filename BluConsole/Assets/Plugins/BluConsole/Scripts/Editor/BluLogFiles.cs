@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace BluConsole.Editor
 {
 
-	[CreateAssetMenu(menuName="BluConsole/BluLogFiles")]
+    [CreateAssetMenu(menuName="BluConsole/BluLogFiles")]
     public class BluLogFiles : ScriptableObject
     {
 
