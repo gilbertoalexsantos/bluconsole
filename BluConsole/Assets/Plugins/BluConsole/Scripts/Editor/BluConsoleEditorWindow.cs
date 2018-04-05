@@ -38,14 +38,7 @@ namespace BluConsole.Editor
         private BluDetailWindow _detailWindow;
         private BluToolbarWindow _toolbarWindow;
 
-        #endregion Variables
-
-
-        #region Properties
-
-        private bool IsRepaintEvent { get { return Event.current.type == EventType.Repaint; } } 
-        
-        #endregion Properties        
+        #endregion Variables      
 
         
         #region Windows
@@ -209,7 +202,7 @@ namespace BluConsole.Editor
 
         private float DrawResizer()
         {
-            if (!IsRepaintEvent)
+            if (Event.current.type != EventType.Repaint)
                 return _configuration.ResizerHeight;
             
             var rect = new Rect(0, _drawYPos, position.width, _configuration.ResizerHeight);
