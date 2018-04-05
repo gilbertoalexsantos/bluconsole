@@ -1,8 +1,32 @@
-﻿namespace BluConsole.Core.UnityLoggerApi
+﻿using UnityEngine;
+
+
+namespace BluConsole.Core.UnityLoggerApi
 {
 
     public static class UnityLoggerServer
     {
+
+        public static bool ShouldShowPlayerConsole
+        {
+            get
+            {
+                return Application.platform == RuntimePlatform.OSXEditor;
+            }
+        }
+
+        public static void OpenEditorConsole()
+        {
+            BluInternalEditorUtility.OpenEditorConsole();
+        }
+
+        public static void OpenPlayerConsole()
+        {
+            if (!ShouldShowPlayerConsole)
+                return;
+
+            BluInternalEditorUtility.OpenPlayerConsole();
+        }
 
         public static void Clear()
         {

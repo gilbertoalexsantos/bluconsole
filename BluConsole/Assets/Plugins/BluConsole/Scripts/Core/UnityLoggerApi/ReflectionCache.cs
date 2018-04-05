@@ -8,9 +8,10 @@ namespace BluConsole.Core.UnityLoggerApi
 
     public enum UnityClassType
     {
-        ConsoleWindow = 0,
-        LogEntries    = 1,
-        LogEntry      = 2,
+        ConsoleWindow         = 0,
+        LogEntries            = 1,
+        LogEntry              = 2,
+        InternalEditorUtility = 3,
     }
 
     public static class ReflectionCache
@@ -18,9 +19,10 @@ namespace BluConsole.Core.UnityLoggerApi
 
         private static Dictionary<UnityClassType, string> _cacheStrUnityClassType = new Dictionary<UnityClassType, string>()
         {
-            { UnityClassType.ConsoleWindow, "0" },
-            { UnityClassType.LogEntries,    "1" },
-            { UnityClassType.LogEntry,      "2" },
+            { UnityClassType.ConsoleWindow,         "0" },
+            { UnityClassType.LogEntries,            "1" },
+            { UnityClassType.LogEntry,              "2" },
+            { UnityClassType.InternalEditorUtility, "3" },
         };
 
         private static Dictionary<Type, string> _cacheStrType = new Dictionary<Type, string>()
@@ -36,7 +38,7 @@ namespace BluConsole.Core.UnityLoggerApi
         {
             var cacheKey = GetKey<MethodInfo>(key, type);
             if (!Has(cacheKey))
-                _cache[cacheKey] = GetType(type).GetMethod(key, GetFlags(type));
+                _cache[cacheKey] = GetType(type).GetMethod(key, Flags);
             return (MethodInfo)_cache[cacheKey];
         }
 
@@ -44,7 +46,7 @@ namespace BluConsole.Core.UnityLoggerApi
         {
             var cacheKey = GetKey<PropertyInfo>(key, type);
             if (!Has(cacheKey))
-                _cache[cacheKey] = GetType(type).GetProperty(key, GetFlags(type));
+                _cache[cacheKey] = GetType(type).GetProperty(key, Flags);
             return (PropertyInfo)_cache[cacheKey];
         }
 
@@ -85,6 +87,8 @@ namespace BluConsole.Core.UnityLoggerApi
                     return Type.GetType("UnityEditor.LogEntries,UnityEditor.dll");
                 case UnityClassType.LogEntry:
                     return Type.GetType("UnityEditor.LogEntry,UnityEditor.dll");
+                case UnityClassType.InternalEditorUtility:
+                    return Type.GetType("UnityEditorInternal.InternalEditorUtility,UnityEditor.dll");
                 default:
                     return default(Type);
             }
@@ -97,24 +101,23 @@ namespace BluConsole.Core.UnityLoggerApi
                     return Type.GetType("UnityEditorInternal.LogEntries,UnityEditor.dll");
                 case UnityClassType.LogEntry:
                     return Type.GetType("UnityEditorInternal.LogEntry,UnityEditor.dll");
+                case UnityClassType.InternalEditorUtility:
+                    return Type.GetType("UnityEditorInternal.InternalEditorUtility,UnityEditor.dll");
                 default:
                     return default(Type);
             }
 #endif
         }
 
-        private static BindingFlags GetFlags(UnityClassType type)
+        private static BindingFlags Flags
         {
-            switch (type)
+            get
             {
-                case UnityClassType.ConsoleWindow:
-                    return BindingFlags.Static | BindingFlags.NonPublic;
-                case UnityClassType.LogEntries:
-                    return BindingFlags.Static | BindingFlags.Public;
-                case UnityClassType.LogEntry:
-                    return BindingFlags.Default;
-                default:
-                    return BindingFlags.Default;
+                return BindingFlags.Public |
+                       BindingFlags.NonPublic |
+                       BindingFlags.Static |
+                       BindingFlags.Instance |
+                       BindingFlags.Default;
             }
         }
 

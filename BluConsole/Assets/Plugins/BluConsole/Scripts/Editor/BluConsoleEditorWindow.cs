@@ -12,7 +12,7 @@ namespace BluConsole.Editor
 
     public class BluConsoleEditorWindow : EditorWindow, IHasCustomMenu
     {
-        
+
         #region Variables
 
         public static BluConsoleEditorWindow Instance;
@@ -38,11 +38,11 @@ namespace BluConsole.Editor
         private BluDetailWindow _detailWindow;
         private BluToolbarWindow _toolbarWindow;
 
-        #endregion Variables      
+        #endregion Variables
 
-        
+
         #region Windows
-        
+
         [MenuItem("Window/BluConsole")]
         public static void ShowWindow()
         {
@@ -56,10 +56,10 @@ namespace BluConsole.Editor
 
             window._topPanelHeight = window.position.height / 2.0f;
         }
-        
+
         #endregion Windows
-        
-        
+
+
         #region OnEvents
 
         private void OnEnable()
@@ -88,7 +88,7 @@ namespace BluConsole.Editor
         }
 
         private void OnGUI()
-        {       
+        {
             InitVariables();
             CalculateResizer();
 
@@ -107,8 +107,8 @@ namespace BluConsole.Editor
         }
 
         public void OnBeforeCompile()
-        { 
-            SetDirtyLogs(); 
+        {
+            SetDirtyLogs();
         }
 
         public void OnAfterCompile()
@@ -127,7 +127,7 @@ namespace BluConsole.Editor
         {
             SetDirtyLogs();
         }
-        
+
         #endregion OnEvents
 
 
@@ -135,6 +135,9 @@ namespace BluConsole.Editor
 
         public void AddItemsToMenu(GenericMenu menu)
         {
+            if (UnityLoggerServer.ShouldShowPlayerConsole)
+                menu.AddItem(new GUIContent("Open Player Log"), false, UnityLoggerServer.OpenPlayerConsole);
+            menu.AddItem(new GUIContent("Open Editor Log"), false, UnityLoggerServer.OpenEditorConsole);
             menu.AddItem(new GUIContent("Add Filter"), false, OnAddFilterTabClicked);
         }
 
@@ -142,13 +145,13 @@ namespace BluConsole.Editor
         {
             if (_settings == null)
                 return;
-                
+
             Selection.activeObject = _settings;
         }
 
         #endregion IHasCustomMenu
 
-        
+
         #region Draw
 
         private float DrawToolbarWindow(int id)
@@ -165,7 +168,7 @@ namespace BluConsole.Editor
             GUI.Window(id, new Rect(0, 0, position.width, height), _toolbarWindow.OnGUI, GUIContent.none, GUIStyle.none);
 
             return height;
-        }        
+        }
 
         private float DrawListWindow(int id)
         {
@@ -204,7 +207,7 @@ namespace BluConsole.Editor
         {
             if (Event.current.type != EventType.Repaint)
                 return _configuration.ResizerHeight;
-            
+
             var rect = new Rect(0, _drawYPos, position.width, _configuration.ResizerHeight);
             EditorGUI.DrawRect(rect, _configuration.ResizerColor);
 
@@ -213,7 +216,7 @@ namespace BluConsole.Editor
 
         #endregion Draw
 
-        
+
         #region Gets
 
         private int[] GetCachedIntArr(int size)
@@ -255,7 +258,7 @@ namespace BluConsole.Editor
         {
             return Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition);
         }
-        
+
         private bool ShouldLog(BluLog log, int row)
         {
             var messageLower = log.MessageLower;
@@ -285,10 +288,10 @@ namespace BluConsole.Editor
         }
 
         #endregion Gets
-        
-        
+
+
         #region Sets
-        
+
         private void SetDirtyComparer()
         {
             _cacheLogComparer.Clear();
@@ -302,10 +305,10 @@ namespace BluConsole.Editor
             _cacheLogArr = new BluLog[50];
             SetDirtyComparer();
         }
-        
+
         #endregion Sets
 
-        
+
         #region Actions
 
         private void CheckDirties()
@@ -335,8 +338,8 @@ namespace BluConsole.Editor
                 _cursorChangeRect.Set(_cursorChangeRect.x, resizerY, _cursorChangeRect.width, _cursorChangeRect.height);
             }
 
-            _topPanelHeight = Mathf.Clamp(_topPanelHeight, 
-                                          _configuration.MinHeightOfTopAndBotton, 
+            _topPanelHeight = Mathf.Clamp(_topPanelHeight,
+                                          _configuration.MinHeightOfTopAndBotton,
                                           position.height - _configuration.MinHeightOfTopAndBotton);
         }
 
@@ -369,7 +372,7 @@ namespace BluConsole.Editor
             int cacheLogComparerCount = _cacheLogComparer.Count;
             for (int i = 0; i < _qtLogs; i++)
             {
-                // Ugly code to avoid function call 
+                // Ugly code to avoid function call
                 int realCount = _cacheLog.Count;
                 BluLog log = null;
                 if (i < _cacheLogCount && i < realCount)
@@ -377,7 +380,7 @@ namespace BluConsole.Editor
                 else
                     log = GetSimpleLog(i);
 
-                // Ugly code to avoid function call 
+                // Ugly code to avoid function call
                 bool has = false;
                 if (i < cacheLogComparerCount)
                     has = _cacheLogComparer[i];
