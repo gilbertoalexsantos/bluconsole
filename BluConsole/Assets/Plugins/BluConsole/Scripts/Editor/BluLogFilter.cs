@@ -10,8 +10,11 @@ namespace BluConsole.Editor
     public class BluLogFilter : ISerializationCallbackReceiver
     {
     
+        #pragma warning disable 414, CS0649
         [SerializeField] private string _name;
         [SerializeField] private string _pattern;
+        #pragma warning restore CS0649  
+
         private List<string> _patterns;
 
         public string Name { get { return string.IsNullOrEmpty(_name) ? "?" : _name; } }

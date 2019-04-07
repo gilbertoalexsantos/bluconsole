@@ -26,7 +26,9 @@ namespace BluConsole.Editor
             }
         }
     
+        #pragma warning disable 414, CS0649
         [SerializeField] private Texture _windowIcon;
+        #pragma warning restore CS0649  
 
         public Texture WindowIcon { get { return _windowIcon; } }
     
